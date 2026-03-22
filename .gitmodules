@@ -1,0 +1,12 @@
+[submodule "thirdparty/volk"]
+	path = thirdparty/volk
+	url = https://github.com/zeux/volk.git
+[submodule "thirdparty/SDL"]
+	path = thirdparty/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "thirdparty/slang"]
+	path = thirdparty/slang
+	url = https://github.com/shader-slang/slang.git
+[submodule "thirdparty/SPIRV-Reflect"]
+	path = thirdparty/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
