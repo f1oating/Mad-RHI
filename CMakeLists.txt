@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.25)
+project(Mad-RHI VERSION 0.1.0 LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Vulkan REQUIRED)
+
+set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/SDL)
+
+set(SLANG_ENABLE_GFX OFF CACHE BOOL "" FORCE)
+set(SLANG_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
+set(SLANG_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/slang)
+
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/SPIRV-Reflect)
+
+add_subdirectory(thirdparty/volk)
+
+add_subdirectory(RHI)
+add_subdirectory(Examples)
