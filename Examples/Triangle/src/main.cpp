@@ -1,7 +1,12 @@
 #include <iostream>
 
+#include "Mad-RHI/Device.h"
+
+using namespace mad::rhi;
+
 int main()
 {
-    std::cout << "Hello" << std::endl;
+    RefPtr<Device> device = Device::Create();
+
     return 0;
 }

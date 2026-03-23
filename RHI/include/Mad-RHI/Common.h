@@ -12,6 +12,7 @@ class RefCounter
 friend class Object;
 template<typename T> friend class ObjectBase;
 template<typename T> friend class WeakPtr;
+template<typename T> friend class RefPtr;
 
 public:
     void AddStrongRef();
@@ -25,8 +26,6 @@ public:
     int GetStrongRefCount() const { return m_Strong.load(std::memory_order_relaxed); }
 
 private:
-    template<typename T> friend class ObjectBase;
-    template<typename T> friend class WeakPtr;
 
     Object* m_pObject = nullptr;
 
@@ -42,8 +41,8 @@ class Object
 public:
     virtual ~Object() = default;
 
-    virtual void AddRef();
-    virtual void Release();
+    virtual void AddRef() = 0;
+    virtual void Release() = 0;
     virtual RefCounter* GetRefCounter() = 0;
 
 };
@@ -103,6 +102,12 @@ public:
         if (m_Ptr) m_Ptr->AddRef();
     }
 
+    template<typename U>
+    RefPtr(const RefPtr<U>& other) : m_Ptr(other.m_Ptr)
+    {
+        if (m_Ptr) m_Ptr->AddRef();
+    }
+
     RefPtr& operator=(const RefPtr& other)
     {
         if (m_Ptr != other.m_Ptr)
@@ -115,6 +120,12 @@ public:
     }
 
     RefPtr(RefPtr&& other) noexcept : m_Ptr(other.m_Ptr)
+    {
+        other.m_Ptr = nullptr;
+    }
+
+    template<typename U>
+    RefPtr(RefPtr<U>&& other) noexcept : m_Ptr(other.m_Ptr)
     {
         other.m_Ptr = nullptr;
     }
@@ -232,7 +243,7 @@ RefPtr<T> MakeRef(Args&... args)
 {
     T* obj = new T(std::forward<Args>(args)...);
     RefPtr<T> ptr;
-    ptr->Attach(obj);
+    ptr.Attach(obj);
     return ptr;
 }
 

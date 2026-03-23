@@ -1,5 +1,16 @@
 #pragma once
 
+#include "Mad-RHI/Common.h"
+
 namespace mad::rhi {
     
+class Device : public Object
+{
+public:
+    virtual ~Device() = default;
+
+    static RefPtr<Device> Create();
+
+};
+
 }
