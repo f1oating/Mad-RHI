@@ -2,7 +2,6 @@
 
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/CommandList.h"
-#include <xcb/xcb.h>
 
 namespace mad::rhi {
 
@@ -18,6 +17,19 @@ struct FactoryInitInfo
     const char* pEngineName;
 };
 
+struct WindowHandle
+{
+    enum class Platform { WIN, WAYLAND, XCB };
+    Platform platform;
+
+    union
+    {
+        struct { void* connection; uint32_t window; } xcb;
+        struct { void* display; void* surface; } wayland;
+        struct { void* hwnd; void* hinstance; } win32;
+    };
+};
+
 class Factory
 {
 protected:
@@ -30,7 +42,7 @@ public:
     static void Init(FactoryInitInfo& info);
     static void Shutdown();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, xcb_connection_t* connection, xcb_window_t window) = 0;
+    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh) = 0;
 
     static Factory* GetInstance();
 

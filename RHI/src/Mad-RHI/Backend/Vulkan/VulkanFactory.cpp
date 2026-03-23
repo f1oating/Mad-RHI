@@ -49,9 +49,9 @@ VulkanFactory::~VulkanFactory()
     std::cout << "Factory Destroyed" << std::endl;
 }
 
-void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, xcb_connection_t* connection, xcb_window_t window)
+void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh)
 {
-    *ppDevice = new VulkanDevice(m_Instance, connection, window);
+    *ppDevice = new VulkanDevice(m_Instance, wh);
     *ppIcl = new VulkanGraphicsImmidiateCommandList();
 }
 

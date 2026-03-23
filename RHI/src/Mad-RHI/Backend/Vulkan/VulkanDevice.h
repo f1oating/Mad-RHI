@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Device.h"
+#include "Mad-RHI/Factory.h"
 #include <volk/volk.h>
 
 namespace mad::rhi {
@@ -11,7 +12,7 @@ protected:
     ~VulkanDevice();
 
 public:
-    VulkanDevice(VkInstance instance, xcb_connection_t* connection, xcb_window_t window);
+    VulkanDevice(VkInstance instance, WindowHandle& wh);
 
 private:
     VkInstance m_Instance = nullptr;
@@ -24,7 +25,7 @@ private:
     uint32_t m_PresentFamily = -1;
 
 private:
-    void CreateSurface(xcb_connection_t* connection, xcb_window_t window);
+    void CreateSurface(WindowHandle& wh);
     void CreatePhysicalDevice();
     void CreateLogicalDevice();
     void CreateSwapchain();

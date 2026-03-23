@@ -6,11 +6,11 @@
 
 namespace mad::rhi {
 
-VulkanDevice::VulkanDevice(VkInstance instance, xcb_connection_t* connection, xcb_window_t window)
+VulkanDevice::VulkanDevice(VkInstance instance, WindowHandle& wh)
 {
     m_Instance = instance;
 
-    CreateSurface(connection, window);
+    CreateSurface(wh);
     CreatePhysicalDevice();
     CreateLogicalDevice();
     CreateSwapchain();
@@ -26,14 +26,20 @@ VulkanDevice::~VulkanDevice()
     std::cout << "Device destroyed" << std::endl;
 }
 
-void VulkanDevice::CreateSurface(xcb_connection_t* connection, xcb_window_t window)
+void VulkanDevice::CreateSurface(WindowHandle& wh)
 {
-    VkXcbSurfaceCreateInfoKHR info{};
-    info.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-    info.connection = connection;
-    info.window     = window;
+    switch (wh.platform)
+    {
+        case WindowHandle::Platform::XCB:
+        {
+            VkXcbSurfaceCreateInfoKHR info{};
+            info.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+            info.connection = static_cast<xcb_connection_t*>(wh.xcb.connection);
+            info.window     = static_cast<xcb_window_t>(wh.xcb.window);
 
-    vkCreateXcbSurfaceKHR(m_Instance, &info, nullptr, &m_Surface);
+            vkCreateXcbSurfaceKHR(m_Instance, &info, nullptr, &m_Surface);
+        }
+    }
 }
 
 void VulkanDevice::CreatePhysicalDevice()

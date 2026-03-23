@@ -5,26 +5,32 @@
 #include "Mad-RHI/CommandList.h"
 #include "Common/Window.h"
 
-using namespace mad::rhi;
-using namespace mad::common;
+using namespace mad;
 
 int main()
 {
-    Window window("Triangle", 800, 600);
+    common::Window window("Triangle", 800, 600);
 
-    FactoryInitInfo info;
+    rhi::FactoryInitInfo info;
     info.pAppName = "Triangle";
     info.pEngineName = "Mad-RHI";
-    info.Backend = FactoryBackend::Vulkan;
+    info.Backend = rhi::FactoryBackend::Vulkan;
 
-    Factory::Init(info);
+    rhi::Factory::Init(info);
 
     {
-        Factory* factory = Factory::GetInstance();
-        RefPtr<Device> device = nullptr;
-        RefPtr<ImmidiateCommandList> icl = nullptr;
-        WindowInfo winInfo = window.GetWindowInfo();
-        factory->CreateDevice(&device, &icl, winInfo.Connection, winInfo.Window);
+        rhi::Factory* factory = rhi::Factory::GetInstance();
+
+        rhi::RefPtr<rhi::Device> device = nullptr;
+        rhi::RefPtr<rhi::ImmidiateCommandList> icl = nullptr;
+
+        common::WindowInfo winInfo = window.GetWindowInfo();
+
+        rhi::WindowHandle wh{};
+        wh.platform = rhi::WindowHandle::Platform::XCB;
+        wh.xcb.connection = winInfo.Connection;
+        wh.xcb.window = winInfo.Window;
+        factory->CreateDevice(&device, &icl, wh);
 
         while (window.IsRunning())
         {
@@ -32,7 +38,7 @@ int main()
         }
     }
 
-    Factory::Shutdown();
+    rhi::Factory::Shutdown();
 
     return 0;
 }

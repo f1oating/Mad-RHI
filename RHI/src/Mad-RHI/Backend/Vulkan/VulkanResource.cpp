@@ -1,0 +1,1 @@
+#include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
