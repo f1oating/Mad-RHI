@@ -23,7 +23,8 @@ int main()
         Factory* factory = Factory::GetInstance();
         RefPtr<Device> device = nullptr;
         RefPtr<ImmidiateCommandList> icl = nullptr;
-        factory->CreateDevice(&device, &icl);
+        WindowInfo winInfo = window.GetWindowInfo();
+        factory->CreateDevice(&device, &icl, winInfo.Connection, winInfo.Window);
 
         while (window.IsRunning())
         {

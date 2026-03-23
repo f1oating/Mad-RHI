@@ -3,6 +3,7 @@ project(Mad-RHI VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Vulkan REQUIRED)
 
@@ -18,6 +19,7 @@ add_subdirectory(thirdparty/slang)
 set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "" FORCE)
 add_subdirectory(thirdparty/SPIRV-Reflect)
 
+set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XCB_KHR)
 add_subdirectory(thirdparty/volk)
 
 add_subdirectory(RHI)

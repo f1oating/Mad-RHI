@@ -1,4 +1,5 @@
 #include "Common/Window.h"
+#include <X11/Xlib-xcb.h>
 
 namespace mad::common {
 
@@ -26,6 +27,25 @@ void Window::Update()
     {
         if (event.type == SDL_EVENT_QUIT) m_IsRunning = false;
     }
+}
+
+WindowInfo Window::GetWindowInfo()
+{
+    Display* xDisplay = (Display*)SDL_GetPointerProperty(
+        SDL_GetWindowProperties(m_Window),
+        SDL_PROP_WINDOW_X11_DISPLAY_POINTER,
+        nullptr
+    );
+
+    xcb_window_t xcbWindow = (xcb_window_t)SDL_GetNumberProperty(
+        SDL_GetWindowProperties(m_Window),
+        SDL_PROP_WINDOW_X11_WINDOW_NUMBER,
+        0
+    );
+
+    xcb_connection_t* connection = XGetXCBConnection(xDisplay);
+
+    return { connection, xcbWindow };
 }
 
 }

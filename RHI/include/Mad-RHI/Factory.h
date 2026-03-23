@@ -2,6 +2,7 @@
 
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/CommandList.h"
+#include <xcb/xcb.h>
 
 namespace mad::rhi {
 
@@ -29,7 +30,7 @@ public:
     static void Init(FactoryInitInfo& info);
     static void Shutdown();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl) = 0;
+    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, xcb_connection_t* connection, xcb_window_t window) = 0;
 
     static Factory* GetInstance();
 

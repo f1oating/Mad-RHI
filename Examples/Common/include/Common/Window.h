@@ -1,8 +1,15 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <xcb/xcb.h>
 
 namespace mad::common {
+
+struct WindowInfo
+{
+    xcb_connection_t* Connection;
+    xcb_window_t Window;
+};
 
 class Window
 {
@@ -13,6 +20,8 @@ public:
     void Update();
 
     bool IsRunning() { return m_IsRunning; }
+
+    WindowInfo GetWindowInfo();
 
 private:
     bool m_IsRunning = false;
