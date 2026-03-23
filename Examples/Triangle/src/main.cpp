@@ -2,11 +2,16 @@
 
 #include "Mad-RHI/Factory.h"
 #include "Mad-RHI/Device.h"
+#include "Mad-RHI/CommandList.h"
+#include "Common/Window.h"
 
 using namespace mad::rhi;
+using namespace mad::common;
 
 int main()
 {
+    Window window("Triangle", 800, 600);
+
     FactoryInitInfo info;
     info.pAppName = "Triangle";
     info.pEngineName = "Mad-RHI";
@@ -14,9 +19,17 @@ int main()
 
     Factory::Init(info);
 
-    Factory* factory = Factory::GetInstance();
-    RefPtr<Device> device = nullptr;
-    factory->CreateDevice(&device);
+    {
+        Factory* factory = Factory::GetInstance();
+        RefPtr<Device> device = nullptr;
+        RefPtr<ImmidiateCommandList> icl = nullptr;
+        factory->CreateDevice(&device, &icl);
+
+        while (window.IsRunning())
+        {
+            window.Update();
+        }
+    }
 
     Factory::Shutdown();
 
