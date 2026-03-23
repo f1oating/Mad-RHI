@@ -86,6 +86,7 @@ class RefPtr
 {
 public:
     RefPtr() = default;
+    RefPtr(std::nullptr_t) noexcept {}
 
     explicit RefPtr(T* ptr) : m_Ptr(ptr)
     {

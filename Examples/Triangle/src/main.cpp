@@ -15,7 +15,8 @@ int main()
     Factory::Init(info);
 
     Factory* factory = Factory::GetInstance();
-    RefPtr<Device> device = Device::Create();
+    RefPtr<Device> device = nullptr;
+    factory->CreateDevice(&device);
 
     Factory::Shutdown();
 

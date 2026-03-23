@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Mad-RHI/Device.h"
+
 namespace mad::rhi {
 
 enum class FactoryBackend
@@ -25,6 +27,8 @@ public:
 
     static void Init(FactoryInitInfo& info);
     static void Shutdown();
+
+    virtual void CreateDevice(Device** ppDevice) = 0;
 
     static Factory* GetInstance();
 

@@ -1,5 +1,6 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
 #include <iostream>
+#include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 
 namespace mad::rhi {
 
@@ -45,6 +46,11 @@ VulkanFactory::~VulkanFactory()
         vkDestroyInstance(m_Instance, nullptr);
     }
     std::cout << "Factory Destroyed" << std::endl;
+}
+
+void VulkanFactory::CreateDevice(Device** ppDevice)
+{
+    *ppDevice = new VulkanDevice();
 }
 
 }

@@ -9,8 +9,6 @@ class Device : public Object
 public:
     virtual ~Device() = default;
 
-    static RefPtr<Device> Create();
-
 };
 
 }
