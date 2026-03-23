@@ -18,7 +18,7 @@ public:
 
 };
 
-class ImmidiateCommandList : public DefferedCommandList
+class ImmidiateCommandList : public CommandList
 {
 public:
     virtual ~ImmidiateCommandList() = default;
