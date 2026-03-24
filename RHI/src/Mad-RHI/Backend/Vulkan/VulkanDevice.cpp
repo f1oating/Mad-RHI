@@ -130,8 +130,13 @@ void VulkanDevice::CreateLogicalDevice()
 
     const char* deviceExts[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
+    VkPhysicalDeviceTimelineSemaphoreFeatures tf{};
+    tf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+    tf.timelineSemaphore = VK_TRUE;
+
     VkDeviceCreateInfo deviceInfo{};
     deviceInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo.pNext                   = &tf;
     deviceInfo.queueCreateInfoCount    = queueInfos.size();
     deviceInfo.pQueueCreateInfos       = queueInfos.data();
     deviceInfo.enabledExtensionCount   = 1;
