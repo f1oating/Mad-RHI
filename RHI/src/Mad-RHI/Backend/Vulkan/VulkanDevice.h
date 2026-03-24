@@ -18,6 +18,8 @@ public:
 
     virtual void Resize() override;
 
+    virtual void Present() override;
+
 private:
     VkInstance m_Instance = nullptr;
     VkSurfaceKHR m_Surface = nullptr;
@@ -33,8 +35,11 @@ private:
     uint32_t m_PresentFamily = -1;
 
     std::vector<VkSemaphore> m_RenderFinishedSamephores;
-    std::vector<VkSemaphore> m_ImageAvailaleSemaphores;
+    std::vector<VkSemaphore> m_PresentCompleteSemaphores;
     std::vector<VkFence> m_Fences;
+
+    uint32_t m_CurrentFrame = 0;
+    uint32_t m_CurrentImageIndex = 0;
 
 private:
     void CreateSurface(const WindowHandle& wh);
@@ -44,6 +49,8 @@ private:
     void DestroySwapchain();
     void CreateFramesInFlightSync();
     void DestroyFramesInFlightSync();
+
+    void AcquireNextImage();
 
 };
 

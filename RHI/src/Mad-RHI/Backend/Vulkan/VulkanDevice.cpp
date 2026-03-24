@@ -16,11 +16,15 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateSwapchain();
     CreateFramesInFlightSync();
 
+    AcquireNextImage();
+
     std::cout << "Device created" << std::endl;
 }
 
 VulkanDevice::~VulkanDevice()
 {
+    vkDeviceWaitIdle(m_Device);
+
     DestroyFramesInFlightSync();
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
@@ -34,6 +38,29 @@ void VulkanDevice::Resize()
     vkDeviceWaitIdle(m_Device);
     DestroySwapchain();
     CreateSwapchain();
+}
+
+void VulkanDevice::Present()
+{
+    VkSubmitInfo si{};
+    si.sType                 = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    si.signalSemaphoreCount  = 1;
+    si.pSignalSemaphores     = &m_RenderFinishedSamephores[m_CurrentImageIndex];
+    si.commandBufferCount    = 0;
+    si.pCommandBuffers       = nullptr;
+    vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrame]);
+
+    VkPresentInfoKHR pi{};
+    pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    pi.waitSemaphoreCount = 1;
+    pi.pWaitSemaphores    = &m_RenderFinishedSamephores[m_CurrentFrame];
+    pi.swapchainCount = 1;
+    pi.pSwapchains    = &m_Swapchain;
+    pi.pImageIndices  = &m_CurrentImageIndex;
+
+    vkQueuePresentKHR(m_PresentQueue, &pi);
+    m_CurrentFrame = (m_CurrentFrame + 1) % 2;
+    AcquireNextImage();
 }
 
 void VulkanDevice::CreateSurface(const WindowHandle& wh)
@@ -209,19 +236,22 @@ void VulkanDevice::DestroySwapchain()
 
 void VulkanDevice::CreateFramesInFlightSync()
 {
-    m_ImageAvailaleSemaphores.resize(m_SwapchainImages.size());
     m_RenderFinishedSamephores.resize(m_SwapchainImages.size());
+    m_PresentCompleteSemaphores.resize(m_SwapchainImages.size());
     m_Fences.resize(2);
 
     for (int i = 0; i < m_SwapchainImages.size(); i++)
     {
         VkSemaphoreCreateInfo sci{};
         sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        vkCreateSemaphore(m_Device, &sci, nullptr, &m_ImageAvailaleSemaphores[i]);
         vkCreateSemaphore(m_Device, &sci, nullptr, &m_RenderFinishedSamephores[i]);
     }
     for (int i = 0; i < 2; i++)
     {
+        VkSemaphoreCreateInfo sci{};
+        sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        vkCreateSemaphore(m_Device, &sci, nullptr, &m_PresentCompleteSemaphores[i]);
+
         VkFenceCreateInfo fci{};
         fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
@@ -231,14 +261,14 @@ void VulkanDevice::CreateFramesInFlightSync()
 
 void VulkanDevice::DestroyFramesInFlightSync()
 {
-    for (auto& sem : m_ImageAvailaleSemaphores)
+    for (auto& sem : m_RenderFinishedSamephores)
     {
         if (sem != nullptr)
         {
             vkDestroySemaphore(m_Device, sem, nullptr);
         }
     }
-    for (auto& sem : m_RenderFinishedSamephores)
+    for (auto& sem : m_PresentCompleteSemaphores)
     {
         if (sem != nullptr)
         {
@@ -252,6 +282,26 @@ void VulkanDevice::DestroyFramesInFlightSync()
             vkDestroyFence(m_Device, fence, nullptr);
         }
     }
+}
+
+void VulkanDevice::AcquireNextImage()
+{
+    vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
+    vkAcquireNextImageKHR(
+        m_Device, m_Swapchain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentFrame],
+        nullptr, &m_CurrentImageIndex
+    );
+
+    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    VkSubmitInfo si{};
+    si.sType               = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    si.pWaitDstStageMask   = &waitStage;
+    si.waitSemaphoreCount  = 1;
+    si.pWaitSemaphores     = &m_PresentCompleteSemaphores[m_CurrentFrame];
+    si.commandBufferCount  = 0;
+    si.pCommandBuffers     = nullptr;
+    vkQueueSubmit(m_GraphicsQueue, 1, &si, nullptr);
 }
 
 }

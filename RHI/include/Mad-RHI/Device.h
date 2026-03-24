@@ -11,6 +11,8 @@ public:
 
     virtual void Resize() = 0;
 
+    virtual void Present() = 0;
+
 };
 
 }
