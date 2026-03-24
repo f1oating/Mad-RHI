@@ -39,10 +39,10 @@ protected:
 public:
     virtual ~Factory() = default;
 
-    static void Init(FactoryInitInfo& info);
+    static void Init(const FactoryInitInfo& info);
     static void Shutdown();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh) = 0;
+    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh) = 0;
 
     static Factory* GetInstance();
 

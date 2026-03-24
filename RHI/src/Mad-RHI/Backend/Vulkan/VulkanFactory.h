@@ -8,10 +8,10 @@ namespace mad::rhi {
 class VulkanFactory : public Factory
 {
 public:
-    VulkanFactory(FactoryInitInfo& info);
+    VulkanFactory(const FactoryInitInfo& info);
     ~VulkanFactory();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh) override;
+    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh) override;
 
 private:
     VkInstance m_Instance = nullptr;

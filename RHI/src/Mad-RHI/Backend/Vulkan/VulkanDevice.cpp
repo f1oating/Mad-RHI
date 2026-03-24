@@ -1,12 +1,12 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 
 #include <iostream>
-#include <vector>
 #include <set>
+#include <algorithm>
 
 namespace mad::rhi {
 
-VulkanDevice::VulkanDevice(VkInstance instance, WindowHandle& wh)
+VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
 {
     m_Instance = instance;
 
@@ -20,13 +20,14 @@ VulkanDevice::VulkanDevice(VkInstance instance, WindowHandle& wh)
 
 VulkanDevice::~VulkanDevice()
 {
+    DestroySwapchain();
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
 
     std::cout << "Device destroyed" << std::endl;
 }
 
-void VulkanDevice::CreateSurface(WindowHandle& wh)
+void VulkanDevice::CreateSurface(const WindowHandle& wh)
 {
     switch (wh.platform)
     {
@@ -108,7 +109,93 @@ void VulkanDevice::CreateLogicalDevice()
 
 void VulkanDevice::CreateSwapchain()
 {
+    VkSurfaceCapabilitiesKHR caps;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice, m_Surface, &caps);
 
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &formatCount, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &formatCount, formats.data());
+
+    VkSurfaceFormatKHR chosenFormat = formats[0];
+    for (auto& f : formats)
+    {
+        if (f.format == VK_FORMAT_B8G8R8A8_SRGB && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            chosenFormat = f;
+    }
+
+    uint32_t modeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &modeCount, nullptr);
+    std::vector<VkPresentModeKHR> modes(modeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &modeCount, modes.data());
+
+    VkPresentModeKHR chosenMode = VK_PRESENT_MODE_FIFO_KHR;
+    for (auto& m : modes)
+    {
+        if (m == VK_PRESENT_MODE_MAILBOX_KHR)
+            chosenMode = m;
+    }        
+
+    uint32_t imageCount = 3;
+
+    VkSwapchainCreateInfoKHR info{};
+    info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    info.surface          = m_Surface;
+    info.minImageCount    = imageCount;
+    info.imageFormat      = chosenFormat.format;
+    info.imageColorSpace  = chosenFormat.colorSpace;
+    info.imageExtent      = caps.currentExtent;
+    info.imageArrayLayers = 1;
+    info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    info.preTransform     = caps.currentTransform;
+    info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    info.presentMode      = chosenMode;
+    info.clipped          = VK_TRUE;
+    info.oldSwapchain     = m_Swapchain;
+
+    if (m_GraphicsFamily != m_PresentFamily) 
+    {
+        uint32_t families[] = { m_GraphicsFamily, m_PresentFamily };
+        info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+        info.queueFamilyIndexCount = 2;
+        info.pQueueFamilyIndices   = families;
+    } else 
+    {
+        info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+
+    vkCreateSwapchainKHR(m_Device, &info, nullptr, &m_Swapchain);
+
+    uint32_t imagesCount;
+    vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imagesCount, nullptr);
+    std::vector<VkImage> images(imagesCount);
+    vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imagesCount, images.data());
+
+    m_SwapchainImages.resize(imagesCount);
+    for (int i = 0; i < imagesCount; i++)
+    {
+        TextureDesc texDesc{};
+        texDesc.Name            = "Swapchain image";
+        texDesc.Dimension       = TextureDimension::Texture2D;
+        texDesc.Width           = caps.currentExtent.width;
+        texDesc.Height          = caps.currentExtent.height;
+        texDesc.ArraySize       = 1;
+        texDesc.Format          = FromVkFormat(chosenFormat.format);
+        texDesc.MipLevels       = 1;
+        texDesc.SampleCount     = 1;
+        texDesc.BindFlags       = RenderTarget;
+        texDesc.Usage           = ResourceUsage::Default;
+        m_SwapchainImages[i]    = MakeRef<VulkanTexture>(texDesc, images[i]);
+    }
+}
+
+void VulkanDevice::DestroySwapchain()
+{
+    if (m_Swapchain)
+    {
+        vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
+        m_SwapchainImages.clear();
+    }
 }
 
 }

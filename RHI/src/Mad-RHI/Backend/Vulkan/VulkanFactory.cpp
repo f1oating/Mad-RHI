@@ -5,7 +5,7 @@
 
 namespace mad::rhi {
 
-VulkanFactory::VulkanFactory(FactoryInitInfo& info)
+VulkanFactory::VulkanFactory(const FactoryInitInfo& info)
 {
     volkInitialize();
 
@@ -49,7 +49,7 @@ VulkanFactory::~VulkanFactory()
     std::cout << "Factory Destroyed" << std::endl;
 }
 
-void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh)
+void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh)
 {
     *ppDevice = new VulkanDevice(m_Instance, wh);
     *ppIcl = new VulkanImmidiateCommandList();

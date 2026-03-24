@@ -7,7 +7,7 @@ namespace mad::rhi {
 Factory* Factory::s_Factory = nullptr;
 bool Factory::s_IsInitialized = false;
 
-void Factory::Init(FactoryInitInfo& info)
+void Factory::Init(const FactoryInitInfo& info)
 {
     if (s_IsInitialized) return;
 
