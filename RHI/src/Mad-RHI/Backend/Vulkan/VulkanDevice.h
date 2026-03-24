@@ -32,12 +32,18 @@ private:
     uint32_t m_GraphicsFamily = -1;
     uint32_t m_PresentFamily = -1;
 
+    std::vector<VkSemaphore> m_RenderFinishedSamephores;
+    std::vector<VkSemaphore> m_ImageAvailaleSemaphores;
+    std::vector<VkFence> m_Fences;
+
 private:
     void CreateSurface(const WindowHandle& wh);
     void CreatePhysicalDevice();
     void CreateLogicalDevice();
     void CreateSwapchain();
     void DestroySwapchain();
+    void CreateFramesInFlightSync();
+    void DestroyFramesInFlightSync();
 
 };
 

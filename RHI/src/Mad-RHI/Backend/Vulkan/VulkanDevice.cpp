@@ -14,12 +14,14 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreatePhysicalDevice();
     CreateLogicalDevice();
     CreateSwapchain();
+    CreateFramesInFlightSync();
 
     std::cout << "Device created" << std::endl;
 }
 
 VulkanDevice::~VulkanDevice()
 {
+    DestroyFramesInFlightSync();
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
@@ -202,6 +204,53 @@ void VulkanDevice::DestroySwapchain()
     {
         vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
         m_SwapchainImages.clear();
+    }
+}
+
+void VulkanDevice::CreateFramesInFlightSync()
+{
+    m_ImageAvailaleSemaphores.resize(m_SwapchainImages.size());
+    m_RenderFinishedSamephores.resize(m_SwapchainImages.size());
+    m_Fences.resize(2);
+
+    for (int i = 0; i < m_SwapchainImages.size(); i++)
+    {
+        VkSemaphoreCreateInfo sci{};
+        sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        vkCreateSemaphore(m_Device, &sci, nullptr, &m_ImageAvailaleSemaphores[i]);
+        vkCreateSemaphore(m_Device, &sci, nullptr, &m_RenderFinishedSamephores[i]);
+    }
+    for (int i = 0; i < 2; i++)
+    {
+        VkFenceCreateInfo fci{};
+        fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        vkCreateFence(m_Device, &fci, nullptr, &m_Fences[i]);
+    }
+}
+
+void VulkanDevice::DestroyFramesInFlightSync()
+{
+    for (auto& sem : m_ImageAvailaleSemaphores)
+    {
+        if (sem != nullptr)
+        {
+            vkDestroySemaphore(m_Device, sem, nullptr);
+        }
+    }
+    for (auto& sem : m_RenderFinishedSamephores)
+    {
+        if (sem != nullptr)
+        {
+            vkDestroySemaphore(m_Device, sem, nullptr);
+        }
+    }
+    for (auto& fence : m_Fences)
+    {
+        if (fence != nullptr)
+        {
+            vkDestroyFence(m_Device, fence, nullptr);
+        }
     }
 }
 
