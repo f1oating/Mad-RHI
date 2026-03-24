@@ -16,6 +16,8 @@ protected:
 public:
     VulkanDevice(VkInstance instance, const WindowHandle& wh);
 
+    virtual void Resize() override;
+
 private:
     VkInstance m_Instance = nullptr;
     VkSurfaceKHR m_Surface = nullptr;

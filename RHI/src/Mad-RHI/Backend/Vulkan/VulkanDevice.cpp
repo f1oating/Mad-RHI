@@ -21,10 +21,17 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
 VulkanDevice::~VulkanDevice()
 {
     DestroySwapchain();
-    if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
+    if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 
     std::cout << "Device destroyed" << std::endl;
+}
+
+void VulkanDevice::Resize()
+{
+    vkDeviceWaitIdle(m_Device);
+    DestroySwapchain();
+    CreateSwapchain();
 }
 
 void VulkanDevice::CreateSurface(const WindowHandle& wh)
@@ -151,7 +158,7 @@ void VulkanDevice::CreateSwapchain()
     info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     info.presentMode      = chosenMode;
     info.clipped          = VK_TRUE;
-    info.oldSwapchain     = m_Swapchain;
+    info.oldSwapchain     = nullptr;
 
     if (m_GraphicsFamily != m_PresentFamily) 
     {

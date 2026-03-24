@@ -1,5 +1,6 @@
 #include "Common/Window.h"
 #include <X11/Xlib-xcb.h>
+#include "Common/Event.h"
 
 namespace mad::common {
 
@@ -26,6 +27,13 @@ void Window::Update()
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_EVENT_QUIT) m_IsRunning = false;
+        if (event.type == SDL_EVENT_WINDOW_RESIZED)
+        {
+            WindowResizeEvent wre{};
+            wre.Width = event.window.data1;
+            wre.Height = event.window.data2;
+            EventBus::Emit(wre);
+        }
     }
 }
 

@@ -4,6 +4,7 @@
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/CommandList.h"
 #include "Common/Window.h"
+#include "Common/Event.h"
 
 using namespace mad;
 
@@ -32,12 +33,17 @@ int main()
         wh.xcb.window = winInfo.Window;
         factory->CreateDevice(&device, &icl, wh);
 
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
+            device->Resize();
+        });
+
         while (window.IsRunning())
         {
             window.Update();
         }
     }
 
+    common::EventBus::Clear();
     rhi::Factory::Shutdown();
 
     return 0;

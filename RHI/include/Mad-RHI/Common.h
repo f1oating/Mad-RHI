@@ -98,7 +98,7 @@ public:
         if (m_Ptr) m_Ptr->Release();
     }
 
-    RefPtr(const RefPtr& other) : m_Ptr(other.ptr)
+    RefPtr(const RefPtr& other) : m_Ptr(other.m_Ptr)
     {
         if (m_Ptr) m_Ptr->AddRef();
     }

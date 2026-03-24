@@ -9,6 +9,8 @@ class Device : public Object
 public:
     virtual ~Device() = default;
 
+    virtual void Resize() = 0;
+
 };
 
 }
