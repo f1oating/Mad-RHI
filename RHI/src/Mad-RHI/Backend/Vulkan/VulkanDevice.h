@@ -21,6 +21,8 @@ private:
     VkDevice m_Device = nullptr;
     VkSwapchainKHR m_Swapchain = nullptr;
 
+    VkQueue m_GraphicsQueue = nullptr;
+    VkQueue m_PresentQueue = nullptr;
     uint32_t m_GraphicsFamily = -1;
     uint32_t m_PresentFamily = -1;
 

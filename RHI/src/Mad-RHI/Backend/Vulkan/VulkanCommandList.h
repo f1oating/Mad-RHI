@@ -4,13 +4,13 @@
 
 namespace mad::rhi {
 
-class VulkanGraphicsImmidiateCommandList : public ObjectBase<ImmidiateCommandList>
+class VulkanImmidiateCommandList : public ObjectBase<ImmidiateCommandList>
 {
 protected:
-    ~VulkanGraphicsImmidiateCommandList();
+    ~VulkanImmidiateCommandList();
 
 public:
-    VulkanGraphicsImmidiateCommandList();
+    VulkanImmidiateCommandList();
 
 };
 

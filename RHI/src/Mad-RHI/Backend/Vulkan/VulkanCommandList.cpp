@@ -3,14 +3,14 @@
 
 namespace mad::rhi {
 
-VulkanGraphicsImmidiateCommandList::VulkanGraphicsImmidiateCommandList()
+VulkanImmidiateCommandList::VulkanImmidiateCommandList()
 {
-    std::cout << "VulkanGraphicsImmidiateCommandList created" << std::endl;
+    std::cout << "VulkanImmidiateCommandList created" << std::endl;
 }
 
-VulkanGraphicsImmidiateCommandList::~VulkanGraphicsImmidiateCommandList()
+VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
 {
-    std::cout << "VulkanGraphicsImmidiateCommandList destroyed" << std::endl;
+    std::cout << "VulkanImmidiateCommandList destroyed" << std::endl;
 }
 
 }

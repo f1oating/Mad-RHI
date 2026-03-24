@@ -52,7 +52,7 @@ VulkanFactory::~VulkanFactory()
 void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, WindowHandle& wh)
 {
     *ppDevice = new VulkanDevice(m_Instance, wh);
-    *ppIcl = new VulkanGraphicsImmidiateCommandList();
+    *ppIcl = new VulkanImmidiateCommandList();
 }
 
 }

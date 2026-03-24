@@ -101,6 +101,9 @@ void VulkanDevice::CreateLogicalDevice()
     deviceInfo.ppEnabledExtensionNames = deviceExts;
 
     vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device);
+
+    vkGetDeviceQueue(m_Device, m_GraphicsFamily, 0, &m_GraphicsQueue);
+    vkGetDeviceQueue(m_Device, m_PresentFamily, 0, &m_PresentQueue);
 }
 
 void VulkanDevice::CreateSwapchain()
