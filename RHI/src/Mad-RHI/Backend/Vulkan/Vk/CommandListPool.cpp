@@ -2,5 +2,14 @@
 
 namespace mad::rhi::vk {
 
+void CommandListPool::Init()
+{
+
+}
+
+void CommandListPool::Shutdown()
+{
+
+}
     
 }

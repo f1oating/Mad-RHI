@@ -16,6 +16,7 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateSwapchain();
     CreateFramesInFlightSync();
     CreateQueueSync();
+    m_ReleaseManager.Init(m_Device);
 
     AcquireNextImage();
 
@@ -26,8 +27,7 @@ VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
 
-    m_GraphicsReleaseQueue.Flush();
-
+    m_ReleaseManager.Shutdown();
     DestroyQueueSync();
     DestroyFramesInFlightSync();
     DestroySwapchain();
@@ -340,8 +340,7 @@ void VulkanDevice::PollQueues()
 {
     vkGetSemaphoreCounterValue(m_Device, m_TimelineGraphicsQueueSemaphore,
         &m_CurrentTimelineGraphicsQueueSemaphoreValue);
-
-    m_GraphicsReleaseQueue.Poll(m_CurrentTimelineGraphicsQueueSemaphoreValue);
+    m_ReleaseManager.Purge(m_CurrentTimelineGraphicsQueueSemaphoreValue);
 }
 
 }

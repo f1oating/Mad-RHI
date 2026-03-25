@@ -5,7 +5,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include <volk/volk.h>
 #include <vector>
-#include "Mad-RHI/Backend/Vulkan/Vk/ReleaseQueue.h"
+#include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 
 namespace mad::rhi {
 
@@ -34,10 +34,11 @@ private:
     VkQueue m_PresentQueue = nullptr;
     uint32_t m_GraphicsFamily = -1;
     uint32_t m_PresentFamily = -1;
-    vk::ReleaseQueue m_GraphicsReleaseQueue;
     
     VkSemaphore m_TimelineGraphicsQueueSemaphore = nullptr;
     size_t m_CurrentTimelineGraphicsQueueSemaphoreValue = 0;
+
+    vk::ReleaseManager m_ReleaseManager;
 
     std::vector<VkSemaphore> m_RenderFinishedSamephores;
     std::vector<VkSemaphore> m_PresentCompleteSemaphores;
