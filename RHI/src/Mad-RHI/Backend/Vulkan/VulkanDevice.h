@@ -36,7 +36,7 @@ private:
     uint32_t m_PresentFamily = -1;
     
     VkSemaphore m_TimelineGraphicsQueueSemaphore = nullptr;
-    size_t m_CurrentTimelineGraphicsQueueSemaphoreValue = 0;
+    uint64_t m_CurrentTimelineGraphicsQueueSemaphoreValue = 0;
 
     vk::ReleaseManager m_ReleaseManager;
 

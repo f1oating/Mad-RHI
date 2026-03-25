@@ -2,7 +2,6 @@
 
 #include <Mad-RHI/Common.h>
 #include <cstdint>
-#include <cstddef>
 
 namespace mad::rhi {
 
@@ -101,7 +100,7 @@ enum class BufferMode
 
 struct BufferDesc 
 {
-    size_t              Size              = 0;
+    uint64_t            Size              = 0;
     ResourceBindFlags   BindFlags         = BindNone;
     ResourceUsage       Usage             = ResourceUsage::Default;
     BufferMode          Mode              = BufferMode::Undefined;
