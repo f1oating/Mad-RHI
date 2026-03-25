@@ -15,6 +15,7 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateLogicalDevice();
     CreateSwapchain();
     CreateFramesInFlightSync();
+    CreateQueueSync();
 
     AcquireNextImage();
 
@@ -25,6 +26,9 @@ VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
 
+    m_GraphicsReleaseQueue.Flush();
+
+    DestroyQueueSync();
     DestroyFramesInFlightSync();
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
@@ -60,6 +64,7 @@ void VulkanDevice::Present()
 
     vkQueuePresentKHR(m_PresentQueue, &pi);
     m_CurrentFrame = (m_CurrentFrame + 1) % 2;
+    PollQueues();
     AcquireNextImage();
 }
 
@@ -289,6 +294,28 @@ void VulkanDevice::DestroyFramesInFlightSync()
     }
 }
 
+void VulkanDevice::CreateQueueSync()
+{
+    VkSemaphoreTypeCreateInfo stci{};
+    stci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+    stci.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+    stci. initialValue = m_CurrentTimelineGraphicsQueueSemaphoreValue;
+
+    VkSemaphoreCreateInfo sci{};
+    sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    sci.pNext = &stci;
+
+    vkCreateSemaphore(m_Device, &sci, nullptr, &m_TimelineGraphicsQueueSemaphore);
+}
+
+void VulkanDevice::DestroyQueueSync()
+{
+    if (m_TimelineGraphicsQueueSemaphore != nullptr)
+    {
+        vkDestroySemaphore(m_Device, m_TimelineGraphicsQueueSemaphore, nullptr);
+    }
+}
+
 void VulkanDevice::AcquireNextImage()
 {
     vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
@@ -307,6 +334,14 @@ void VulkanDevice::AcquireNextImage()
     si.commandBufferCount  = 0;
     si.pCommandBuffers     = nullptr;
     vkQueueSubmit(m_GraphicsQueue, 1, &si, nullptr);
+}
+
+void VulkanDevice::PollQueues()
+{
+    vkGetSemaphoreCounterValue(m_Device, m_TimelineGraphicsQueueSemaphore,
+        &m_CurrentTimelineGraphicsQueueSemaphoreValue);
+
+    m_GraphicsReleaseQueue.Poll(m_CurrentTimelineGraphicsQueueSemaphoreValue);
 }
 
 }
