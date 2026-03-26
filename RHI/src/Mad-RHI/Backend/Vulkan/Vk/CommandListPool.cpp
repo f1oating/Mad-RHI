@@ -35,6 +35,8 @@ VkCommandBuffer CommandListPool::AcquireCommandBuffer()
     cbai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     cbai.commandPool = m_CommandPool;
     cbai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cbai.commandBufferCount = 1;
+
     VkCommandBuffer cb = nullptr;
     vkAllocateCommandBuffers(m_Device, &cbai, &cb);
     

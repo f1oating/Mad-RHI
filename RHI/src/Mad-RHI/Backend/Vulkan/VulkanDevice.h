@@ -64,7 +64,6 @@ private:
     void DestroyFramesInFlightSync();
 
     void AcquireNextImage();
-    void PollQueues();
 
 };
 

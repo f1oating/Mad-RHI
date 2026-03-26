@@ -48,6 +48,8 @@ void VulkanDevice::Resize()
 
 void VulkanDevice::Present()
 {
+    m_GraphicsImmidiateCommandList->Flush();
+
     VkSubmitInfo si{};
     si.sType                 = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     si.signalSemaphoreCount  = 1;
@@ -66,7 +68,6 @@ void VulkanDevice::Present()
 
     vkQueuePresentKHR(m_PresentQueue, &pi);
     m_CurrentFrame = (m_CurrentFrame + 1) % 2;
-    PollQueues();
     AcquireNextImage();
 }
 
@@ -310,20 +311,7 @@ void VulkanDevice::AcquireNextImage()
         nullptr, &m_CurrentImageIndex
     );
 
-    VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkSubmitInfo si{};
-    si.sType               = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.pWaitDstStageMask   = &waitStage;
-    si.waitSemaphoreCount  = 1;
-    si.pWaitSemaphores     = &m_PresentCompleteSemaphores[m_CurrentFrame];
-    si.commandBufferCount  = 0;
-    si.pCommandBuffers     = nullptr;
-    vkQueueSubmit(m_GraphicsQueue, 1, &si, nullptr);
-}
-
-void VulkanDevice::PollQueues()
-{
-    m_ReleaseManager.Purge(m_GraphicsImmidiateCommandList->GetQueueTimelineSemaphoreGPUValue());
+    m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrame]);
 }
 
 }
