@@ -1,7 +1,6 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
 #include <iostream>
 #include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
-#include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
 
 namespace mad::rhi {
 
@@ -49,10 +48,9 @@ VulkanFactory::~VulkanFactory()
     std::cout << "Factory Destroyed" << std::endl;
 }
 
-void VulkanFactory::CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh)
+void VulkanFactory::CreateDevice(Device** ppDevice, const WindowHandle& wh)
 {
     *ppDevice = new VulkanDevice(m_Instance, wh);
-    *ppIcl = new VulkanImmidiateCommandList();
 }
 
 }

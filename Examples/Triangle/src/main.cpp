@@ -31,7 +31,8 @@ int main()
         wh.platform = rhi::WindowHandle::Platform::XCB;
         wh.xcb.connection = winInfo.Connection;
         wh.xcb.window = winInfo.Window;
-        factory->CreateDevice(&device, &icl, wh);
+        factory->CreateDevice(&device, wh);
+        icl = device->GetImmidiateCommandList();
 
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();

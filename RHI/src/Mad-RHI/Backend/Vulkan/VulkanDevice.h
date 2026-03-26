@@ -6,6 +6,7 @@
 #include <volk/volk.h>
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
 
 namespace mad::rhi {
 
@@ -20,6 +21,12 @@ public:
     virtual void Resize() override;
 
     virtual void Present() override;
+
+    virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
+
+    VkQueue GetGrpaphicsQueue() { return m_GraphicsQueue; }
+    uint32_t GetGrpaphicsQueueFamilyIndex() { return m_GraphicsFamily; }
+    vk::ReleaseManager* GetReleaseManager() { return &m_ReleaseManager; }
 
 private:
     VkInstance m_Instance = nullptr;
@@ -46,6 +53,8 @@ private:
 
     uint32_t m_CurrentFrame = 0;
     uint32_t m_CurrentImageIndex = 0;
+
+    RefPtr<VulkanImmidiateCommandList> m_GraphicsImmidiateCommandList = nullptr;
 
 private:
     void CreateSurface(const WindowHandle& wh);

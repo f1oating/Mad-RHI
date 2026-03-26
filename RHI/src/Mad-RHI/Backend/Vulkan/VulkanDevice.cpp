@@ -18,6 +18,8 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateQueueSync();
     m_ReleaseManager.Init(m_Device);
 
+    m_GraphicsImmidiateCommandList = MakeRef<VulkanImmidiateCommandList>(this);
+
     AcquireNextImage();
 
     std::cout << "Device created" << std::endl;
@@ -26,6 +28,8 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
 VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
+
+    m_GraphicsImmidiateCommandList = nullptr;
 
     m_ReleaseManager.Shutdown();
     DestroyQueueSync();
@@ -66,6 +70,11 @@ void VulkanDevice::Present()
     m_CurrentFrame = (m_CurrentFrame + 1) % 2;
     PollQueues();
     AcquireNextImage();
+}
+
+RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
+{
+    return m_GraphicsImmidiateCommandList;
 }
 
 void VulkanDevice::CreateSurface(const WindowHandle& wh)

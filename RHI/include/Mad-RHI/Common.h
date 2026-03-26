@@ -240,7 +240,7 @@ private:
 };
 
 template<typename T, typename... Args>
-RefPtr<T> MakeRef(Args&... args)
+RefPtr<T> MakeRef(Args&&... args)
 {
     T* obj = new T(std::forward<Args>(args)...);
     RefPtr<T> ptr;

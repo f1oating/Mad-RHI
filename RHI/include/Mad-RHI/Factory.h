@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Mad-RHI/Device.h"
-#include "Mad-RHI/CommandList.h"
 
 namespace mad::rhi {
 
@@ -42,7 +41,7 @@ public:
     static void Init(const FactoryInitInfo& info);
     static void Shutdown();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh) = 0;
+    virtual void CreateDevice(Device** ppDevice, const WindowHandle& wh) = 0;
 
     static Factory* GetInstance();
 

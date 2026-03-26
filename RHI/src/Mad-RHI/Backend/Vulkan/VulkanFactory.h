@@ -11,7 +11,7 @@ public:
     VulkanFactory(const FactoryInitInfo& info);
     ~VulkanFactory();
 
-    virtual void CreateDevice(Device** ppDevice, ImmidiateCommandList** ppIcl, const WindowHandle& wh) override;
+    virtual void CreateDevice(Device** ppDevice, const WindowHandle& wh) override;
 
 private:
     VkInstance m_Instance = nullptr;

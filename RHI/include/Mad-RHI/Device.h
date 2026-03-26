@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Common.h"
+#include "Mad-RHI/CommandList.h"
 
 namespace mad::rhi {
     
@@ -12,6 +13,8 @@ public:
     virtual void Resize() = 0;
 
     virtual void Present() = 0;
+
+    virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;
 
 };
 
