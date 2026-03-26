@@ -24,8 +24,9 @@ public:
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
 
-    VkQueue GetGrpaphicsQueue() { return m_GraphicsQueue; }
-    uint32_t GetGrpaphicsQueueFamilyIndex() { return m_GraphicsFamily; }
+    VkDevice GetDevice() { return m_Device; }
+    VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
+    uint32_t GetGraphicsQueueFamilyIndex() { return m_GraphicsFamily; }
     vk::ReleaseManager* GetReleaseManager() { return &m_ReleaseManager; }
 
 private:
@@ -41,9 +42,6 @@ private:
     VkQueue m_PresentQueue = nullptr;
     uint32_t m_GraphicsFamily = -1;
     uint32_t m_PresentFamily = -1;
-    
-    VkSemaphore m_TimelineGraphicsQueueSemaphore = nullptr;
-    uint64_t m_CurrentTimelineGraphicsQueueSemaphoreValue = 0;
 
     vk::ReleaseManager m_ReleaseManager;
 
@@ -64,8 +62,6 @@ private:
     void DestroySwapchain();
     void CreateFramesInFlightSync();
     void DestroyFramesInFlightSync();
-    void CreateQueueSync();
-    void DestroyQueueSync();
 
     void AcquireNextImage();
     void PollQueues();

@@ -16,6 +16,8 @@ class ImmidiateCommandList : public Object
 public:
     virtual ~ImmidiateCommandList() = default;
 
+    virtual void Flush() = 0;
+
 };
 
 }
