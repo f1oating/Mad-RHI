@@ -57,7 +57,7 @@ void VulkanDevice::Present()
     VkPresentInfoKHR pi{};
     pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     pi.waitSemaphoreCount = 1;
-    pi.pWaitSemaphores    = &m_RenderFinishedSamephores[m_CurrentFrame];
+    pi.pWaitSemaphores    = &m_RenderFinishedSamephores[m_CurrentImageIndex];
     pi.swapchainCount = 1;
     pi.pSwapchains    = &m_Swapchain;
     pi.pImageIndices  = &m_CurrentImageIndex;

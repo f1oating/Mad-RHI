@@ -40,6 +40,7 @@ int main()
         while (window.IsRunning())
         {
             window.Update();
+            device->Present();
         }
     }
 
