@@ -39,12 +39,26 @@ VulkanDevice::~VulkanDevice()
     std::cout << "Device destroyed" << std::endl;
 }
 
+void VulkanDevice::ReleaseStaleResources()
+{
+    uint64_t graphicsQueueValue = m_GraphicsImmidiateCommandList->GetTimelineSemaphoreValue();
+
+    m_ReleaseManager.Purge(graphicsQueueValue);
+}
+
 void VulkanDevice::Resize()
 {
     vkDeviceWaitIdle(m_Device);
+
+    DestroyFramesInFlightSync();
     DestroySwapchain();
+
     CreateSwapchain();
-    FlushAcquireSync();
+    CreateFramesInFlightSync();
+
+    m_GraphicsImmidiateCommandList->FlushWaitSemaphores();
+    m_GraphicsImmidiateCommandList->FlushSignalSemaphores();
+
     AcquireNextImage();
 }
 
@@ -193,7 +207,7 @@ void VulkanDevice::CreateSwapchain()
             chosenMode = m;
     }        
 
-    uint32_t imageCount = 3;
+    uint32_t imageCount = caps.minImageCount + 1;
 
     VkSwapchainCreateInfoKHR info{};
     info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -258,7 +272,7 @@ void VulkanDevice::DestroySwapchain()
 void VulkanDevice::CreateFramesInFlightSync()
 {
     m_RenderFinishedSamephores.resize(m_SwapchainImages.size());
-    m_PresentCompleteSemaphores.resize(m_SwapchainImages.size());
+    m_PresentCompleteSemaphores.resize(2);
     m_Fences.resize(2);
 
     for (int i = 0; i < m_SwapchainImages.size(); i++)
@@ -315,17 +329,6 @@ void VulkanDevice::AcquireNextImage()
     );
 
     m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrame]);
-}
-
-void VulkanDevice::FlushAcquireSync()
-{
-    VkPipelineStageFlags stageFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-    VkSubmitInfo si{};
-    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.pWaitDstStageMask = &stageFlags;
-    si.waitSemaphoreCount = 1;
-    si.pWaitSemaphores = &m_PresentCompleteSemaphores[m_CurrentFrame];
-    vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrame]);
 }
 
 }

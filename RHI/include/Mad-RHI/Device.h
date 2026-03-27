@@ -10,6 +10,7 @@ class Device : public Object
 public:
     virtual ~Device() = default;
 
+    virtual void ReleaseStaleResources() = 0;
     virtual void Resize() = 0;
 
     virtual void Present() = 0;

@@ -22,7 +22,11 @@ public:
 
     virtual void Flush() override;
 
+    uint64_t GetTimelineSemaphoreValue();
+
+    void FlushWaitSemaphores();
     void AddWaitSemaphore(VkSemaphore sem, uint64_t value = 0);
+    void FlushSignalSemaphores();
     void AddSignalSemaphore(VkSemaphore sem, uint64_t value = 0);
 
 private:

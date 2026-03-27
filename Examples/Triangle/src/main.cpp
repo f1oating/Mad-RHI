@@ -41,6 +41,7 @@ int main()
         while (window.IsRunning())
         {
             window.Update();
+            device->ReleaseStaleResources();
             device->Present();
         }
     }

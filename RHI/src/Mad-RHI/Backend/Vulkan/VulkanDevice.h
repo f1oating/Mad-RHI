@@ -18,6 +18,7 @@ protected:
 public:
     VulkanDevice(VkInstance instance, const WindowHandle& wh);
 
+    virtual void ReleaseStaleResources() override;
     virtual void Resize() override;
 
     virtual void Present() override;
@@ -64,7 +65,6 @@ private:
     void DestroyFramesInFlightSync();
 
     void AcquireNextImage();
-    void FlushAcquireSync();
 
 };
 

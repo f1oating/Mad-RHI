@@ -122,12 +122,21 @@ void VulkanImmidiateCommandList::Flush()
     m_CommandListPool.ReleaseCommandBuffer(m_CurrentCommandBuffer, m_TimelineSemaphoreValue);
     AcquireCommandBuffer();
 
+    m_CommandListPool.Purge(GetTimelineSemaphoreValue());
+}
+
+uint64_t VulkanImmidiateCommandList::GetTimelineSemaphoreValue()
+{
     uint64_t value;
     vkGetSemaphoreCounterValue(m_Device, m_TimelineSemaphore,
         &value);
+    return value;
+}
 
-    m_CommandListPool.Purge(value);
-    m_Context->GetReleaseManager()->Purge(value);
+void VulkanImmidiateCommandList::FlushWaitSemaphores()
+{
+    m_WaitSemaphores.clear();
+    m_WaitSemaphoresValues.clear();
 }
 
 void VulkanImmidiateCommandList::AddWaitSemaphore(VkSemaphore sem, uint64_t value)
@@ -137,6 +146,12 @@ void VulkanImmidiateCommandList::AddWaitSemaphore(VkSemaphore sem, uint64_t valu
 
     m_WaitSemaphores.push_back(sem);
     m_WaitSemaphoresValues.push_back(value);
+}
+
+void VulkanImmidiateCommandList::FlushSignalSemaphores()
+{
+    m_SignalSemaphores.clear();
+    m_SignalSemaphoresValues.clear();
 }
 
 void VulkanImmidiateCommandList::AddSignalSemaphore(VkSemaphore sem, uint64_t value)
