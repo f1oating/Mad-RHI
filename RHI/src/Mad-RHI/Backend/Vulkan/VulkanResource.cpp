@@ -13,6 +13,11 @@ VulkanTexture::~VulkanTexture()
     
 }
 
+ResourceState VulkanTexture::GetCurrentResourceState()
+{
+    return m_CurrentState;
+}
+
 VulkanBuffer::VulkanBuffer()
 {
 
@@ -21,6 +26,11 @@ VulkanBuffer::VulkanBuffer()
 VulkanBuffer::~VulkanBuffer()
 {
 
+}
+
+ResourceState VulkanBuffer::GetCurrentResourceState()
+{
+    return m_CurrentState;
 }
 
 }

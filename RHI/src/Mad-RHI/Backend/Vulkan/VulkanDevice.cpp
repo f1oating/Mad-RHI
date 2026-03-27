@@ -44,27 +44,30 @@ void VulkanDevice::Resize()
     vkDeviceWaitIdle(m_Device);
     DestroySwapchain();
     CreateSwapchain();
+    FlushAcquireSync();
+    AcquireNextImage();
 }
 
 void VulkanDevice::Present()
 {
+    TextureBarrier tb{};
+    tb.NewState = ResourceState::Present;
+    tb.Texture = m_SwapchainImages[m_CurrentImageIndex];
+    m_GraphicsImmidiateCommandList->ResourceBarrier({ tb }, {});
+    m_GraphicsImmidiateCommandList->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
     m_GraphicsImmidiateCommandList->Flush();
 
     VkSubmitInfo si{};
-    si.sType                 = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.signalSemaphoreCount  = 1;
-    si.pSignalSemaphores     = &m_RenderFinishedSamephores[m_CurrentImageIndex];
-    si.commandBufferCount    = 0;
-    si.pCommandBuffers       = nullptr;
+    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrame]);
 
     VkPresentInfoKHR pi{};
     pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     pi.waitSemaphoreCount = 1;
-    pi.pWaitSemaphores    = &m_RenderFinishedSamephores[m_CurrentImageIndex];
+    pi.pWaitSemaphores = &m_RenderFinishedSamephores[m_CurrentImageIndex];
     pi.swapchainCount = 1;
-    pi.pSwapchains    = &m_Swapchain;
-    pi.pImageIndices  = &m_CurrentImageIndex;
+    pi.pSwapchains = &m_Swapchain;
+    pi.pImageIndices = &m_CurrentImageIndex;
 
     vkQueuePresentKHR(m_PresentQueue, &pi);
     m_CurrentFrame = (m_CurrentFrame + 1) % 2;
@@ -312,6 +315,17 @@ void VulkanDevice::AcquireNextImage()
     );
 
     m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrame]);
+}
+
+void VulkanDevice::FlushAcquireSync()
+{
+    VkPipelineStageFlags stageFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    VkSubmitInfo si{};
+    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    si.pWaitDstStageMask = &stageFlags;
+    si.waitSemaphoreCount = 1;
+    si.pWaitSemaphores = &m_PresentCompleteSemaphores[m_CurrentFrame];
+    vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrame]);
 }
 
 }

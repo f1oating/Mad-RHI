@@ -17,6 +17,9 @@ protected:
 public:
     VulkanImmidiateCommandList(VulkanDevice* context);
 
+    virtual void ResourceBarrier(
+        std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) override;
+
     virtual void Flush() override;
 
     void AddWaitSemaphore(VkSemaphore sem, uint64_t value = 0);

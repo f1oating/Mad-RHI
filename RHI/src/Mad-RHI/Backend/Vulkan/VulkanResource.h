@@ -201,6 +201,60 @@ inline TextureFormat FromVkFormat(VkFormat format)
     }
 }
 
+inline VkImageLayout ToVkImageLayout(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState::Undefined:        return VK_IMAGE_LAYOUT_UNDEFINED;
+    case ResourceState::RenderTarget:     return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case ResourceState::ShaderResource:   return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case ResourceState::UnorderedAccess:  return VK_IMAGE_LAYOUT_GENERAL;
+    case ResourceState::DepthWrite:       return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    case ResourceState::DepthRead:        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    case ResourceState::CopyDst:          return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    case ResourceState::CopySrc:          return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    case ResourceState::Present:          return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    default:                              return VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+}
+
+inline ResourceState FromVkImageLayout(VkImageLayout layout)
+{
+    switch (layout)
+    {
+    case VK_IMAGE_LAYOUT_UNDEFINED:                         return ResourceState::Undefined;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:          return ResourceState::RenderTarget;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:          return ResourceState::ShaderResource;
+    case VK_IMAGE_LAYOUT_GENERAL:                           return ResourceState::UnorderedAccess;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:  return ResourceState::DepthWrite;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:   return ResourceState::DepthRead;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:              return ResourceState::CopyDst;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:              return ResourceState::CopySrc;
+    case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:                   return ResourceState::Present;
+
+    default:                                                return ResourceState::Undefined;
+    }
+}
+
+inline VkAccessFlags ToVkAccessMask(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState::Undefined:        return 0;
+    case ResourceState::RenderTarget:     return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    case ResourceState::ShaderResource:   return VK_ACCESS_SHADER_READ_BIT;
+    case ResourceState::UnorderedAccess:  return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    case ResourceState::DepthWrite:       return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    case ResourceState::DepthRead:        return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    case ResourceState::CopyDst:          return VK_ACCESS_TRANSFER_WRITE_BIT;
+    case ResourceState::CopySrc:          return VK_ACCESS_TRANSFER_READ_BIT;
+    case ResourceState::Present:          return 0;
+
+    default:                              return 0;
+    }
+}
+
 class VulkanTexture : public ObjectBase<Texture>
 {
 protected:
@@ -209,8 +263,15 @@ protected:
 public:
     VulkanTexture(const TextureDesc& desc, VkImage image);
 
+    virtual ResourceState GetCurrentResourceState() override;
+
+    VkImage GetImage() { return m_Image; }
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
 private:
     TextureDesc m_Desc;
+    ResourceState m_CurrentState = ResourceState::Undefined;
+
     VkImage m_Image = nullptr;
 
 };
@@ -222,6 +283,16 @@ protected:
 
 public:
     VulkanBuffer();
+
+    virtual ResourceState GetCurrentResourceState() override;
+
+    VkBuffer GetBuffer() { return m_Buffer; }
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
+private:
+    ResourceState m_CurrentState = ResourceState::Undefined;
+
+    VkBuffer m_Buffer = nullptr;
 
 };
 

@@ -107,10 +107,25 @@ struct BufferDesc
     uint32_t            ElementByteStride = 0;
 };
 
+enum class ResourceState
+{
+    Undefined,
+    RenderTarget,
+    ShaderResource,
+    UnorderedAccess,
+    DepthWrite,
+    DepthRead,
+    CopyDst,
+    CopySrc,
+    Present,
+};
+
 class Texture : public Object
 {
 public:
     virtual ~Texture() = default;
+
+    virtual ResourceState GetCurrentResourceState() = 0;
 
 };
 
@@ -119,6 +134,24 @@ class Buffer : public Object
 public:
     virtual ~Buffer() = default;
 
+    virtual ResourceState GetCurrentResourceState() = 0;
+
+};
+
+struct TextureBarrier
+{
+    RefPtr<Texture> Texture;
+    ResourceState   NewState;
+    uint32_t        BaseMip    = 0;
+    uint32_t        MipCount   = 0;
+    uint32_t        BaseSlice  = 0;
+    uint32_t        SliceCount = 0;
+};
+
+struct BufferBarrier
+{
+    RefPtr<Buffer>  Buffer;
+    ResourceState   NewState;
 };
 
 }

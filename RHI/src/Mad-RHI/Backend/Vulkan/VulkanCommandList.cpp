@@ -1,6 +1,8 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
 #include <iostream>
 #include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
+#include <algorithm>
 
 namespace mad::rhi {
 
@@ -26,6 +28,62 @@ VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
     DestroyQueueSync();
 
     std::cout << "VulkanImmidiateCommandList destroyed" << std::endl;
+}
+
+void VulkanImmidiateCommandList::ResourceBarrier(
+    std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers)
+{
+    std::vector<VkImageMemoryBarrier> imageMemoryBarriers;
+    std::vector<VkBufferMemoryBarrier> bufferMemoryBarriers;
+
+    for (TextureBarrier& tb : textureBarriers)
+    {
+        VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(tb.Texture.Get());
+        VkImageMemoryBarrier imgBarrier{};
+        imgBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        imgBarrier.srcAccessMask       = ToVkAccessMask(vulkanTexture->GetCurrentResourceState());
+        imgBarrier.dstAccessMask       = ToVkAccessMask(tb.NewState);
+        imgBarrier.oldLayout           = ToVkImageLayout(vulkanTexture->GetCurrentResourceState());
+        imgBarrier.newLayout           = ToVkImageLayout(tb.NewState);
+        imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        imgBarrier.image               = vulkanTexture->GetImage();
+        imgBarrier.subresourceRange    = {
+            .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel   = tb.BaseMip,
+            .levelCount     = tb.MipCount ? tb.MipCount : VK_REMAINING_MIP_LEVELS,
+            .baseArrayLayer = tb.BaseSlice,
+            .layerCount     = tb.SliceCount ? tb.SliceCount : VK_REMAINING_ARRAY_LAYERS,
+        };
+        imageMemoryBarriers.emplace_back(imgBarrier);
+        vulkanTexture->SetResourceState(tb.NewState);
+    }
+
+    for (BufferBarrier& bb : bufferBarriers)
+    {
+        VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(bb.Buffer.Get());
+        VkBufferMemoryBarrier bufBarrier{};
+        bufBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        bufBarrier.srcAccessMask       = ToVkAccessMask(vulkanBuffer->GetCurrentResourceState());
+        bufBarrier.dstAccessMask       = ToVkAccessMask(bb.NewState);
+        bufBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        bufBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        bufBarrier.buffer              = vulkanBuffer->GetBuffer();
+        bufBarrier.offset              = 0;
+        bufBarrier.size                = VK_WHOLE_SIZE;
+        vulkanBuffer->SetResourceState(bb.NewState);
+    }
+
+    vkCmdPipelineBarrier(
+        m_CurrentCommandBuffer,
+        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        0,
+        0, nullptr,
+        bufferMemoryBarriers.size(),
+        bufferMemoryBarriers.data(),
+        imageMemoryBarriers.size(),
+        imageMemoryBarriers.data()
+    );
 }
 
 void VulkanImmidiateCommandList::Flush()
@@ -74,12 +132,18 @@ void VulkanImmidiateCommandList::Flush()
 
 void VulkanImmidiateCommandList::AddWaitSemaphore(VkSemaphore sem, uint64_t value)
 {
+    if (std::find(m_WaitSemaphores.begin(), m_WaitSemaphores.end(), sem) != m_WaitSemaphores.end())
+        return;
+
     m_WaitSemaphores.push_back(sem);
     m_WaitSemaphoresValues.push_back(value);
 }
 
 void VulkanImmidiateCommandList::AddSignalSemaphore(VkSemaphore sem, uint64_t value)
 {
+    if (std::find(m_SignalSemaphores.begin(), m_SignalSemaphores.end(), sem) != m_SignalSemaphores.end())
+        return;
+
     m_SignalSemaphores.push_back(sem);
     m_SignalSemaphoresValues.push_back(value);
 }

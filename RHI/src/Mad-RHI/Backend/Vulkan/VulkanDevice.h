@@ -64,6 +64,7 @@ private:
     void DestroyFramesInFlightSync();
 
     void AcquireNextImage();
+    void FlushAcquireSync();
 
 };
 
