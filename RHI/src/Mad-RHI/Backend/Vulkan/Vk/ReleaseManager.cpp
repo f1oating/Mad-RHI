@@ -12,33 +12,60 @@ void ReleaseManager::Shutdown()
     Flush();
 }
 
-void ReleaseManager::Enqueue(DeferredDeleter deleter, uint64_t fenceValue)
+void ReleaseManager::SafeReleaseResource(ReleaseRefWrapper* res, uint64_t cmdNum)
 {
-    RefWrapper* ref = new RefWrapper();
-    ref->resource = { deleter, fenceValue };
-    m_GraphicsReleaseQueue.push_back(ref);
+    m_StaleQueue.push_back({res, cmdNum});
+}
+
+void ReleaseManager::DiscardStaleResources(uint64_t cmdNum, uint64_t fenceValue)
+{
+    while (!m_StaleQueue.empty() && 
+        m_StaleQueue.front().cmdNum <= cmdNum) 
+    {
+        StaleEntry entry = m_StaleQueue.front();
+        m_ReleaseQueue.push_back({entry.res, fenceValue});
+        m_StaleQueue.pop_front();
+    }
 }
 
 void ReleaseManager::Purge(uint64_t fenceValue)
 {
-    while (!m_GraphicsReleaseQueue.empty() && 
-        m_GraphicsReleaseQueue.front()->resource.FenceValue <= fenceValue) 
+    while (!m_ReleaseQueue.empty() && 
+        m_ReleaseQueue.front().fenceValue <= fenceValue) 
     {
-        RefWrapper* ref = m_GraphicsReleaseQueue.front();
-        ref->resource.Deleter.Destroy(m_Device);
-        delete ref;
-        m_GraphicsReleaseQueue.pop_front();
+        ReleaseEntry entry = m_ReleaseQueue.front();
+        entry.res->refs--;
+        if (entry.res->refs <= 0)
+        {
+            entry.res->Deleter.Destroy(m_Device);
+            delete entry.res;
+        }
+        m_ReleaseQueue.pop_front();
     }
 }
 
 void ReleaseManager::Flush()
 {
-    for (auto ref : m_GraphicsReleaseQueue)
+    for (auto entry : m_StaleQueue)
     {
-        ref->resource.Deleter.Destroy(m_Device);
-        delete ref;
+        entry.res->refs--;
+        if (entry.res->refs <= 0)
+        {
+            entry.res->Deleter.Destroy(m_Device);
+            delete entry.res;
+        }
     }
-    m_GraphicsReleaseQueue.clear();
+    for (auto entry : m_ReleaseQueue)
+    {
+        entry.res->refs--;
+        if (entry.res->refs <= 0)
+        {
+            entry.res->Deleter.Destroy(m_Device);
+            delete entry.res;
+        }
+    }
+    m_StaleQueue.clear();
+    m_ReleaseQueue.clear();
 }
     
 }

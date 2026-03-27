@@ -15,7 +15,6 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateLogicalDevice();
     CreateSwapchain();
     CreateFramesInFlightSync();
-    m_ReleaseManager.Init(m_Device);
 
     m_GraphicsImmidiateCommandList = MakeRef<VulkanImmidiateCommandList>(this);
 
@@ -30,7 +29,6 @@ VulkanDevice::~VulkanDevice()
 
     m_GraphicsImmidiateCommandList = nullptr;
 
-    m_ReleaseManager.Shutdown();
     DestroyFramesInFlightSync();
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
@@ -41,9 +39,7 @@ VulkanDevice::~VulkanDevice()
 
 void VulkanDevice::ReleaseStaleResources()
 {
-    uint64_t graphicsQueueValue = m_GraphicsImmidiateCommandList->GetTimelineSemaphoreValue();
-
-    m_ReleaseManager.Purge(graphicsQueueValue);
+    m_GraphicsImmidiateCommandList->PurgeReleaseResources();
 }
 
 void VulkanDevice::Resize()

@@ -16,6 +16,7 @@ VulkanImmidiateCommandList::VulkanImmidiateCommandList(VulkanDevice* context)
 
     CreateQueueSync();
     m_CommandListPool.Init(m_Device, m_QueueFamilyIndex);
+    m_ReleaseManager.Init(m_Device);
 
     AcquireCommandBuffer();
 
@@ -24,6 +25,7 @@ VulkanImmidiateCommandList::VulkanImmidiateCommandList(VulkanDevice* context)
 
 VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
 {
+    m_ReleaseManager.Shutdown();
     m_CommandListPool.Shutdown();
     DestroyQueueSync();
 
@@ -120,17 +122,21 @@ void VulkanImmidiateCommandList::Flush()
     m_SignalSemaphoresValues.clear();
 
     m_CommandListPool.ReleaseCommandBuffer(m_CurrentCommandBuffer, m_TimelineSemaphoreValue);
+    m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_TimelineSemaphoreValue);
+
     AcquireCommandBuffer();
 
     m_CommandListPool.Purge(GetTimelineSemaphoreValue());
 }
 
-uint64_t VulkanImmidiateCommandList::GetTimelineSemaphoreValue()
+void VulkanImmidiateCommandList::SafeReleaseResource(vk::ReleaseRefWrapper* ref)
 {
-    uint64_t value;
-    vkGetSemaphoreCounterValue(m_Device, m_TimelineSemaphore,
-        &value);
-    return value;
+    m_ReleaseManager.SafeReleaseResource(ref, m_CommandBufferNumber);
+}
+
+void VulkanImmidiateCommandList::PurgeReleaseResources()
+{
+    m_ReleaseManager.Purge(GetTimelineSemaphoreValue());
 }
 
 void VulkanImmidiateCommandList::FlushWaitSemaphores()
@@ -185,6 +191,14 @@ void VulkanImmidiateCommandList::DestroyQueueSync()
     }
 }
 
+uint64_t VulkanImmidiateCommandList::GetTimelineSemaphoreValue()
+{
+    uint64_t value;
+    vkGetSemaphoreCounterValue(m_Device, m_TimelineSemaphore,
+        &value);
+    return value;
+}
+
 void VulkanImmidiateCommandList::AcquireCommandBuffer()
 {
     m_CurrentCommandBuffer = m_CommandListPool.AcquireCommandBuffer();
@@ -193,6 +207,8 @@ void VulkanImmidiateCommandList::AcquireCommandBuffer()
     cbbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &cbbi);
+
+    m_CommandBufferNumber++;
 }
 
 }

@@ -14,25 +14,24 @@ struct DeferredDeleter
     void Destroy(VkDevice device) { Callback(Data, device); }
 };
 
-inline DeferredDeleter MakeDeleter(VkBuffer h) 
+struct ReleaseRefWrapper
 {
-    return { (void*)(uint64_t)h, [](void* d, VkDevice dev) {
-        vkDestroyBuffer(dev, (VkBuffer)(uint64_t)d, nullptr);
-    }};
+    DeferredDeleter Deleter;
+    std::atomic<int> refs = 1;
 };
 
 class ReleaseManager
 {
-struct PendingDelete
+struct StaleEntry
 {
-    DeferredDeleter Deleter;
-    uint64_t FenceValue;
+    ReleaseRefWrapper* res;
+    uint64_t cmdNum;
 };
 
-struct RefWrapper
+struct ReleaseEntry
 {
-    PendingDelete resource;
-    std::atomic<int> refs = 1;
+    ReleaseRefWrapper* res;
+    uint64_t fenceValue;
 };
 
 public:
@@ -42,7 +41,8 @@ public:
     void Init(VkDevice device);
     void Shutdown();
 
-    void Enqueue(DeferredDeleter deleter, uint64_t fenceValue);
+    void SafeReleaseResource(ReleaseRefWrapper* res, uint64_t cmdNum);
+    void DiscardStaleResources(uint64_t cmdNum, uint64_t fenceValue);
 
     void Purge(uint64_t fenceValue);
     void Flush();
@@ -50,8 +50,16 @@ public:
 private:
     VkDevice m_Device = nullptr;
 
-    std::deque<RefWrapper*> m_GraphicsReleaseQueue;
+    std::deque<StaleEntry> m_StaleQueue;
+    std::deque<ReleaseEntry> m_ReleaseQueue;
 
+};
+
+inline DeferredDeleter MakeDeleter(VkBuffer h) 
+{
+    return { (void*)(uint64_t)h, [](void* d, VkDevice dev) {
+        vkDestroyBuffer(dev, (VkBuffer)(uint64_t)d, nullptr);
+    }};
 };
 
 }

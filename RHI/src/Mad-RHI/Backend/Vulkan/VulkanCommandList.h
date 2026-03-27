@@ -4,6 +4,7 @@
 #include <volk/volk.h>
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/Vk/CommandListPool.h"
+#include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 
 namespace mad::rhi {
 
@@ -22,7 +23,8 @@ public:
 
     virtual void Flush() override;
 
-    uint64_t GetTimelineSemaphoreValue();
+    void SafeReleaseResource(vk::ReleaseRefWrapper* ref);
+    void PurgeReleaseResources();
 
     void FlushWaitSemaphores();
     void AddWaitSemaphore(VkSemaphore sem, uint64_t value = 0);
@@ -45,12 +47,16 @@ private:
     uint64_t m_TimelineSemaphoreValue = 0;
 
     vk::CommandListPool m_CommandListPool;
+    uint64_t m_CommandBufferNumber = 0;
     VkCommandBuffer m_CurrentCommandBuffer = nullptr;
+
+    vk::ReleaseManager m_ReleaseManager;
 
 private:
     void CreateQueueSync();
     void DestroyQueueSync();
 
+    uint64_t GetTimelineSemaphoreValue();
     void AcquireCommandBuffer();
 
 };
