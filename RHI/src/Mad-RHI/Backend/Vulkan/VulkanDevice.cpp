@@ -83,7 +83,12 @@ void VulkanDevice::Present()
     pi.pSwapchains = &m_Swapchain;
     pi.pImageIndices = &m_CurrentImageIndex;
 
-    vkQueuePresentKHR(m_PresentQueue, &pi);
+    VkResult res = vkQueuePresentKHR(m_PresentQueue, &pi);
+    if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        Resize();
+    }
+
     m_CurrentFrame = (m_CurrentFrame + 1) % 2;
     AcquireNextImage();
 }
@@ -322,12 +327,18 @@ void VulkanDevice::DestroyFramesInFlightSync()
 void VulkanDevice::AcquireNextImage()
 {
     vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
-    vkAcquireNextImageKHR(
+    VkResult res = vkAcquireNextImageKHR(
         m_Device, m_Swapchain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentFrame],
         nullptr, &m_CurrentImageIndex
     );
 
+    if (res == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        Resize();
+        return;
+    }
+
+    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
     m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrame]);
 }
 
