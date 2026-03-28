@@ -20,7 +20,7 @@ void ReleaseManager::SafeReleaseResource(ReleaseRefWrapper* res, uint64_t cmdNum
 void ReleaseManager::DiscardStaleResources(uint64_t cmdNum, uint64_t fenceValue)
 {
     while (!m_StaleQueue.empty() && 
-        m_StaleQueue.front().cmdNum <= cmdNum) 
+        m_StaleQueue.front().cmdNum == cmdNum) 
     {
         StaleEntry entry = m_StaleQueue.front();
         m_ReleaseQueue.push_back({entry.res, fenceValue});
