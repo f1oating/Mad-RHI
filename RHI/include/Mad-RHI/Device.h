@@ -2,6 +2,7 @@
 
 #include "Mad-RHI/Common.h"
 #include "Mad-RHI/CommandList.h"
+#include "Mad-RHI/PipelineState.h"
 
 namespace mad::rhi {
     
@@ -16,6 +17,8 @@ public:
     virtual void Present() = 0;
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;
+
+    virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) = 0;
 
 };
 

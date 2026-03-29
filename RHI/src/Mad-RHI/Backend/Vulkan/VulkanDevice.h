@@ -24,6 +24,8 @@ public:
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
 
+    virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
+
     VkDevice GetDevice() { return m_Device; }
     VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
     uint32_t GetGraphicsQueueFamilyIndex() { return m_GraphicsFamily; }

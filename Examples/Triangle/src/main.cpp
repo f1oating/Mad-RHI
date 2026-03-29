@@ -38,6 +38,8 @@ int main()
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/Pixel.slang" });
 
+        rhi::RefPtr<rhi::Shader> vertexShader = device->CreateShader(spirvVertex.data(), spirvVertex.size());
+
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();
         });

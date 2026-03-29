@@ -3,6 +3,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include "Mad-RHI/Backend/Vulkan/VulkanPipelineState.h"
 
 namespace mad::rhi {
 
@@ -92,6 +93,11 @@ void VulkanDevice::Present()
 RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
 {
     return m_GraphicsImmidiateCommandList;
+}
+
+RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
+{
+    return MakeRef<VulkanShader>(m_Device, data, size);
 }
 
 void VulkanDevice::CreateSurface(const WindowHandle& wh)
