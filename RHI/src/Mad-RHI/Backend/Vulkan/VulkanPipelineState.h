@@ -40,6 +40,7 @@ private:
     VkShaderStageFlagBits m_ShaderStage = VK_SHADER_STAGE_VERTEX_BIT;
 
     std::vector<VulkanShaderBinding> m_Bindings;
+    std::vector<VkVertexInputAttributeDescription> m_VertexAttributes;
 
 };
 
