@@ -8,7 +8,7 @@
       "program": "${workspaceFolder}/build/Examples/Triangle/Triangle",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/",
+      "cwd": "${workspaceFolder}/Examples/Triangle",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",

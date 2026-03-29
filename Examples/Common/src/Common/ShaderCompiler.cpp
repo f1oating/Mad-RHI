@@ -1,4 +1,5 @@
 #include "Common/ShaderCompiler.h"
+#include <iostream>
 
 namespace mad::common {
 
@@ -38,7 +39,13 @@ std::vector<uint32_t> ShaderCompiler::Compile(ShaderSource source)
     program->link(linkedProgram.writeRef(), diagnostics.writeRef());
 
     Slang::ComPtr<slang::IBlob> spirvBlob;
-    linkedProgram->getEntryPointCode(0, 0, spirvBlob.writeRef(), diagnostics.writeRef());
+    SlangResult res = linkedProgram->getEntryPointCode(0, 0, spirvBlob.writeRef(), diagnostics.writeRef());
+
+    if (SLANG_FAILED(res))
+    {
+        const char* msg = (const char*)diagnostics->getBufferPointer();
+        std::cout << msg << std::endl;
+    }
 
     const uint32_t* ptr  = static_cast<const uint32_t*>(spirvBlob->getBufferPointer());
     const size_t    size = spirvBlob->getBufferSize() / sizeof(uint32_t);
