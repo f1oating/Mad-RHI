@@ -77,7 +77,7 @@ struct DepthStencilDesc
     bool            DepthWriteEnable  = true;
     CompareOp       DepthCompareOp    = CompareOp::Less;
     bool            StencilTestEnable = false;
-    StencilOpDesc   Fron;
+    StencilOpDesc   Front;
     StencilOpDesc   Back;
 };
 
