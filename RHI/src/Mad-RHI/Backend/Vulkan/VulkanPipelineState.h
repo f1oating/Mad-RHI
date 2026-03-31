@@ -33,6 +33,8 @@ struct VulkanReflectedShaderSet
 class VulkanShaderResourceReflection
 {
 public:
+    void Merge(const VulkanShaderResourceReflection* other);    
+
     void AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage);
 
     const VulkanReflectedShaderResource* Find(std::string name);

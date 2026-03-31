@@ -24,6 +24,21 @@ static uint32_t SpvFormatSize(SpvReflectFormat fmt)
     }
 }
 
+void VulkanShaderResourceReflection::Merge(const VulkanShaderResourceReflection* other)
+{
+    for (auto& [name, res] : other->m_Resources)
+    {
+        auto it = m_Resources.find(name);
+        if (it != m_Resources.end())
+        {
+            it->second.Stage |= res.Stage;
+        } else
+        {
+            m_Resources[name] = res;
+        }
+    }
+}
+
 void VulkanShaderResourceReflection::AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage)
 {
     SpvReflectShaderModule spvModule;
