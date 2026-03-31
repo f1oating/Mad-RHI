@@ -67,4 +67,14 @@ private:
 
 };
 
+class VulkanGraphicsPipeline : public ObjectBase<GraphicsPipeline>
+{
+protected:
+    ~VulkanGraphicsPipeline();
+
+public:
+    VulkanGraphicsPipeline();
+
+};
+
 };
