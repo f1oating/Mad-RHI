@@ -24,13 +24,10 @@ static uint32_t SpvFormatSize(SpvReflectFormat fmt)
     }
 }
 
-VulkanShader::VulkanShader(VkDevice device, const uint32_t* byteCode, uint64_t size)
+void VulkanShaderResourceReflection::AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage)
 {
-    m_Device = device;
-
     SpvReflectShaderModule spvModule;
     spvReflectCreateShaderModule(size, byteCode, &spvModule);
-    m_ShaderStage = static_cast<VkShaderStageFlagBits>(spvModule.shader_stage);
 
     uint32_t descBindingCount;
     spvReflectEnumerateDescriptorBindings(&spvModule, &descBindingCount, nullptr);
@@ -39,15 +36,52 @@ VulkanShader::VulkanShader(VkDevice device, const uint32_t* byteCode, uint64_t s
 
     for (auto* binding : bindings)
     {
-        m_Bindings.push_back({
-            binding->name,
-            binding->set,
-            binding->binding,
-            static_cast<VkDescriptorType>(binding->descriptor_type),
-            binding->count,
-            binding->block.size
-        });
+        auto it = m_Resources.find(binding->name);
+
+        if (it != m_Resources.end())
+        {
+            it->second.Stage |= stage;
+        } else
+        {
+            m_Resources[binding->name] = VulkanReflectedShaderResource(
+                binding->name,
+                binding->set,
+                binding->binding,
+                static_cast<VkDescriptorType>(binding->descriptor_type),
+                stage,
+                binding->count
+            );
+        }
     }
+
+    spvReflectDestroyShaderModule(&spvModule);
+}
+
+const VulkanReflectedShaderResource* VulkanShaderResourceReflection::Find(std::string name)
+{
+    auto it = m_Resources.find(name);
+    return it != m_Resources.end() ? &it->second : nullptr;
+}
+
+std::vector<const VulkanReflectedShaderResource*> VulkanShaderResourceReflection::GetSet(uint32_t index) const
+{
+    std::vector<const VulkanReflectedShaderResource*> result;
+    for (const auto& [name, res] : m_Resources)
+    {
+        if (res.Set == index) result.push_back(&res);
+    }
+    return result;
+}
+
+VulkanShader::VulkanShader(VkDevice device, const uint32_t* byteCode, uint64_t size)
+{
+    m_Device = device;
+
+    SpvReflectShaderModule spvModule;
+    spvReflectCreateShaderModule(size, byteCode, &spvModule);
+    m_ShaderStage = static_cast<VkShaderStageFlagBits>(spvModule.shader_stage);
+
+    m_ResourceReflection.AddStage(byteCode, size, m_ShaderStage);
 
     if (m_ShaderStage == VK_SHADER_STAGE_VERTEX_BIT)
     {

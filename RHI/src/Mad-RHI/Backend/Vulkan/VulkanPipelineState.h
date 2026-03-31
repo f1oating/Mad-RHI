@@ -4,6 +4,7 @@
 #include <volk/volk.h>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 namespace mad::rhi {
 
@@ -13,14 +14,34 @@ inline ShaderType FromVkShaderStage(VkShaderStageFlagBits shaderStage)
     if (shaderStage & VK_SHADER_STAGE_FRAGMENT_BIT) return ShaderType::FRAGMENT;
 }
 
-struct VulkanShaderBinding
+struct VulkanReflectedShaderResource
 {
     std::string Name;
     uint32_t Set;
     uint32_t Binding;
     VkDescriptorType Type;
+    VkShaderStageFlags Stage;
     uint32_t ArraySize;
-    uint32_t BlockSize;
+};
+
+struct VulkanReflectedShaderSet
+{
+    uint32_t Index;
+    std::vector<VulkanReflectedShaderResource> Resources;
+};
+
+class VulkanShaderResourceReflection
+{
+public:
+    void AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage);
+
+    const VulkanReflectedShaderResource* Find(std::string name);
+
+    std::vector<const VulkanReflectedShaderResource*> GetSet(uint32_t index) const;
+
+private:
+    std::unordered_map<std::string, VulkanReflectedShaderResource> m_Resources;
+
 };
 
 class VulkanShader : public ObjectBase<Shader>
@@ -39,7 +60,7 @@ private:
     VkShaderModule m_ShaderModule = nullptr;
     VkShaderStageFlagBits m_ShaderStage = VK_SHADER_STAGE_VERTEX_BIT;
 
-    std::vector<VulkanShaderBinding> m_Bindings;
+    VulkanShaderResourceReflection m_ResourceReflection;
     std::vector<VkVertexInputAttributeDescription> m_VertexAttributes;
 
 };
