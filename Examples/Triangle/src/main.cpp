@@ -36,9 +36,26 @@ int main()
         icl = device->GetImmidiateCommandList();
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
-        std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/Pixel.slang" });
+        std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
 
         rhi::RefPtr<rhi::Shader> vertexShader = device->CreateShader(spirvVertex.data(), spirvVertex.size());
+        rhi::RefPtr<rhi::Shader> fragmentShader = device->CreateShader(spirvFragment.data(), spirvFragment.size());
+
+        rhi::GraphicsPipelineDesc pipelineDesc{};
+        pipelineDesc.VertexShader   = vertexShader;
+        pipelineDesc.FragmentShader = fragmentShader;
+        pipelineDesc.Topology = rhi::PrimitiveTopology::TriangleList;
+        pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
+        pipelineDesc.Rasterization.Cull = rhi::CullMode::None;
+        pipelineDesc.Rasterization.Face = rhi::FrontFace::CCW;
+        pipelineDesc.DepthStencil.DepthTestEnable = false;
+        pipelineDesc.DepthStencil.DepthWriteEnable = false;
+        rhi::ColorAttachmentBlend colorBlend{};
+        colorBlend.BlendEnable = false;
+        pipelineDesc.BlendAttachments.push_back(colorBlend);
+        pipelineDesc.Rendering.ColorFormats.push_back(rhi::TextureFormat::BGRA8_UNorm_SRGB);
+        pipelineDesc.Rendering.SampleCount = 1;
+        rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = device->CreateGraphicsPipeline(pipelineDesc);
 
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();

@@ -143,10 +143,10 @@ struct GraphicsPipelineDesc
     RenderingDesc                       Rendering;
 };
 
-class GraphicsPipeline : public Object
+class GraphicsPipelineState : public Object
 {
 public:
-    virtual ~GraphicsPipeline() = default;
+    virtual ~GraphicsPipelineState() = default;
 
 };
 

@@ -100,6 +100,11 @@ RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
     return MakeRef<VulkanShader>(m_Device, data, size);
 }
 
+RefPtr<GraphicsPipelineState> VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineDesc& desc)
+{
+    return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc);
+}
+
 void VulkanDevice::CreateSurface(const WindowHandle& wh)
 {
     switch (wh.platform)
@@ -167,16 +172,23 @@ void VulkanDevice::CreateLogicalDevice()
 
     const char* deviceExts[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-    VkPhysicalDeviceTimelineSemaphoreFeatures tf{};
-    tf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
-    tf.timelineSemaphore = VK_TRUE;
+    VkPhysicalDeviceVulkan13Features vk13{};
+    vk13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    vk13.pNext = nullptr;
+    vk13.dynamicRendering = VK_TRUE;
+    vk13.synchronization2 = VK_TRUE;
+
+    VkPhysicalDeviceVulkan12Features vk12{};
+    vk12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    vk12.pNext = &vk13;
+    vk12.timelineSemaphore = VK_TRUE;
 
     VkDeviceCreateInfo deviceInfo{};
-    deviceInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceInfo.pNext                   = &tf;
-    deviceInfo.queueCreateInfoCount    = queueInfos.size();
-    deviceInfo.pQueueCreateInfos       = queueInfos.data();
-    deviceInfo.enabledExtensionCount   = 1;
+    deviceInfo.sType  = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceInfo.pNext  = &vk12;
+    deviceInfo.queueCreateInfoCount = queueInfos.size();
+    deviceInfo.pQueueCreateInfos = queueInfos.data();
+    deviceInfo.enabledExtensionCount = 1;
     deviceInfo.ppEnabledExtensionNames = deviceExts;
 
     vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device);
@@ -217,26 +229,26 @@ void VulkanDevice::CreateSwapchain()
     uint32_t imageCount = caps.minImageCount + 1;
 
     VkSwapchainCreateInfoKHR info{};
-    info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    info.surface          = m_Surface;
-    info.minImageCount    = imageCount;
-    info.imageFormat      = chosenFormat.format;
-    info.imageColorSpace  = chosenFormat.colorSpace;
-    info.imageExtent      = caps.currentExtent;
+    info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    info.surface = m_Surface;
+    info.minImageCount = imageCount;
+    info.imageFormat = chosenFormat.format;
+    info.imageColorSpace = chosenFormat.colorSpace;
+    info.imageExtent = caps.currentExtent;
     info.imageArrayLayers = 1;
-    info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    info.preTransform     = caps.currentTransform;
-    info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    info.presentMode      = chosenMode;
-    info.clipped          = VK_TRUE;
-    info.oldSwapchain     = nullptr;
+    info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    info.preTransform = caps.currentTransform;
+    info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    info.presentMode = chosenMode;
+    info.clipped = VK_TRUE;
+    info.oldSwapchain = nullptr;
 
     if (m_GraphicsFamily != m_PresentFamily) 
     {
         uint32_t families[] = { m_GraphicsFamily, m_PresentFamily };
-        info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+        info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         info.queueFamilyIndexCount = 2;
-        info.pQueueFamilyIndices   = families;
+        info.pQueueFamilyIndices = families;
     } else 
     {
         info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -253,17 +265,17 @@ void VulkanDevice::CreateSwapchain()
     for (int i = 0; i < imagesCount; i++)
     {
         TextureDesc texDesc{};
-        texDesc.Name            = "Swapchain image";
-        texDesc.Dimension       = TextureDimension::Texture2D;
-        texDesc.Width           = caps.currentExtent.width;
-        texDesc.Height          = caps.currentExtent.height;
-        texDesc.ArraySize       = 1;
-        texDesc.Format          = FromVkFormat(chosenFormat.format);
-        texDesc.MipLevels       = 1;
-        texDesc.SampleCount     = 1;
-        texDesc.BindFlags       = RenderTarget;
-        texDesc.Usage           = ResourceUsage::Default;
-        m_SwapchainImages[i]    = MakeRef<VulkanTexture>(texDesc, images[i]);
+        texDesc.Name = "Swapchain image";
+        texDesc.Dimension = TextureDimension::Texture2D;
+        texDesc.Width = caps.currentExtent.width;
+        texDesc.Height = caps.currentExtent.height;
+        texDesc.ArraySize = 1;
+        texDesc.Format = FromVkFormat(chosenFormat.format);
+        texDesc.MipLevels = 1;
+        texDesc.SampleCount = 1;
+        texDesc.BindFlags = RenderTarget;
+        texDesc.Usage = ResourceUsage::Default;
+        m_SwapchainImages[i] = MakeRef<VulkanTexture>(texDesc, images[i]);
     }
 }
 

@@ -19,6 +19,7 @@ public:
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;
 
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) = 0;
+    virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
 
 };
 
