@@ -30,6 +30,7 @@ void VulkanShaderResourceReflection::Merge(const VulkanShaderResourceReflection*
     for (auto& [name, res] : other->m_Resources)
     {
         auto it = m_Resources.find(name);
+        m_MaxSet = std::max(m_MaxSet, res.Set);
         if (it != m_Resources.end())
         {
             it->second.Stage |= res.Stage;
@@ -53,6 +54,7 @@ void VulkanShaderResourceReflection::AddStage(const uint32_t* byteCode, uint64_t
     for (auto* binding : bindings)
     {
         auto it = m_Resources.find(binding->name);
+        m_MaxSet = std::max(m_MaxSet, binding->set);
 
         if (it != m_Resources.end())
         {
@@ -79,7 +81,7 @@ const VulkanReflectedShaderResource* VulkanShaderResourceReflection::Find(std::s
     return it != m_Resources.end() ? &it->second : nullptr;
 }
 
-std::vector<const VulkanReflectedShaderResource*> VulkanShaderResourceReflection::GetSet(uint32_t index) const
+std::vector<const VulkanReflectedShaderResource*> VulkanShaderResourceReflection::GetSet(uint32_t index)
 {
     std::vector<const VulkanReflectedShaderResource*> result;
     for (const auto& [name, res] : m_Resources)
@@ -265,8 +267,39 @@ VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const 
     renderingCI.depthAttachmentFormat = ToVkFormat(desc.Rendering.DepthFormat);
     renderingCI.stencilAttachmentFormat = ToVkFormat(desc.Rendering.StencilFormat);
 
+    VulkanShaderResourceReflection merged;
+    merged.Merge(&vertexShader->GetShaderResourceReflection());
+    merged.Merge(&fragmentShader->GetShaderResourceReflection());
+
+    for (uint32_t setIndex = 0; setIndex <= merged.GetMaxSet(); setIndex++)
+    {
+        auto resources = merged.GetSet(setIndex);
+
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+        for (auto& res : resources)
+        {
+            VkDescriptorSetLayoutBinding b{};
+            b.binding = res->Binding;
+            b.descriptorType = res->Type;
+            b.descriptorCount = res->ArraySize;
+            b.stageFlags = res->Stage;
+            bindings.push_back(b);
+        }
+
+        VkDescriptorSetLayoutCreateInfo dslCI{};
+        dslCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        dslCI.bindingCount = (uint32_t)bindings.size();
+        dslCI.pBindings = bindings.data();
+
+        VkDescriptorSetLayout layout;
+        vkCreateDescriptorSetLayout(m_Device, &dslCI, nullptr, &layout);
+        m_SetLayouts.push_back(layout);
+    };
+
     VkPipelineLayoutCreateInfo layoutCI{};
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutCI.setLayoutCount = (uint32_t)m_SetLayouts.size();
+    layoutCI.pSetLayouts = m_SetLayouts.data();
     vkCreatePipelineLayout(m_Device, &layoutCI, nullptr, &m_Layout);
 
     VkGraphicsPipelineCreateInfo pipelineCI{};
@@ -296,6 +329,10 @@ VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState()
     if (m_Layout)
     {
         vkDestroyPipelineLayout(m_Device, m_Layout, nullptr);
+    }
+    for (auto layout : m_SetLayouts)
+    {
+        vkDestroyDescriptorSetLayout(m_Device, layout, nullptr);
     }
 }
 

@@ -8,12 +8,6 @@
 
 namespace mad::rhi {
 
-inline ShaderType FromVkShaderStage(VkShaderStageFlagBits shaderStage)
-{
-    if (shaderStage & VK_SHADER_STAGE_VERTEX_BIT) return ShaderType::VERTEX;
-    if (shaderStage & VK_SHADER_STAGE_FRAGMENT_BIT) return ShaderType::FRAGMENT;
-}
-
 struct VulkanReflectedShaderResource
 {
     std::string Name;
@@ -39,9 +33,11 @@ public:
 
     const VulkanReflectedShaderResource* Find(std::string name);
 
-    std::vector<const VulkanReflectedShaderResource*> GetSet(uint32_t index) const;
+    std::vector<const VulkanReflectedShaderResource*> GetSet(uint32_t index);
+    uint32_t GetMaxSet() { return m_MaxSet; }
 
 private:
+    uint32_t m_MaxSet = 0;
     std::unordered_map<std::string, VulkanReflectedShaderResource> m_Resources;
 
 };
@@ -57,6 +53,7 @@ public:
     virtual ShaderType GetType() override;
 
     VkShaderModule GetShaderModule() { return m_ShaderModule; }
+    const VulkanShaderResourceReflection& GetShaderResourceReflection() { return m_ResourceReflection; }
     const std::vector<VkVertexInputAttributeDescription>& GetVertexInputAttributes() { return m_VertexAttributes; }
     const VkVertexInputBindingDescription& GetVertexInputBinding() { return m_VertexBinding; }
 
@@ -85,8 +82,15 @@ private:
 
     VkPipeline m_Pipeline = nullptr;
     VkPipelineLayout m_Layout = nullptr;
+    std::vector<VkDescriptorSetLayout> m_SetLayouts;
 
 };
+
+inline ShaderType FromVkShaderStage(VkShaderStageFlagBits shaderStage)
+{
+    if (shaderStage & VK_SHADER_STAGE_VERTEX_BIT) return ShaderType::VERTEX;
+    if (shaderStage & VK_SHADER_STAGE_FRAGMENT_BIT) return ShaderType::FRAGMENT;
+}
 
 inline VkPolygonMode ToVkPolygonMode(PolygonMode mode)
 {

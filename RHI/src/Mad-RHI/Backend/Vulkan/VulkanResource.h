@@ -5,6 +5,47 @@
 
 namespace mad::rhi {
 
+class VulkanTexture : public ObjectBase<Texture>
+{
+protected:
+    ~VulkanTexture();
+
+public:
+    VulkanTexture(const TextureDesc& desc, VkImage image);
+
+    virtual ResourceState GetCurrentResourceState() override;
+
+    VkImage GetImage() { return m_Image; }
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
+private:
+    TextureDesc m_Desc;
+    ResourceState m_CurrentState = ResourceState::Undefined;
+
+    VkImage m_Image = nullptr;
+
+};
+
+class VulkanBuffer : public ObjectBase<Buffer>
+{
+protected:
+    ~VulkanBuffer();
+
+public:
+    VulkanBuffer();
+
+    virtual ResourceState GetCurrentResourceState() override;
+
+    VkBuffer GetBuffer() { return m_Buffer; }
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
+private:
+    ResourceState m_CurrentState = ResourceState::Undefined;
+
+    VkBuffer m_Buffer = nullptr;
+
+};
+
 inline VkImageViewType ToVkImageViewType(TextureDimension dimension)
 {
     switch (dimension)
@@ -254,46 +295,5 @@ inline VkAccessFlags ToVkAccessMask(ResourceState state)
     default:                              return 0;
     }
 }
-
-class VulkanTexture : public ObjectBase<Texture>
-{
-protected:
-    ~VulkanTexture();
-
-public:
-    VulkanTexture(const TextureDesc& desc, VkImage image);
-
-    virtual ResourceState GetCurrentResourceState() override;
-
-    VkImage GetImage() { return m_Image; }
-    void SetResourceState(ResourceState state) { m_CurrentState = state; }
-
-private:
-    TextureDesc m_Desc;
-    ResourceState m_CurrentState = ResourceState::Undefined;
-
-    VkImage m_Image = nullptr;
-
-};
-
-class VulkanBuffer : public ObjectBase<Buffer>
-{
-protected:
-    ~VulkanBuffer();
-
-public:
-    VulkanBuffer();
-
-    virtual ResourceState GetCurrentResourceState() override;
-
-    VkBuffer GetBuffer() { return m_Buffer; }
-    void SetResourceState(ResourceState state) { m_CurrentState = state; }
-
-private:
-    ResourceState m_CurrentState = ResourceState::Undefined;
-
-    VkBuffer m_Buffer = nullptr;
-
-};
 
 }
