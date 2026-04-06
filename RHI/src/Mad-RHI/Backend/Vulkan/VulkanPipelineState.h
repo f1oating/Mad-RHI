@@ -77,12 +77,27 @@ protected:
 public:
     VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineDesc& desc);
 
+    VkPipeline GetPipeline() { return m_Pipeline; }
+    VkPipelineLayout GetPipelineLayout() { return m_Layout; }
+
+    VkDescriptorSetLayout GetSetLayout(uint32_t set) { return m_SetLayouts[set]; }
+    uint32_t GetSetCount() { return m_SetLayouts.size(); }
+
+    const VulkanShaderResourceReflection& GetReflection() { return m_MergedReflection; }
+
+private:
+    void CreateLayout();
+    void CreatePipeline();
+
 private:
     VkDevice m_Device = nullptr;
+    GraphicsPipelineDesc m_Desc;
 
     VkPipeline m_Pipeline = nullptr;
     VkPipelineLayout m_Layout = nullptr;
     std::vector<VkDescriptorSetLayout> m_SetLayouts;
+
+    VulkanShaderResourceReflection m_MergedReflection;
 
 };
 

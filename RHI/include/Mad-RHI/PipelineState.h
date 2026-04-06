@@ -3,6 +3,7 @@
 #include "Mad-RHI/Common.h"
 #include "Mad-RHI/Resource.h"
 #include <vector>
+#include <variant>
 
 namespace mad::rhi {
     
