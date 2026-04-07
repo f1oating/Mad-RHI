@@ -31,11 +31,11 @@ VulkanDevice::~VulkanDevice()
 
     m_GraphicsImmidiateCommandList = nullptr;
 
+    if (m_Allocator) vmaDestroyAllocator(m_Allocator);
     DestroyFramesInFlightSync();
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-    if (m_Allocator) vmaDestroyAllocator(m_Allocator);
 
     std::cout << "Device destroyed" << std::endl;
 }
@@ -95,6 +95,40 @@ void VulkanDevice::Present()
 RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
 {
     return m_GraphicsImmidiateCommandList;
+}
+
+RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
+{
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    if (desc.BindFlags & VertexBuffer) usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if (desc.BindFlags & IndexBuffer) usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (desc.BindFlags & UniformBuffer) usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if (desc.BindFlags & ShaderResource) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (desc.BindFlags & UnorderedAccess) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+    VkBufferCreateInfo bci{};
+    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size = desc.Size;
+    bci.usage = usage;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo aci{};
+    if (desc.Usage == ResourceUsage::Readback)
+    {
+        aci.usage = VMA_MEMORY_USAGE_AUTO;
+        aci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+        bci.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    }
+    else
+    {
+        aci.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    }
+
+    VkBuffer buffer;
+    VmaAllocation allocation;
+    vmaCreateBuffer(m_Allocator, &bci, &aci, &buffer, &allocation, nullptr);
+
+    return MakeRef<VulkanBuffer>(desc, buffer, allocation, m_Allocator);
 }
 
 RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)

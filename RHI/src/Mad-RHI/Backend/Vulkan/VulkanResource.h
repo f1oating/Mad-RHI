@@ -2,6 +2,7 @@
 
 #include "Mad-RHI/Resource.h"
 #include <volk/volk.h>
+#include <vk_mem_alloc.h>
 
 namespace mad::rhi {
 
@@ -32,17 +33,22 @@ protected:
     ~VulkanBuffer();
 
 public:
-    VulkanBuffer();
+    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, VmaAllocation allocation, VmaAllocator allocator);
 
     virtual ResourceState GetCurrentResourceState() override;
 
     VkBuffer GetBuffer() { return m_Buffer; }
+    VmaAllocation GetAllocation() { return m_Allocation; }
+    
     void SetResourceState(ResourceState state) { m_CurrentState = state; }
 
 private:
     ResourceState m_CurrentState = ResourceState::Undefined;
+    BufferDesc m_Desc;
 
     VkBuffer m_Buffer = nullptr;
+    VmaAllocation m_Allocation = nullptr;
+    VmaAllocator m_Allocator = nullptr;
 
 };
 

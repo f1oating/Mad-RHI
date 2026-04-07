@@ -57,6 +57,13 @@ int main()
         pipelineDesc.Rendering.SampleCount = 1;
         rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = device->CreateGraphicsPipeline(pipelineDesc);
 
+        rhi::BufferDesc ibd{};
+        ibd.Usage = rhi::ResourceUsage::Default;
+        ibd.Size = 12;
+        ibd.BindFlags = rhi::ResourceBindFlags::IndexBuffer;
+
+        rhi::RefPtr<rhi::Buffer> ib = device->CreateBuffer(ibd);
+
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();
         });

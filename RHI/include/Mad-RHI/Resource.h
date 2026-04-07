@@ -20,10 +20,9 @@ enum ResourceBindFlags : uint32_t
     IndexBuffer      = 1 << 1,
     UniformBuffer    = 1 << 2,
     ShaderResource   = 1 << 3,
-    StreamOutput     = 1 << 4,
-    RenderTarget     = 1 << 5,
-    DepthStencil     = 1 << 6,
-    UnorderedAccess  = 1 << 7,
+    RenderTarget     = 1 << 4,
+    DepthStencil     = 1 << 5,
+    UnorderedAccess  = 1 << 6,
 };
 
 enum class TextureDimension

@@ -25,6 +25,7 @@ public:
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
 
+    virtual RefPtr<Buffer> CreateBuffer(const BufferDesc& desc) override;
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
 
