@@ -23,7 +23,11 @@ public:
 
     virtual void Flush() override;
 
-    void SafeReleaseResource(vk::ReleaseRefWrapper* ref);
+    template<typename T>
+    void SafeReleaseResource(T&& resource)
+    {
+        m_ReleaseManager.SafeReleaseResource(std::forward<T>(resource), m_CommandBufferNumber);
+    }
     void PurgeReleaseResources();
 
     void FlushWaitSemaphores();

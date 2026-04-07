@@ -29,6 +29,19 @@ public:
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
 
+    template<typename T>
+    void SafeReleaseResource(T&& object, uint32_t queueMask)
+    {
+        int numRefs = std::popcount(queueMask);
+
+        auto wrapper = vk::StaleResourceWrapper::Create(std::move(object), numRefs);
+
+        if (numRefs & ImmidiateCommandListFlags::Graphics)
+            m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper);
+
+        wrapper.GiveUpOwnership();
+    }
+
     VkDevice GetDevice() { return m_Device; }
     VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
     uint32_t GetGraphicsQueueFamilyIndex() { return m_GraphicsFamily; }

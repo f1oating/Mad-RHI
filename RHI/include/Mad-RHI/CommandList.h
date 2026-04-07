@@ -7,11 +7,9 @@
 
 namespace mad::rhi {
 
-class DefferedCommandList : public Object
+enum ImmidiateCommandListFlags : uint32_t
 {
-public:
-    virtual ~DefferedCommandList() = default;
-
+    Graphics = 1 << 0
 };
 
 class ImmidiateCommandList : public Object

@@ -129,11 +129,6 @@ void VulkanImmidiateCommandList::Flush()
     m_CommandListPool.Purge(GetTimelineSemaphoreValue());
 }
 
-void VulkanImmidiateCommandList::SafeReleaseResource(vk::ReleaseRefWrapper* ref)
-{
-    m_ReleaseManager.SafeReleaseResource(ref, m_CommandBufferNumber);
-}
-
 void VulkanImmidiateCommandList::PurgeReleaseResources()
 {
     m_ReleaseManager.Purge(GetTimelineSemaphoreValue());
