@@ -11,6 +11,7 @@ target_include_directories(Mad-RHI
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/thirdparty/VMA/include
 )
 
 target_link_libraries(Mad-RHI

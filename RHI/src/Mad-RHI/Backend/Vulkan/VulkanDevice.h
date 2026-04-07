@@ -6,6 +6,7 @@
 #include <volk/volk.h>
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
+#include <vk_mem_alloc.h>
 
 namespace mad::rhi {
 
@@ -54,6 +55,8 @@ private:
 
     RefPtr<VulkanImmidiateCommandList> m_GraphicsImmidiateCommandList = nullptr;
 
+    VmaAllocator m_Allocator = nullptr;
+
 private:
     void CreateSurface(const WindowHandle& wh);
     void CreatePhysicalDevice();
@@ -62,6 +65,7 @@ private:
     void DestroySwapchain();
     void CreateFramesInFlightSync();
     void DestroyFramesInFlightSync();
+    void CreateAllocator();
 
     void AcquireNextImage();
 

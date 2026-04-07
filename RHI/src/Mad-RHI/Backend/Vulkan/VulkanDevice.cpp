@@ -16,6 +16,7 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateLogicalDevice();
     CreateSwapchain();
     CreateFramesInFlightSync();
+    CreateAllocator();
 
     m_GraphicsImmidiateCommandList = MakeRef<VulkanImmidiateCommandList>(this);
 
@@ -34,6 +35,7 @@ VulkanDevice::~VulkanDevice()
     DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+    if (m_Allocator) vmaDestroyAllocator(m_Allocator);
 
     std::cout << "Device destroyed" << std::endl;
 }
@@ -336,6 +338,22 @@ void VulkanDevice::DestroyFramesInFlightSync()
             vkDestroyFence(m_Device, fence, nullptr);
         }
     }
+}
+
+void VulkanDevice::CreateAllocator()
+{
+    VmaVulkanFunctions vulkanFunctions = {};
+    vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+    vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+
+    VmaAllocatorCreateInfo info = {};
+    info.physicalDevice = m_PhysicalDevice;
+    info.device = m_Device;
+    info.instance = m_Instance;
+    info.vulkanApiVersion = VK_API_VERSION_1_3;
+    info.pVulkanFunctions = &vulkanFunctions;
+
+    vmaCreateAllocator(&info, &m_Allocator);
 }
 
 void VulkanDevice::AcquireNextImage()
