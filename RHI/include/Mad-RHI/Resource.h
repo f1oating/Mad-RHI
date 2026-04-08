@@ -5,6 +5,13 @@
 
 namespace mad::rhi {
 
+enum CommandQueueTypeFlags : uint32_t
+{
+    COMMAND_QUEUE_TYPE_GRAPHICS_BIT = 1 << 0,
+    COMMAND_QUEUE_TYPE_COMPUTE_BIT = 1 << 1,
+    COMMAND_QUEUE_TYPE_TRANSFER_BIT = 1 << 2,
+};
+
 enum class ResourceUsage
 {
     Immutable,
@@ -73,20 +80,20 @@ enum class TextureFormat
 
 struct TextureDesc
 {
-    const char*         Name        = nullptr;
-    TextureDimension    Dimension   = TextureDimension::Texture2D;
-    uint32_t            Width       = 0;
-    uint32_t            Height      = 0;
+    const char* Name = nullptr;
+    TextureDimension Dimension = TextureDimension::Texture2D;
+    uint32_t Width = 0;
+    uint32_t Height = 0;
     union 
     { 
-        uint32_t        ArraySize   = 1;
-        uint32_t        Depth; 
+        uint32_t ArraySize = 1;
+        uint32_t Depth; 
     };
-    TextureFormat       Format      = TextureFormat::RGBA8_UNorm;
-    uint32_t            MipLevels   = 1;
-    uint32_t            SampleCount = 1;
-    ResourceBindFlags   BindFlags   = BindNone;
-    ResourceUsage       Usage       = ResourceUsage::Default;
+    TextureFormat Format = TextureFormat::RGBA8_UNorm;
+    uint32_t MipLevels = 1;
+    uint32_t SampleCount = 1;
+    ResourceBindFlags BindFlags = BindNone;
+    ResourceUsage Usage = ResourceUsage::Default;
 };
 
 enum class BufferMode
@@ -99,11 +106,12 @@ enum class BufferMode
 
 struct BufferDesc 
 {
-    uint64_t            Size              = 0;
-    ResourceBindFlags   BindFlags         = BindNone;
-    ResourceUsage       Usage             = ResourceUsage::Default;
-    BufferMode          Mode              = BufferMode::Undefined;
-    uint32_t            ElementByteStride = 0;
+    uint64_t Size = 0;
+    ResourceBindFlags BindFlags = BindNone;
+    ResourceUsage Usage = ResourceUsage::Default;
+    BufferMode Mode = BufferMode::Undefined;
+    uint32_t ElementByteStride = 0;
+    CommandQueueTypeFlags QueueTypeFlags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 };
 
 enum class ResourceState

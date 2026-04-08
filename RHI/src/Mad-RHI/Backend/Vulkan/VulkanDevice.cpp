@@ -128,7 +128,7 @@ RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
     VmaAllocation allocation;
     vmaCreateBuffer(m_Allocator, &bci, &aci, &buffer, &allocation, nullptr);
 
-    return MakeRef<VulkanBuffer>(desc, buffer, allocation, m_Allocator);
+    return MakeRef<VulkanBuffer>(desc, buffer, allocation, m_Allocator, this);
 }
 
 RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
@@ -139,6 +139,18 @@ RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
 RefPtr<GraphicsPipelineState> VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineDesc& desc)
 {
     return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc);
+}
+
+void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource, uint32_t queueMask)
+{
+    int numRefs = std::popcount(queueMask);
+
+    auto wrapper = vk::StaleResourceWrapper::Create(resource, numRefs);
+
+    if (queueMask & COMMAND_QUEUE_TYPE_GRAPHICS_BIT)
+        m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper);
+
+    wrapper.GiveUpOwnership();
 }
 
 void VulkanDevice::CreateSurface(const WindowHandle& wh)

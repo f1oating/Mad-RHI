@@ -23,11 +23,9 @@ public:
 
     virtual void Flush() override;
 
-    template<typename T>
-    void SafeReleaseResource(T&& resource)
-    {
-        m_ReleaseManager.SafeReleaseResource(std::forward<T>(resource), m_CommandBufferNumber);
-    }
+    void SafeReleaseResource(vk::StaleResourceWrapper&& wrapper);
+    void SafeReleaseResource(const vk::StaleResourceWrapper& wrapper);
+
     void PurgeReleaseResources();
 
     void FlushWaitSemaphores();

@@ -6,6 +6,8 @@
 
 namespace mad::rhi {
 
+class VulkanDevice;
+
 class VulkanTexture : public ObjectBase<Texture>
 {
 protected:
@@ -33,7 +35,8 @@ protected:
     ~VulkanBuffer();
 
 public:
-    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, VmaAllocation allocation, VmaAllocator allocator);
+    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, VmaAllocation allocation, 
+        VmaAllocator allocator, VulkanDevice* context);
 
     virtual ResourceState GetCurrentResourceState() override;
 
@@ -49,6 +52,8 @@ private:
     VkBuffer m_Buffer = nullptr;
     VmaAllocation m_Allocation = nullptr;
     VmaAllocator m_Allocator = nullptr;
+
+    VulkanDevice* m_Context = nullptr;
 
 };
 

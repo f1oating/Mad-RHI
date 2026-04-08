@@ -7,13 +7,6 @@
 
 namespace mad::rhi {
 
-enum CommandQueueTypeFlags : uint32_t
-{
-    COMMAND_QUEUE_TYPE_GRAPHICS = 1 << 0,
-    COMMAND_QUEUE_TYPE_COMPUTE = 1 << 1,
-    COMMAND_QUEUE_TYPE_TRANSFER = 1 << 2,
-};
-
 class ImmidiateCommandList : public Object
 {
 public:
