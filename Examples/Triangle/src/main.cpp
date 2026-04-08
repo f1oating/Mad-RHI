@@ -64,6 +64,20 @@ int main()
 
         rhi::RefPtr<rhi::Buffer> ib = device->CreateBuffer(ibd);
 
+        rhi::TextureDesc texDesc{};
+        texDesc.Name = "MyTexture";
+        texDesc.Dimension = rhi::TextureDimension::Texture2D;
+        texDesc.Width  = 512;
+        texDesc.Height = 512;
+        texDesc.Format = rhi::TextureFormat::RGBA8_UNorm;
+        texDesc.MipLevels = 1;
+        texDesc.ArraySize = 1;
+        texDesc.SampleCount = 1;
+        texDesc.BindFlags = rhi::ShaderResource;
+        texDesc.Usage = rhi::ResourceUsage::Default;
+
+        rhi::RefPtr<rhi::Texture> texture = device->CreateTexture(texDesc);
+
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();
         });

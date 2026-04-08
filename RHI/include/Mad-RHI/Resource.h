@@ -94,6 +94,7 @@ struct TextureDesc
     uint32_t SampleCount = 1;
     ResourceBindFlags BindFlags = BindNone;
     ResourceUsage Usage = ResourceUsage::Default;
+    CommandQueueTypeFlags QueueTypeFlags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 };
 
 enum class BufferMode

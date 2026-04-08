@@ -97,6 +97,53 @@ RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
     return m_GraphicsImmidiateCommandList;
 }
 
+RefPtr<Texture> VulkanDevice::CreateTexture(const TextureDesc& desc)
+{
+    VkImageType imageType;
+    switch (desc.Dimension)
+    {
+    case TextureDimension::Texture1D:
+    case TextureDimension::Texture1DArray:
+        imageType = VK_IMAGE_TYPE_1D; break;
+    case TextureDimension::Texture3D:
+        imageType = VK_IMAGE_TYPE_3D; break;
+    default:
+        imageType = VK_IMAGE_TYPE_2D; break;
+    }
+
+    bool isCube = (desc.Dimension == TextureDimension::TextureCube ||
+        desc.Dimension == TextureDimension::TextureCubeArray);
+
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (desc.BindFlags & RenderTarget) usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (desc.BindFlags & DepthStencil) usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (desc.BindFlags & ShaderResource) usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (desc.BindFlags & UnorderedAccess) usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+
+    VkImageCreateInfo ici{};
+    ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ici.imageType = imageType;
+    ici.format = ToVkFormat(desc.Format);
+    ici.extent = { desc.Width, desc.Height, (imageType == VK_IMAGE_TYPE_3D) ? desc.Depth : 1 };
+    ici.mipLevels = desc.MipLevels;
+    ici.arrayLayers = isCube ? desc.ArraySize * 6 : desc.ArraySize;
+    ici.samples = static_cast<VkSampleCountFlagBits>(desc.SampleCount);
+    ici.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ici.usage = usage;
+    ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    if (isCube) ici.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+    VmaAllocationCreateInfo aci{};
+    aci.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+
+    VkImage image;
+    VmaAllocation allocation;
+    vmaCreateImage(m_Allocator, &ici, &aci, &image, &allocation, nullptr);
+
+    return MakeRef<VulkanTexture>(desc, image, allocation, m_Allocator, this);
+}
+
 RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
 {
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;

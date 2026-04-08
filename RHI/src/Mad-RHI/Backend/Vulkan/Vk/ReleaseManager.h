@@ -87,4 +87,17 @@ struct VkBufferResource : StaleResourceBase
     }
 };
 
+struct VkImageResource : StaleResourceBase 
+{
+    VkImage Image;
+    VmaAllocation Allocation;
+    VmaAllocator Allocator;
+    
+    VkImageResource(VkImage i, VmaAllocation a, VmaAllocator al)
+        : Image(i), Allocation(a), Allocator(al) {}
+
+    void Destroy() override { vmaDestroyImage(Allocator, Image, Allocation); }
+};
+
+
 }

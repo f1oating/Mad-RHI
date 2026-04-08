@@ -9,9 +9,22 @@ VulkanTexture::VulkanTexture(const TextureDesc& desc, VkImage image)
     m_Image = image;
 }
 
+VulkanTexture::VulkanTexture(const TextureDesc& desc, VkImage image, 
+    VmaAllocation allocation, VmaAllocator allocator, VulkanDevice* context)
+{
+    m_Desc = desc;
+    m_Image = image;
+    m_Allocation = allocation;
+    m_Allocator = allocator;
+    m_Context = context;
+}
+
 VulkanTexture::~VulkanTexture()
 {
-    
+    if (m_Image && m_Allocation)
+    {
+        m_Context->SafeReleaseResource(new vk::VkImageResource{ m_Image, m_Allocation, m_Allocator }, m_Desc.QueueTypeFlags);
+    }
 }
 
 ResourceState VulkanTexture::GetCurrentResourceState()

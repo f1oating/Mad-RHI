@@ -15,6 +15,8 @@ protected:
 
 public:
     VulkanTexture(const TextureDesc& desc, VkImage image);
+    VulkanTexture(const TextureDesc& desc, VkImage image, VmaAllocation allocation, 
+        VmaAllocator allocator, VulkanDevice* context);
 
     virtual ResourceState GetCurrentResourceState() override;
 
@@ -26,7 +28,11 @@ private:
     ResourceState m_CurrentState = ResourceState::Undefined;
 
     VkImage m_Image = nullptr;
+    VmaAllocation m_Allocation = nullptr;
+    VmaAllocator m_Allocator = nullptr;
 
+    VulkanDevice* m_Context = nullptr;
+    
 };
 
 class VulkanBuffer : public ObjectBase<Buffer>
