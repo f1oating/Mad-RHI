@@ -2,6 +2,7 @@
 #include <spirv_reflect.h>
 #include <algorithm>
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 
 namespace mad::rhi {
 
@@ -157,10 +158,12 @@ ShaderType VulkanShader::GetType()
     return FromVkShaderStage(m_ShaderStage);
 }
 
-VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineDesc& desc)
+VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, 
+    const GraphicsPipelineDesc& desc, VulkanDevice* context)
 {
     m_Device = device;
     m_Desc = desc;
+    m_Context = context;
 
     CreateLayout();
     CreatePipeline();

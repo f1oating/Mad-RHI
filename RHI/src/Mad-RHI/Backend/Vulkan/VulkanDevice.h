@@ -18,7 +18,7 @@ protected:
 public:
     VulkanDevice(VkInstance instance, const WindowHandle& wh);
 
-    virtual void ReleaseStaleResources() override;
+    virtual void EndFrame() override;
     virtual void Resize() override;
 
     virtual void Present() override;
@@ -30,7 +30,7 @@ public:
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
 
-    void SafeReleaseResource(vk::StaleResourceBase* resource, uint32_t queueMask);
+    void SafeReleaseResource(vk::StaleResourceBase* resource);
 
     VkDevice GetDevice() { return m_Device; }
     VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }

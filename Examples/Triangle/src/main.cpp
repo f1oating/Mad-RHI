@@ -85,7 +85,7 @@ int main()
         while (window.IsRunning())
         {
             window.Update();
-            device->ReleaseStaleResources();
+            device->EndFrame();
             device->Present();
         }
     }

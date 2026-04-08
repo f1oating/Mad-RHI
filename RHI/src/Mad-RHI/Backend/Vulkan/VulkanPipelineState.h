@@ -8,6 +8,8 @@
 
 namespace mad::rhi {
 
+class VulkanDevice;
+
 struct VulkanReflectedShaderResource
 {
     std::string Name;
@@ -75,7 +77,8 @@ protected:
     ~VulkanGraphicsPipelineState();
 
 public:
-    VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineDesc& desc);
+    VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineDesc& desc,
+        VulkanDevice* context);
 
     VkPipeline GetPipeline() { return m_Pipeline; }
     VkPipelineLayout GetPipelineLayout() { return m_Layout; }
@@ -98,6 +101,8 @@ private:
     std::vector<VkDescriptorSetLayout> m_SetLayouts;
 
     VulkanShaderResourceReflection m_MergedReflection;
+
+    VulkanDevice* m_Context;
 
 };
 

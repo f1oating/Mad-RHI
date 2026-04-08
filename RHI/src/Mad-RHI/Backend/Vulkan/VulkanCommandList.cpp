@@ -139,7 +139,7 @@ void VulkanImmidiateCommandList::SafeReleaseResource(const vk::StaleResourceWrap
     m_ReleaseManager.SafeReleaseResource(wrapper, m_CommandBufferNumber);
 }
 
-void VulkanImmidiateCommandList::PurgeReleaseResources()
+void VulkanImmidiateCommandList::EndFrame()
 {
     Flush();
     m_ReleaseManager.Purge(GetTimelineSemaphoreValue());

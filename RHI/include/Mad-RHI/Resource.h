@@ -5,13 +5,6 @@
 
 namespace mad::rhi {
 
-enum CommandQueueTypeFlags : uint32_t
-{
-    COMMAND_QUEUE_TYPE_GRAPHICS_BIT = 1 << 0,
-    COMMAND_QUEUE_TYPE_COMPUTE_BIT = 1 << 1,
-    COMMAND_QUEUE_TYPE_TRANSFER_BIT = 1 << 2,
-};
-
 enum class ResourceUsage
 {
     Immutable,
@@ -94,7 +87,6 @@ struct TextureDesc
     uint32_t SampleCount = 1;
     ResourceBindFlags BindFlags = BindNone;
     ResourceUsage Usage = ResourceUsage::Default;
-    CommandQueueTypeFlags QueueTypeFlags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 };
 
 enum class BufferMode
@@ -112,7 +104,6 @@ struct BufferDesc
     ResourceUsage Usage = ResourceUsage::Default;
     BufferMode Mode = BufferMode::Undefined;
     uint32_t ElementByteStride = 0;
-    CommandQueueTypeFlags QueueTypeFlags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 };
 
 enum class ResourceState

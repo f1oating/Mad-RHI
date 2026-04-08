@@ -40,9 +40,9 @@ VulkanDevice::~VulkanDevice()
     std::cout << "Device destroyed" << std::endl;
 }
 
-void VulkanDevice::ReleaseStaleResources()
+void VulkanDevice::EndFrame()
 {
-    m_GraphicsImmidiateCommandList->PurgeReleaseResources();
+    m_GraphicsImmidiateCommandList->EndFrame();
 }
 
 void VulkanDevice::Resize()
@@ -185,17 +185,14 @@ RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
 
 RefPtr<GraphicsPipelineState> VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineDesc& desc)
 {
-    return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc);
+    return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc, this);
 }
 
-void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource, uint32_t queueMask)
+void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)
 {
-    int numRefs = std::popcount(queueMask);
+    auto wrapper = vk::StaleResourceWrapper::Create(resource, 1);
 
-    auto wrapper = vk::StaleResourceWrapper::Create(resource, numRefs);
-
-    if (queueMask & COMMAND_QUEUE_TYPE_GRAPHICS_BIT)
-        m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper);
+    m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper); 
 
     wrapper.GiveUpOwnership();
 }

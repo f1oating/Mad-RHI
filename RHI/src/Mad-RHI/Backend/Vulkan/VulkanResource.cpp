@@ -23,7 +23,7 @@ VulkanTexture::~VulkanTexture()
 {
     if (m_Image && m_Allocation)
     {
-        m_Context->SafeReleaseResource(new vk::VkImageResource{ m_Image, m_Allocation, m_Allocator }, m_Desc.QueueTypeFlags);
+        m_Context->SafeReleaseResource(new vk::VkImageResource{ m_Image, m_Allocation, m_Allocator });
     }
 }
 
@@ -46,7 +46,7 @@ VulkanBuffer::~VulkanBuffer()
 {
     if (m_Buffer && m_Allocation)
     {
-        m_Context->SafeReleaseResource(new vk::VkBufferResource{ m_Buffer, m_Allocation, m_Allocator }, m_Desc.QueueTypeFlags);
+        m_Context->SafeReleaseResource(new vk::VkBufferResource{ m_Buffer, m_Allocation, m_Allocator });
     }
 }
 
