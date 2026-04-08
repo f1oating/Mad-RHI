@@ -36,7 +36,7 @@ public:
 
         auto wrapper = vk::StaleResourceWrapper::Create(std::move(object), numRefs);
 
-        if (numRefs & ImmidiateCommandListFlags::Graphics)
+        if (numRefs & COMMAND_QUEUE_TYPE_GRAPHICS)
             m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper);
 
         wrapper.GiveUpOwnership();

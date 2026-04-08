@@ -131,6 +131,7 @@ void VulkanImmidiateCommandList::Flush()
 
 void VulkanImmidiateCommandList::PurgeReleaseResources()
 {
+    Flush();
     m_ReleaseManager.Purge(GetTimelineSemaphoreValue());
 }
 
