@@ -58,6 +58,7 @@ public:
     void SafeReleaseResource(StaleResourceWrapper&& wrapper, uint64_t cmdNum);
     void SafeReleaseResource(const StaleResourceWrapper& wrapper, uint64_t cmdNum);
 
+    void DiscardStaleResources(uint64_t fenceValue);
     void DiscardStaleResources(uint64_t cmdNum, uint64_t fenceValue);
 
     void Purge(uint64_t fenceValue);

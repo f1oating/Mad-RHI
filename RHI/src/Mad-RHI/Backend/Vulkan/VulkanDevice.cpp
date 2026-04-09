@@ -40,11 +40,6 @@ VulkanDevice::~VulkanDevice()
     std::cout << "Device destroyed" << std::endl;
 }
 
-void VulkanDevice::EndFrame()
-{
-    m_GraphicsImmidiateCommandList->EndFrame();
-}
-
 void VulkanDevice::Resize()
 {
     vkDeviceWaitIdle(m_Device);
@@ -59,6 +54,16 @@ void VulkanDevice::Resize()
     m_GraphicsImmidiateCommandList->FlushSignalSemaphores();
 
     AcquireNextImage();
+}
+
+void VulkanDevice::EndFrame()
+{
+    m_GraphicsImmidiateCommandList->EndFrame();
+}
+
+void VulkanDevice::GarbageCollect()
+{
+    m_GraphicsImmidiateCommandList->GarbageCollect();
 }
 
 void VulkanDevice::Present()

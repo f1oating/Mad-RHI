@@ -86,6 +86,7 @@ int main()
         {
             window.Update();
             device->EndFrame();
+            device->GarbageCollect();
             device->Present();
         }
     }

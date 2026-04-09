@@ -27,6 +27,7 @@ public:
     void SafeReleaseResource(const vk::StaleResourceWrapper& wrapper);
 
     void EndFrame();
+    void GarbageCollect();
 
     void FlushWaitSemaphores();
     void AddWaitSemaphore(VkSemaphore sem, uint64_t value = 0);

@@ -18,8 +18,10 @@ protected:
 public:
     VulkanDevice(VkInstance instance, const WindowHandle& wh);
 
-    virtual void EndFrame() override;
     virtual void Resize() override;
+
+    virtual void EndFrame() override;
+    virtual void GarbageCollect() override;
 
     virtual void Present() override;
 

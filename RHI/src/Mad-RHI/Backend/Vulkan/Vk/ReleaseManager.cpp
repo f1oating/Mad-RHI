@@ -22,6 +22,15 @@ void ReleaseManager::SafeReleaseResource(const StaleResourceWrapper& wrapper, ui
     m_StaleQueue.emplace_back(cmdNum, wrapper);
 }
 
+void ReleaseManager::DiscardStaleResources(uint64_t fenceValue)
+{
+    while (!m_StaleQueue.empty())
+    {
+        m_ReleaseQueue.emplace_back(fenceValue, std::move(m_StaleQueue.front().second));
+        m_StaleQueue.pop_front();
+    }
+}
+
 void ReleaseManager::DiscardStaleResources(uint64_t cmdNum, uint64_t fenceValue)
 {
     while (!m_StaleQueue.empty() &&

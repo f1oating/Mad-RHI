@@ -15,6 +15,8 @@ public:
     virtual void Resize() = 0;
 
     virtual void EndFrame() = 0;
+    virtual void GarbageCollect() = 0;
+    
     virtual void Present() = 0;
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;
