@@ -38,6 +38,7 @@ public:
     VkDevice GetDevice() { return m_Device; }
     VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
     uint32_t GetGraphicsQueueFamilyIndex() { return m_GraphicsFamily; }
+    vk::RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:
     VkInstance m_Instance = nullptr;

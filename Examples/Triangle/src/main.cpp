@@ -62,8 +62,14 @@ int main()
         ibd.Size = 12;
         ibd.BindFlags = rhi::ResourceBindFlags::IndexBuffer;
 
-        rhi::RefPtr<rhi::Buffer> ib = device->CreateBuffer(ibd);
+        rhi::BufferDesc cbd{};
+        cbd.Usage = rhi::ResourceUsage::Dynamic;
+        cbd.Size = 512;
+        cbd.BindFlags = rhi::ResourceBindFlags::UniformBuffer;
 
+        rhi::RefPtr<rhi::Buffer> ib = device->CreateBuffer(ibd);
+        rhi::RefPtr<rhi::Buffer> cb = device->CreateBuffer(cbd);
+        
         rhi::TextureDesc texDesc{};
         texDesc.Name = "MyTexture";
         texDesc.Dimension = rhi::TextureDimension::Texture2D;
@@ -85,6 +91,9 @@ int main()
         while (window.IsRunning())
         {
             window.Update();
+
+            cb->Map();
+
             device->EndFrame();
             device->GarbageCollect();
             device->Present();

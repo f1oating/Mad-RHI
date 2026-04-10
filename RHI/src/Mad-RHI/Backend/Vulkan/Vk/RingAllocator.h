@@ -22,12 +22,15 @@ struct Allocation
 class RingBuffer
 {
 public:
-    void Init(VmaAllocator allocator, VkDeviceSize capacity = 16 * 1024 * 1024);
+    void Init(VmaAllocator allocator, VkDeviceSize capacity = 1 * 1024 * 1024);
     void Shutdown();
 
     Allocation Allocate(VkDeviceSize size, VkDeviceSize alignment);
 
     VkDeviceSize GetHead() { return m_Head; }
+    VkBuffer GetBuffer() { return m_Buffer; }
+    void* GetMappedPtr() { return m_MappedPtr; }
+
     void SetTail(VkDeviceSize tail) { m_Tail = tail; }
 
 private:

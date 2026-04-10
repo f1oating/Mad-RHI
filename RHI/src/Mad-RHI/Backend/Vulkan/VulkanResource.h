@@ -43,13 +43,18 @@ protected:
     ~VulkanBuffer();
 
 public:
+    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, void* mapped, VulkanDevice* context);
     VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, VmaAllocation allocation, 
         VmaAllocator allocator, VulkanDevice* context);
 
+    virtual void* Map() override;
+    virtual void Unmap() override;
+        
     virtual ResourceState GetCurrentResourceState() override;
 
     VkBuffer GetBuffer() { return m_Buffer; }
     VmaAllocation GetAllocation() { return m_Allocation; }
+    VkDeviceSize GetOffset() { return m_Offset; }
     
     void SetResourceState(ResourceState state) { m_CurrentState = state; }
 
@@ -58,8 +63,11 @@ private:
     BufferDesc m_Desc;
 
     VkBuffer m_Buffer = nullptr;
+    void* m_MappedPtr = nullptr;
     VmaAllocation m_Allocation = nullptr;
     VmaAllocator m_Allocator = nullptr;
+
+    VkDeviceSize m_Offset = 0;
 
     VulkanDevice* m_Context = nullptr;
 

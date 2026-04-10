@@ -156,6 +156,11 @@ RefPtr<Texture> VulkanDevice::CreateTexture(const TextureDesc& desc)
 
 RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
 {
+    if (desc.Usage == ResourceUsage::Dynamic)
+    {
+        return MakeRef<VulkanBuffer>(desc, m_RingBuffer.GetBuffer(), m_RingBuffer.GetMappedPtr(), this);
+    }
+
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     if (desc.BindFlags & VertexBuffer) usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     if (desc.BindFlags & IndexBuffer) usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;

@@ -15,7 +15,7 @@ enum class ResourceUsage
 
 enum ResourceBindFlags : uint32_t
 {
-    BindNone             = 0,
+    BindNone         = 0,
     VertexBuffer     = 1 << 0,
     IndexBuffer      = 1 << 1,
     UniformBuffer    = 1 << 2,
@@ -132,6 +132,9 @@ class Buffer : public Object
 {
 public:
     virtual ~Buffer() = default;
+
+    virtual void* Map() = 0;
+    virtual void Unmap() = 0;
 
     virtual ResourceState GetCurrentResourceState() = 0;
 
