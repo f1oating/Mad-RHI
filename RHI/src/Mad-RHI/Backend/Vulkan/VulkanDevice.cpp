@@ -64,6 +64,8 @@ void VulkanDevice::EndFrame()
     SafeReleaseResource(new VkRingBufferResource{ ringBufferHead, &m_RingBuffer });
 
     m_GraphicsImmidiateCommandList->EndFrame();
+
+    m_CurrentFrame++;
 }
 
 void VulkanDevice::GarbageCollect()
@@ -82,7 +84,7 @@ void VulkanDevice::Present()
 
     VkSubmitInfo si{};
     si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrame]);
+    vkQueueSubmit(m_GraphicsQueue, 1, &si, m_Fences[m_CurrentFrameInFlight]);
 
     VkPresentInfoKHR pi{};
     pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -98,7 +100,7 @@ void VulkanDevice::Present()
         Resize();
     }
 
-    m_CurrentFrame = (m_CurrentFrame + 1) % 2;
+    m_CurrentFrameInFlight = (m_CurrentFrameInFlight + 1) % 2;
     AcquireNextImage();
 }
 
@@ -463,9 +465,9 @@ void VulkanDevice::CreateAllocator()
 
 void VulkanDevice::AcquireNextImage()
 {
-    vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight], VK_TRUE, UINT64_MAX);
     VkResult res = vkAcquireNextImageKHR(
-        m_Device, m_Swapchain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentFrame],
+        m_Device, m_Swapchain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentFrameInFlight],
         nullptr, &m_CurrentImageIndex
     );
 
@@ -475,8 +477,8 @@ void VulkanDevice::AcquireNextImage()
         return;
     }
 
-    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
-    m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrame]);
+    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight]);
+    m_GraphicsImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrameInFlight]);
 }
 
 }

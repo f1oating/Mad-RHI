@@ -58,7 +58,9 @@ private:
     std::vector<VkSemaphore> m_PresentCompleteSemaphores;
     std::vector<VkFence> m_Fences;
 
-    uint32_t m_CurrentFrame = 0;
+    uint64_t m_CurrentFrame = 0;
+
+    uint32_t m_CurrentFrameInFlight = 0;
     uint32_t m_CurrentImageIndex = 0;
 
     RefPtr<VulkanImmidiateCommandList> m_GraphicsImmidiateCommandList = nullptr;
