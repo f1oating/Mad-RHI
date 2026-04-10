@@ -7,6 +7,7 @@
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
 #include <vk_mem_alloc.h>
+#include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
 
 namespace mad::rhi {
 
@@ -62,6 +63,8 @@ private:
     RefPtr<VulkanImmidiateCommandList> m_GraphicsImmidiateCommandList = nullptr;
 
     VmaAllocator m_Allocator = nullptr;
+
+    vk::RingBuffer m_RingBuffer;
 
 private:
     void CreateSurface(const WindowHandle& wh);

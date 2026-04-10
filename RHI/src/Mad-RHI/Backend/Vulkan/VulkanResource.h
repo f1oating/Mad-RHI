@@ -3,6 +3,8 @@
 #include "Mad-RHI/Resource.h"
 #include <volk/volk.h>
 #include <vk_mem_alloc.h>
+#include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
+#include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
 
 namespace mad::rhi {
 
@@ -61,6 +63,44 @@ private:
 
     VulkanDevice* m_Context = nullptr;
 
+};
+
+struct VkBufferResource : vk::StaleResourceBase
+{
+    VkBuffer Buffer;
+    VmaAllocation Allocation;
+    VmaAllocator Allocator;
+
+    VkBufferResource(VkBuffer b, VmaAllocation a, VmaAllocator al)
+        : Buffer(b), Allocation(a), Allocator(al) {}
+
+    void Destroy() override
+    {
+        vmaDestroyBuffer(Allocator, Buffer, Allocation);
+    }
+};
+
+struct VkImageResource : vk::StaleResourceBase 
+{
+    VkImage Image;
+    VmaAllocation Allocation;
+    VmaAllocator Allocator;
+    
+    VkImageResource(VkImage i, VmaAllocation a, VmaAllocator al)
+        : Image(i), Allocation(a), Allocator(al) {}
+
+    void Destroy() override { vmaDestroyImage(Allocator, Image, Allocation); }
+};
+
+struct VkRingBufferResource : vk::StaleResourceBase 
+{
+    VkDeviceSize Head;
+    vk::RingBuffer* BufferPtr;
+    
+    VkRingBufferResource(VkDeviceSize head, vk::RingBuffer* bufferPtr)
+        : Head(head), BufferPtr(bufferPtr) {}
+
+    void Destroy() override { BufferPtr->SetTail(Head); }
 };
 
 inline VkImageViewType ToVkImageViewType(TextureDimension dimension)

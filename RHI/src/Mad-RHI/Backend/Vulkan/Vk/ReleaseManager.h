@@ -73,32 +73,4 @@ private:
 
 };
 
-struct VkBufferResource : StaleResourceBase
-{
-    VkBuffer Buffer;
-    VmaAllocation Allocation;
-    VmaAllocator Allocator;
-
-    VkBufferResource(VkBuffer b, VmaAllocation a, VmaAllocator al)
-        : Buffer(b), Allocation(a), Allocator(al) {}
-
-    void Destroy() override
-    {
-        vmaDestroyBuffer(Allocator, Buffer, Allocation);
-    }
-};
-
-struct VkImageResource : StaleResourceBase 
-{
-    VkImage Image;
-    VmaAllocation Allocation;
-    VmaAllocator Allocator;
-    
-    VkImageResource(VkImage i, VmaAllocation a, VmaAllocator al)
-        : Image(i), Allocation(a), Allocator(al) {}
-
-    void Destroy() override { vmaDestroyImage(Allocator, Image, Allocation); }
-};
-
-
 }

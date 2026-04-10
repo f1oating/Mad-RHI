@@ -17,6 +17,7 @@ VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
     CreateSwapchain();
     CreateFramesInFlightSync();
     CreateAllocator();
+    m_RingBuffer.Init(m_Allocator);
 
     m_GraphicsImmidiateCommandList = MakeRef<VulkanImmidiateCommandList>(this);
 
@@ -31,6 +32,7 @@ VulkanDevice::~VulkanDevice()
 
     m_GraphicsImmidiateCommandList = nullptr;
 
+    m_RingBuffer.Shutdown();
     if (m_Allocator) vmaDestroyAllocator(m_Allocator);
     DestroyFramesInFlightSync();
     DestroySwapchain();
@@ -58,6 +60,9 @@ void VulkanDevice::Resize()
 
 void VulkanDevice::EndFrame()
 {
+    VkDeviceSize ringBufferHead = m_RingBuffer.GetHead();
+    SafeReleaseResource(new VkRingBufferResource{ ringBufferHead, &m_RingBuffer });
+
     m_GraphicsImmidiateCommandList->EndFrame();
 }
 
