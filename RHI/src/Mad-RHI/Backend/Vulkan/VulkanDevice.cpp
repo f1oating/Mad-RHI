@@ -111,88 +111,12 @@ RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
 
 RefPtr<Texture> VulkanDevice::CreateTexture(const TextureDesc& desc)
 {
-    VkImageType imageType;
-    switch (desc.Dimension)
-    {
-    case TextureDimension::Texture1D:
-    case TextureDimension::Texture1DArray:
-        imageType = VK_IMAGE_TYPE_1D; break;
-    case TextureDimension::Texture3D:
-        imageType = VK_IMAGE_TYPE_3D; break;
-    default:
-        imageType = VK_IMAGE_TYPE_2D; break;
-    }
-
-    bool isCube = (desc.Dimension == TextureDimension::TextureCube ||
-        desc.Dimension == TextureDimension::TextureCubeArray);
-
-    VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    if (desc.BindFlags & RenderTarget) usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    if (desc.BindFlags & DepthStencil) usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    if (desc.BindFlags & ShaderResource) usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (desc.BindFlags & UnorderedAccess) usage |= VK_IMAGE_USAGE_STORAGE_BIT;
-
-    VkImageCreateInfo ici{};
-    ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ici.imageType = imageType;
-    ici.format = ToVkFormat(desc.Format);
-    ici.extent = { desc.Width, desc.Height, (imageType == VK_IMAGE_TYPE_3D) ? desc.Depth : 1 };
-    ici.mipLevels = desc.MipLevels;
-    ici.arrayLayers = isCube ? desc.ArraySize * 6 : desc.ArraySize;
-    ici.samples = static_cast<VkSampleCountFlagBits>(desc.SampleCount);
-    ici.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ici.usage = usage;
-    ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    if (isCube) ici.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-
-    VmaAllocationCreateInfo aci{};
-    aci.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-
-    VkImage image;
-    VmaAllocation allocation;
-    vmaCreateImage(m_Allocator, &ici, &aci, &image, &allocation, nullptr);
-
-    return MakeRef<VulkanTexture>(desc, image, allocation, m_Allocator, this);
+    return MakeRef<VulkanTexture>(desc, this);
 }
 
 RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
 {
-    if (desc.Usage == ResourceUsage::Dynamic)
-    {
-        return MakeRef<VulkanBuffer>(desc, m_RingBuffer.GetBuffer(), m_RingBuffer.GetMappedPtr(), this);
-    }
-
-    VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    if (desc.BindFlags & VertexBuffer) usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    if (desc.BindFlags & IndexBuffer) usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    if (desc.BindFlags & UniformBuffer) usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    if (desc.BindFlags & ShaderResource) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    if (desc.BindFlags & UnorderedAccess) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-
-    VkBufferCreateInfo bci{};
-    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bci.size = desc.Size;
-    bci.usage = usage;
-    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VmaAllocationCreateInfo aci{};
-    if (desc.Usage == ResourceUsage::Readback)
-    {
-        aci.usage = VMA_MEMORY_USAGE_AUTO;
-        aci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
-        bci.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    }
-    else
-    {
-        aci.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-    }
-
-    VkBuffer buffer;
-    VmaAllocation allocation;
-    vmaCreateBuffer(m_Allocator, &bci, &aci, &buffer, &allocation, nullptr);
-
-    return MakeRef<VulkanBuffer>(desc, buffer, allocation, m_Allocator, this);
+    return MakeRef<VulkanBuffer>(desc, this);
 }
 
 RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)

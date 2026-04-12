@@ -38,6 +38,7 @@ public:
     VkDevice GetDevice() { return m_Device; }
     VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
     uint32_t GetGraphicsQueueFamilyIndex() { return m_GraphicsFamily; }
+    VmaAllocator GetVmaAllocator() { return m_Allocator; }
     vk::RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:

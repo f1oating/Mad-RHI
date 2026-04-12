@@ -119,6 +119,37 @@ enum class ResourceState
     Present,
 };
 
+enum class TextureViewType
+{
+    ShaderResource,
+    RenderTarget,
+    DepthStencil,
+    ReadOnlyDepthStencil,
+    UnorderedAccess
+};
+
+struct TextureViewDesc
+{
+    TextureViewType Type = TextureViewType::ShaderResource;
+    uint32_t MostDetailedMip = 0;
+    uint32_t NumMipLevels    = 0;
+    uint32_t FirstArraySlice = 0;
+    uint32_t NumArraySlices  = 0;
+};
+
+enum class BufferViewType
+{
+    ShaderResource,
+    UnorderedAccess,
+};
+
+struct BufferViewDesc
+{
+    BufferViewType Type = BufferViewType::ShaderResource;
+    uint64_t ByteOffset = 0;
+    uint64_t ByteWidth  = 0; 
+};
+
 class Texture : public Object
 {
 public:
@@ -154,6 +185,20 @@ struct BufferBarrier
 {
     RefPtr<Buffer>  Buffer;
     ResourceState   NewState;
+};
+
+class TextureView : public Object
+{
+public:
+    virtual ~TextureView() = default;
+
+};
+
+class BufferView : public Object
+{
+public:
+    virtual ~BufferView() = default;
+
 };
 
 }

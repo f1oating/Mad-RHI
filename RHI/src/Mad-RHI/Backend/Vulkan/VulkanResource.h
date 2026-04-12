@@ -17,8 +17,7 @@ protected:
 
 public:
     VulkanTexture(const TextureDesc& desc, VkImage image);
-    VulkanTexture(const TextureDesc& desc, VkImage image, VmaAllocation allocation, 
-        VmaAllocator allocator, VulkanDevice* context);
+    VulkanTexture(const TextureDesc& desc, VulkanDevice* context);
 
     virtual ResourceState GetCurrentResourceState() override;
 
@@ -31,7 +30,6 @@ private:
 
     VkImage m_Image = nullptr;
     VmaAllocation m_Allocation = nullptr;
-    VmaAllocator m_Allocator = nullptr;
 
     VulkanDevice* m_Context = nullptr;
     
@@ -43,9 +41,7 @@ protected:
     ~VulkanBuffer();
 
 public:
-    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, void* mapped, VulkanDevice* context);
-    VulkanBuffer(const BufferDesc& desc, VkBuffer buffer, VmaAllocation allocation, 
-        VmaAllocator allocator, VulkanDevice* context);
+    VulkanBuffer(const BufferDesc& desc, VulkanDevice* context);
 
     virtual void* Map() override;
     virtual void Unmap() override;
@@ -65,11 +61,40 @@ private:
     VkBuffer m_Buffer = nullptr;
     void* m_MappedPtr = nullptr;
     VmaAllocation m_Allocation = nullptr;
-    VmaAllocator m_Allocator = nullptr;
 
     VkDeviceSize m_Offset = 0;
 
     VulkanDevice* m_Context = nullptr;
+
+};
+
+class VulkanTextureView : public ObjectBase<TextureView>
+{
+protected:
+    ~VulkanTextureView();
+
+public:
+    VulkanTextureView(const TextureViewDesc& desc, VulkanDevice* context);
+
+private:
+    VkDevice m_Device = nullptr;
+
+    VkImageView m_View = nullptr;
+
+};
+
+class VulkanBufferView : public ObjectBase<BufferView>
+{
+protected:
+    ~VulkanBufferView();
+
+public:
+    VulkanBufferView(const BufferViewDesc& desc, VulkanDevice* context);
+
+private:
+    VkDevice m_Device = nullptr;
+
+    VkBufferView m_View = nullptr;
 
 };
 
