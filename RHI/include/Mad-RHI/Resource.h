@@ -73,7 +73,6 @@ enum class TextureFormat
 
 struct TextureDesc
 {
-    const char* Name = nullptr;
     TextureDimension Dimension = TextureDimension::Texture2D;
     uint32_t Width = 0;
     uint32_t Height = 0;
@@ -132,9 +131,9 @@ struct TextureViewDesc
 {
     TextureViewType Type = TextureViewType::ShaderResource;
     uint32_t MostDetailedMip = 0;
-    uint32_t NumMipLevels    = 0;
+    uint32_t NumMipLevels = 0;
     uint32_t FirstArraySlice = 0;
-    uint32_t NumArraySlices  = 0;
+    uint32_t NumArraySlices = 0;
 };
 
 enum class BufferViewType
@@ -150,11 +149,66 @@ struct BufferViewDesc
     uint64_t ByteWidth  = 0; 
 };
 
+enum class FilterType : uint8_t
+{
+    Point,
+    Linear,
+    Anisotropic,
+
+    ComparisonPoint,
+    ComparisonLinear,
+    ComparisonAnisotropic,
+};
+
+enum class TextureAddressMode : uint8_t
+{
+    Wrap,
+    Mirror,
+    Clamp,
+    MirrorOnce,
+};
+
+enum class CompareOp
+{
+    Never,
+    Less,
+    Equal,
+    LessEqual,
+    Greater,
+    NotEqual,
+    GreaterEqual,
+    Always,
+};
+
+enum class SamplerFlags : uint8_t
+{
+    None                        = 0,
+    Subsampled                  = 1 << 0,
+    SubsampledCoarseReconstruct = 1 << 1,
+};
+
+struct SamplerDesc
+{
+    FilterType MinFilter = FilterType::Linear;
+    FilterType MagFilter = FilterType::Linear;
+    FilterType MipFilter = FilterType::Linear;
+    TextureAddressMode AddressU = TextureAddressMode::Clamp;
+    TextureAddressMode AddressV = TextureAddressMode::Clamp;
+    TextureAddressMode AddressW = TextureAddressMode::Clamp;
+    SamplerFlags Flags = SamplerFlags::None;
+    float MipLodBias = 0.0f;
+    uint32_t MaxAnisotropy = 0;
+    CompareOp Compare = CompareOp::Never;
+    float MinLod = 0.0f;
+    float MaxLod = 3.402823466e+38f;
+};
+
 class Texture : public Object
 {
 public:
     virtual ~Texture() = default;
 
+    virtual const TextureDesc& GetDesc() = 0;
     virtual ResourceState GetCurrentResourceState() = 0;
 
 };
@@ -167,7 +221,17 @@ public:
     virtual void* Map() = 0;
     virtual void Unmap() = 0;
 
+    virtual const BufferDesc& GetDesc() = 0;
     virtual ResourceState GetCurrentResourceState() = 0;
+
+};
+
+class Sampler : public Object
+{
+public:
+    virtual ~Sampler() = default;
+
+    virtual const SamplerDesc& GetDesc() = 0;
 
 };
 

@@ -63,6 +63,11 @@ VulkanTexture::~VulkanTexture()
     }
 }
 
+const TextureDesc& VulkanTexture::GetDesc()
+{
+    return m_Desc;
+}
+
 ResourceState VulkanTexture::GetCurrentResourceState()
 {
     return m_CurrentState;
@@ -153,9 +158,75 @@ void VulkanBuffer::Unmap()
     }   
 }
 
+const BufferDesc& VulkanBuffer::GetDesc()
+{
+    return m_Desc;
+}
+
 ResourceState VulkanBuffer::GetCurrentResourceState()
 {
     return m_CurrentState;
+}
+
+VulkanSampler::VulkanSampler(const SamplerDesc& desc, VulkanDevice* context)
+{
+    m_Desc = desc;
+    m_Context = context;
+
+    VkSamplerCreateInfo sci{};
+    sci.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sci.magFilter = ToVkFilter(desc.MagFilter);
+    sci.minFilter = ToVkFilter(desc.MinFilter);
+    sci.mipmapMode = ToVkMipmapMode(desc.MipFilter);
+    sci.addressModeU = ToVkAddressMode(desc.AddressU);
+    sci.addressModeV = ToVkAddressMode(desc.AddressV);
+    sci.addressModeW = ToVkAddressMode(desc.AddressW);
+    sci.mipLodBias = desc.MipLodBias;
+    sci.anisotropyEnable = (desc.MaxAnisotropy > 1) ? VK_TRUE : VK_FALSE;
+    sci.maxAnisotropy = static_cast<float>(desc.MaxAnisotropy);
+    sci.compareEnable = IsComparisonFilter(desc.MinFilter) ? VK_TRUE : VK_FALSE;
+    sci.compareOp = ToVkCompareOp(desc.Compare);
+    sci.minLod = desc.MinLod;
+    sci.maxLod = desc.MaxLod;
+    sci.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    sci.unnormalizedCoordinates = VK_FALSE;
+
+    vkCreateSampler(m_Context->GetDevice(), &sci, nullptr, &m_Sampler);
+}
+
+VulkanSampler::~VulkanSampler()
+{
+    if (m_Sampler)
+    {
+        m_Context->SafeReleaseResource(new VkSamplerResource{ m_Sampler, m_Context->GetDevice() });
+    }
+}
+
+const SamplerDesc& VulkanSampler::GetDesc()
+{
+    return m_Desc;
+}
+
+VulkanTextureView::VulkanTextureView(const TextureViewDesc& desc, VulkanDevice* context)
+{
+    m_Desc = desc;
+    m_Context = context;
+}
+
+VulkanTextureView::~VulkanTextureView()
+{
+    
+}
+
+VulkanBufferView::VulkanBufferView(const BufferViewDesc& desc, VulkanDevice* context)
+{
+    m_Desc = desc;
+    m_Context = context;
+}
+
+VulkanBufferView::~VulkanBufferView()
+{
+    
 }
 
 }

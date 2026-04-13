@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 
 namespace mad::rhi {
 
@@ -141,22 +142,6 @@ inline VkFrontFace ToVkFrontFace(FrontFace face)
     case FrontFace::CCW: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
     case FrontFace::CW:  return VK_FRONT_FACE_CLOCKWISE;
     default:             return VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    }
-}
-
-inline VkCompareOp ToVkCompareOp(CompareOp op)
-{
-    switch (op)
-    {
-    case CompareOp::Never:        return VK_COMPARE_OP_NEVER;
-    case CompareOp::Less:         return VK_COMPARE_OP_LESS;
-    case CompareOp::Equal:        return VK_COMPARE_OP_EQUAL;
-    case CompareOp::LessEqual:    return VK_COMPARE_OP_LESS_OR_EQUAL;
-    case CompareOp::Greater:      return VK_COMPARE_OP_GREATER;
-    case CompareOp::NotEqual:     return VK_COMPARE_OP_NOT_EQUAL;
-    case CompareOp::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
-    case CompareOp::Always:       return VK_COMPARE_OP_ALWAYS;
-    default:                      return VK_COMPARE_OP_ALWAYS;
     }
 }
 

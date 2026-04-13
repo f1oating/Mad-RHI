@@ -119,6 +119,11 @@ RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
     return MakeRef<VulkanBuffer>(desc, this);
 }
 
+RefPtr<Sampler> VulkanDevice::CreateSampler(const SamplerDesc& desc)
+{
+    return MakeRef<VulkanSampler>(desc, this);
+}
+
 RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
 {
     return MakeRef<VulkanShader>(m_Device, data, size);
@@ -298,7 +303,6 @@ void VulkanDevice::CreateSwapchain()
     for (int i = 0; i < imagesCount; i++)
     {
         TextureDesc texDesc{};
-        texDesc.Name = "Swapchain image";
         texDesc.Dimension = TextureDimension::Texture2D;
         texDesc.Width = caps.currentExtent.width;
         texDesc.Height = caps.currentExtent.height;

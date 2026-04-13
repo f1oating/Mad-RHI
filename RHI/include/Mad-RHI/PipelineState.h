@@ -49,12 +49,6 @@ struct RasterizationDesc
     float           LineWidth           = 1.0f;
 };
 
-enum class CompareOp
-{
-    Never, Less, Equal, LessEqual,
-    Greater, NotEqual, GreaterEqual, Always,
-};
-
 enum class StencilOp
 {
     Keep, Zero, Replace, IncrClamp, DecrClamp,

@@ -71,7 +71,6 @@ int main()
         rhi::RefPtr<rhi::Buffer> cb = device->CreateBuffer(cbd);
         
         rhi::TextureDesc texDesc{};
-        texDesc.Name = "MyTexture";
         texDesc.Dimension = rhi::TextureDimension::Texture2D;
         texDesc.Width  = 512;
         texDesc.Height = 512;
@@ -83,6 +82,18 @@ int main()
         texDesc.Usage = rhi::ResourceUsage::Default;
 
         rhi::RefPtr<rhi::Texture> texture = device->CreateTexture(texDesc);
+
+        rhi::SamplerDesc samplerDesc{};
+        samplerDesc.MinFilter = rhi::FilterType::Linear;
+        samplerDesc.MagFilter = rhi::FilterType::Linear;
+        samplerDesc.MipFilter = rhi::FilterType::Linear;
+        samplerDesc.AddressU = rhi::TextureAddressMode::Wrap;
+        samplerDesc.AddressV = rhi::TextureAddressMode::Wrap;
+        samplerDesc.AddressW = rhi::TextureAddressMode::Wrap;
+        samplerDesc.MinLod = 0.0f;
+        samplerDesc.MaxLod = 3.402823466e+38f;
+
+        rhi::RefPtr<rhi::Sampler> sampler = device->CreateSampler(samplerDesc);
 
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
             device->Resize();

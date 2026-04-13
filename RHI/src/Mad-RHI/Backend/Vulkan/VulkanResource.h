@@ -19,6 +19,7 @@ public:
     VulkanTexture(const TextureDesc& desc, VkImage image);
     VulkanTexture(const TextureDesc& desc, VulkanDevice* context);
 
+    virtual const TextureDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
 
     VkImage GetImage() { return m_Image; }
@@ -46,6 +47,7 @@ public:
     virtual void* Map() override;
     virtual void Unmap() override;
         
+    virtual const BufferDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
 
     VkBuffer GetBuffer() { return m_Buffer; }
@@ -68,6 +70,25 @@ private:
 
 };
 
+class VulkanSampler : public ObjectBase<Sampler>
+{
+protected:
+    ~VulkanSampler();
+
+public:
+    VulkanSampler(const SamplerDesc& desc, VulkanDevice* context);
+
+    virtual const SamplerDesc& GetDesc() override;
+
+private:
+    SamplerDesc m_Desc;
+
+    VkSampler m_Sampler = nullptr;
+
+    VulkanDevice* m_Context = nullptr;
+    
+};
+
 class VulkanTextureView : public ObjectBase<TextureView>
 {
 protected:
@@ -77,9 +98,11 @@ public:
     VulkanTextureView(const TextureViewDesc& desc, VulkanDevice* context);
 
 private:
-    VkDevice m_Device = nullptr;
+    TextureViewDesc m_Desc;
 
     VkImageView m_View = nullptr;
+
+    VulkanDevice* m_Context = nullptr;
 
 };
 
@@ -92,9 +115,11 @@ public:
     VulkanBufferView(const BufferViewDesc& desc, VulkanDevice* context);
 
 private:
-    VkDevice m_Device = nullptr;
+    BufferViewDesc m_Desc;
 
     VkBufferView m_View = nullptr;
+
+    VulkanDevice* m_Context = nullptr;
 
 };
 
@@ -123,6 +148,16 @@ struct VkImageResource : vk::StaleResourceBase
         : Image(i), Allocation(a), Allocator(al) {}
 
     void Destroy() override { vmaDestroyImage(Allocator, Image, Allocation); }
+};
+
+struct VkSamplerResource : vk::StaleResourceBase
+{
+    VkSampler Sampler;
+    VkDevice  Device;
+
+    VkSamplerResource(VkSampler s, VkDevice d) : Sampler(s), Device(d) {}
+
+    void Destroy() override { vkDestroySampler(Device, Sampler, nullptr); }
 };
 
 struct VkRingBufferResource : vk::StaleResourceBase 
@@ -383,6 +418,65 @@ inline VkAccessFlags ToVkAccessMask(ResourceState state)
     case ResourceState::Present:          return 0;
 
     default:                              return 0;
+    }
+}
+
+inline VkFilter ToVkFilter(FilterType filter)
+{
+    switch (filter)
+    {
+    case FilterType::Point:
+    case FilterType::ComparisonPoint:    return VK_FILTER_NEAREST;
+    case FilterType::Linear:
+    case FilterType::ComparisonLinear:   return VK_FILTER_LINEAR;
+    case FilterType::Anisotropic:
+    case FilterType::ComparisonAnisotropic: return VK_FILTER_LINEAR;
+    default:                             return VK_FILTER_LINEAR;
+    }
+}
+
+inline VkSamplerMipmapMode ToVkMipmapMode(FilterType mipFilter)
+{
+    switch (mipFilter)
+    {
+    case FilterType::Point:
+    case FilterType::ComparisonPoint:    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    default:                             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    }
+}
+
+inline bool IsComparisonFilter(FilterType filter)
+{
+    return filter == FilterType::ComparisonPoint
+        || filter == FilterType::ComparisonLinear
+        || filter == FilterType::ComparisonAnisotropic;
+}
+
+inline VkSamplerAddressMode ToVkAddressMode(TextureAddressMode mode)
+{
+    switch (mode)
+    {
+    case TextureAddressMode::Wrap:       return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    case TextureAddressMode::Mirror:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    case TextureAddressMode::Clamp:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    case TextureAddressMode::MirrorOnce: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+    default:                             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    }
+}
+
+inline VkCompareOp ToVkCompareOp(CompareOp op)
+{
+    switch (op)
+    {
+    case CompareOp::Never:        return VK_COMPARE_OP_NEVER;
+    case CompareOp::Less:         return VK_COMPARE_OP_LESS;
+    case CompareOp::Equal:        return VK_COMPARE_OP_EQUAL;
+    case CompareOp::LessEqual:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case CompareOp::Greater:      return VK_COMPARE_OP_GREATER;
+    case CompareOp::NotEqual:     return VK_COMPARE_OP_NOT_EQUAL;
+    case CompareOp::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case CompareOp::Always:       return VK_COMPARE_OP_ALWAYS;
+    default:                      return VK_COMPARE_OP_NEVER;
     }
 }
 

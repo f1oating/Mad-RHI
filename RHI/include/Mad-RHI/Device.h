@@ -23,6 +23,7 @@ public:
 
     virtual RefPtr<Texture> CreateTexture(const TextureDesc& desc) = 0;
     virtual RefPtr<Buffer> CreateBuffer(const BufferDesc& desc) = 0;
+    virtual RefPtr<Sampler> CreateSampler(const SamplerDesc& desc) = 0;
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) = 0;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
 

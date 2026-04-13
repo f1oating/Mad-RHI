@@ -30,6 +30,7 @@ public:
 
     virtual RefPtr<Texture> CreateTexture(const TextureDesc& desc) override;
     virtual RefPtr<Buffer> CreateBuffer(const BufferDesc& desc) override;
+    virtual RefPtr<Sampler> CreateSampler(const SamplerDesc& desc) override;
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
 
