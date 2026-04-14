@@ -5,6 +5,8 @@
 
 namespace mad::rhi {
 
+class TextureView;
+
 enum class ResourceUsage
 {
     Immutable,
@@ -118,37 +120,6 @@ enum class ResourceState
     Present,
 };
 
-enum class TextureViewType
-{
-    ShaderResource,
-    RenderTarget,
-    DepthStencil,
-    ReadOnlyDepthStencil,
-    UnorderedAccess
-};
-
-struct TextureViewDesc
-{
-    TextureViewType Type = TextureViewType::ShaderResource;
-    uint32_t MostDetailedMip = 0;
-    uint32_t NumMipLevels = 0;
-    uint32_t FirstArraySlice = 0;
-    uint32_t NumArraySlices = 0;
-};
-
-enum class BufferViewType
-{
-    ShaderResource,
-    UnorderedAccess,
-};
-
-struct BufferViewDesc
-{
-    BufferViewType Type = BufferViewType::ShaderResource;
-    uint64_t ByteOffset = 0;
-    uint64_t ByteWidth  = 0; 
-};
-
 enum class FilterType : uint8_t
 {
     Point,
@@ -203,10 +174,31 @@ struct SamplerDesc
     float MaxLod = 3.402823466e+38f;
 };
 
+enum class TextureViewType 
+{ 
+    Undefined, 
+    SRV, 
+    RTV, 
+    DSV, 
+    UAV 
+};
+
+struct TextureViewDesc 
+{
+    TextureViewType ViewType = TextureViewType::Undefined;
+    TextureFormat Format = TextureFormat::Unknown;
+    uint32_t MostDetailedMip = 0;
+    uint32_t NumMipLevels = 0;
+    uint32_t FirstArraySlice = 0;
+    uint32_t NumArraySlices = 0;
+};
+
 class Texture : public Object
 {
 public:
     virtual ~Texture() = default;
+
+    virtual RefPtr<TextureView> GetDefaultSRV() = 0;
 
     virtual const TextureDesc& GetDesc() = 0;
     virtual ResourceState GetCurrentResourceState() = 0;
@@ -255,13 +247,6 @@ class TextureView : public Object
 {
 public:
     virtual ~TextureView() = default;
-
-};
-
-class BufferView : public Object
-{
-public:
-    virtual ~BufferView() = default;
 
 };
 

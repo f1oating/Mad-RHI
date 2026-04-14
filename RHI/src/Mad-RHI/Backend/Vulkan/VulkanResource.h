@@ -9,6 +9,7 @@
 namespace mad::rhi {
 
 class VulkanDevice;
+class VulkanTextureView;
 
 class VulkanTexture : public ObjectBase<Texture>
 {
@@ -18,6 +19,8 @@ protected:
 public:
     VulkanTexture(const TextureDesc& desc, VkImage image);
     VulkanTexture(const TextureDesc& desc, VulkanDevice* context);
+
+    virtual RefPtr<TextureView> GetDefaultSRV() override;
 
     virtual const TextureDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
@@ -33,6 +36,8 @@ private:
     VmaAllocation m_Allocation = nullptr;
 
     VulkanDevice* m_Context = nullptr;
+
+    VulkanTextureView* m_DefaultSRV = nullptr;
     
 };
 
@@ -91,11 +96,14 @@ private:
 
 class VulkanTextureView : public ObjectBase<TextureView>
 {
+friend class VulkanTexture;
+
 protected:
     ~VulkanTextureView();
 
 public:
-    VulkanTextureView(const TextureViewDesc& desc, VulkanDevice* context);
+    VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
+        VulkanTexture* tex, bool owned, VulkanDevice* context);
 
 private:
     TextureViewDesc m_Desc;
@@ -103,23 +111,9 @@ private:
     VkImageView m_View = nullptr;
 
     VulkanDevice* m_Context = nullptr;
+    VulkanTexture* m_Texture = nullptr;
 
-};
-
-class VulkanBufferView : public ObjectBase<BufferView>
-{
-protected:
-    ~VulkanBufferView();
-
-public:
-    VulkanBufferView(const BufferViewDesc& desc, VulkanDevice* context);
-
-private:
-    BufferViewDesc m_Desc;
-
-    VkBufferView m_View = nullptr;
-
-    VulkanDevice* m_Context = nullptr;
+    RefPtr<VulkanTexture> m_TextureRef = nullptr;
 
 };
 
@@ -153,11 +147,21 @@ struct VkImageResource : vk::StaleResourceBase
 struct VkSamplerResource : vk::StaleResourceBase
 {
     VkSampler Sampler;
-    VkDevice  Device;
+    VkDevice Device;
 
     VkSamplerResource(VkSampler s, VkDevice d) : Sampler(s), Device(d) {}
 
     void Destroy() override { vkDestroySampler(Device, Sampler, nullptr); }
+};
+
+struct VkImageViewResource : vk::StaleResourceBase
+{
+    VkImageView View;
+    VkDevice Device;
+
+    VkImageViewResource(VkImageView v, VkDevice d) : View(v), Device(d) {}
+
+    void Destroy() override { vkDestroyImageView(Device, View, nullptr); }
 };
 
 struct VkRingBufferResource : vk::StaleResourceBase 
@@ -170,6 +174,16 @@ struct VkRingBufferResource : vk::StaleResourceBase
 
     void Destroy() override { BufferPtr->SetTail(Head); }
 };
+
+inline bool IsDepthOnlyFormat(TextureFormat fmt)
+{
+    return fmt == TextureFormat::D16_UNorm || fmt == TextureFormat::D32_Float;
+}
+
+inline bool IsDepthStencilFormat(TextureFormat fmt)
+{
+    return fmt == TextureFormat::D24_UNorm_S8_UInt || fmt == TextureFormat::D32_Float_S8_UInt;
+}
 
 inline VkImageViewType ToVkImageViewType(TextureDimension dimension)
 {

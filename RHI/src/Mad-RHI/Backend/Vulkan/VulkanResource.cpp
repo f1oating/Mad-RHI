@@ -57,10 +57,34 @@ VulkanTexture::VulkanTexture(const TextureDesc& desc, VulkanDevice* context)
 
 VulkanTexture::~VulkanTexture()
 {
+    if (m_DefaultSRV)
+    {
+        delete m_DefaultSRV;
+        m_DefaultSRV = nullptr;
+    }
+
     if (m_Image && m_Allocation)
     {
         m_Context->SafeReleaseResource(new VkImageResource{ m_Image, m_Allocation, m_Context->GetVmaAllocator() });
     }
+}
+
+RefPtr<TextureView> VulkanTexture::GetDefaultSRV()
+{
+    if (!m_DefaultSRV)
+    {
+        TextureViewDesc desc;
+        desc.ViewType = TextureViewType::SRV;
+        desc.Format = m_Desc.Format;
+        desc.MostDetailedMip = 0;
+        desc.NumMipLevels = 0;
+        desc.FirstArraySlice = 0;
+        desc.NumArraySlices = 0;
+
+        m_DefaultSRV = new VulkanTextureView(GetRefCounter(), desc, this, true, m_Context);
+    }
+
+    return RefPtr<TextureView>(m_DefaultSRV);
 }
 
 const TextureDesc& VulkanTexture::GetDesc()
@@ -207,26 +231,75 @@ const SamplerDesc& VulkanSampler::GetDesc()
     return m_Desc;
 }
 
-VulkanTextureView::VulkanTextureView(const TextureViewDesc& desc, VulkanDevice* context)
+VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
+    VulkanTexture* tex, bool owned, VulkanDevice* context)
+    : ObjectBase<TextureView>(sharedCounter)
 {
     m_Desc = desc;
     m_Context = context;
+    m_Texture = tex;
+    if (!owned)
+        m_TextureRef = RefPtr<VulkanTexture>(tex);
+
+    if (m_Desc.Format == TextureFormat::Unknown)
+        m_Desc.Format = tex->GetDesc().Format;
+
+    VkImageViewCreateInfo ci{};
+    ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ci.image = tex->GetImage();
+
+    switch (tex->GetDesc().Dimension) 
+    {
+        case TextureDimension::Texture1D:           ci.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
+        case TextureDimension::Texture1DArray:      ci.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
+        case TextureDimension::Texture2D:           ci.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
+        case TextureDimension::Texture2DArray:      ci.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
+        case TextureDimension::TextureCube:         ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
+        case TextureDimension::TextureCubeArray:    ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
+        case TextureDimension::Texture3D:           ci.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
+    }
+
+    ci.format = ToVkFormat(m_Desc.Format);
+    ci.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
+    ci.subresourceRange.baseMipLevel = m_Desc.MostDetailedMip;
+    ci.subresourceRange.levelCount = (m_Desc.NumMipLevels == 0)
+        ? VK_REMAINING_MIP_LEVELS
+        : m_Desc.NumMipLevels;
+    ci.subresourceRange.baseArrayLayer = m_Desc.FirstArraySlice;
+    ci.subresourceRange.layerCount = (m_Desc.NumArraySlices == 0)
+        ? VK_REMAINING_ARRAY_LAYERS
+        : m_Desc.NumArraySlices;
+
+    if (m_Desc.ViewType == TextureViewType::DSV)
+    {
+        if (IsDepthOnlyFormat(m_Desc.Format))
+            ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        else
+            ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+    else if (m_Desc.ViewType == TextureViewType::SRV && IsDepthStencilFormat(m_Desc.Format))
+    {
+        ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    else
+    {
+        ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    vkCreateImageView(m_Context->GetDevice(), &ci, nullptr, &m_View);
 }
 
 VulkanTextureView::~VulkanTextureView()
 {
-    
-}
-
-VulkanBufferView::VulkanBufferView(const BufferViewDesc& desc, VulkanDevice* context)
-{
-    m_Desc = desc;
-    m_Context = context;
-}
-
-VulkanBufferView::~VulkanBufferView()
-{
-    
+    if (m_View)
+    {
+        m_Context->SafeReleaseResource(new VkImageViewResource{ m_View, m_Context->GetDevice() });
+    }   
 }
 
 }

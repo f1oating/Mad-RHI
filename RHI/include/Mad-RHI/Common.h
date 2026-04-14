@@ -58,6 +58,11 @@ public:
         m_pRefCounter->m_Strong.store(1, std::memory_order_relaxed);
     }
 
+    ObjectBase(RefCounter* sharedCounter)
+    {
+        m_pRefCounter = sharedCounter;
+    }
+
     void AddRef() override
     {
         m_pRefCounter->AddStrongRef();
