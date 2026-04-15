@@ -95,7 +95,8 @@ int main()
 
         rhi::RefPtr<rhi::Sampler> sampler = device->CreateSampler(samplerDesc);
 
-        rhi::RefPtr<rhi::TextureView> textureView = texture->GetDefaultSRV();
+        rhi::RefPtr<rhi::TextureView> textureSRV = texture->GetDefaultSRV();
+        rhi::RefPtr<rhi::TextureView> textureRTV = texture->GetDefaultRTV();
         texture.Reset();
 
         common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {

@@ -21,6 +21,7 @@ public:
     VulkanTexture(const TextureDesc& desc, VulkanDevice* context);
 
     virtual RefPtr<TextureView> GetDefaultSRV() override;
+    virtual RefPtr<TextureView> GetDefaultRTV() override;
 
     virtual const TextureDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
@@ -38,6 +39,7 @@ private:
     VulkanDevice* m_Context = nullptr;
 
     VulkanTextureView* m_DefaultSRV = nullptr;
+    VulkanTextureView* m_DefaultRTV = nullptr;
     
 };
 
@@ -103,7 +105,7 @@ protected:
 
 public:
     VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
-        VulkanTexture* tex, bool owned, VulkanDevice* context);
+        VulkanTexture* tex, VulkanDevice* context);
 
 private:
     TextureViewDesc m_Desc;

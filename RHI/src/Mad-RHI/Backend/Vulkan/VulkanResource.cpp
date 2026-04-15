@@ -63,6 +63,12 @@ VulkanTexture::~VulkanTexture()
         m_DefaultSRV = nullptr;
     }
 
+    if (m_DefaultRTV)
+    {
+        delete m_DefaultRTV;
+        m_DefaultRTV = nullptr;
+    }
+
     if (m_Image && m_Allocation)
     {
         m_Context->SafeReleaseResource(new VkImageResource{ m_Image, m_Allocation, m_Context->GetVmaAllocator() });
@@ -81,10 +87,28 @@ RefPtr<TextureView> VulkanTexture::GetDefaultSRV()
         desc.FirstArraySlice = 0;
         desc.NumArraySlices = 0;
 
-        m_DefaultSRV = new VulkanTextureView(GetRefCounter(), desc, this, true, m_Context);
+        m_DefaultSRV = new VulkanTextureView(GetRefCounter(), desc, this, m_Context);
     }
 
     return RefPtr<TextureView>(m_DefaultSRV);
+}
+
+RefPtr<TextureView> VulkanTexture::GetDefaultRTV()
+{
+    if (!m_DefaultRTV)
+    {
+        TextureViewDesc desc;
+        desc.ViewType = TextureViewType::RTV;
+        desc.Format = m_Desc.Format;
+        desc.MostDetailedMip = 0;
+        desc.NumMipLevels = 1;
+        desc.FirstArraySlice = 0;
+        desc.NumArraySlices = 0;
+
+        m_DefaultRTV = new VulkanTextureView(GetRefCounter(), desc, this, m_Context);
+    }
+
+    return RefPtr<TextureView>(m_DefaultRTV);
 }
 
 const TextureDesc& VulkanTexture::GetDesc()
@@ -232,14 +256,12 @@ const SamplerDesc& VulkanSampler::GetDesc()
 }
 
 VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
-    VulkanTexture* tex, bool owned, VulkanDevice* context)
+    VulkanTexture* tex, VulkanDevice* context)
     : ObjectBase<TextureView>(sharedCounter)
 {
     m_Desc = desc;
     m_Context = context;
     m_Texture = tex;
-    if (!owned)
-        m_TextureRef = RefPtr<VulkanTexture>(tex);
 
     if (m_Desc.Format == TextureFormat::Unknown)
         m_Desc.Format = tex->GetDesc().Format;
