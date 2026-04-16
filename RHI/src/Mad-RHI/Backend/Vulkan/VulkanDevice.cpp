@@ -30,12 +30,13 @@ VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
 
+    DestroyFramesInFlightSync();
+    DestroySwapchain();
+
     m_GraphicsImmidiateCommandList = nullptr;
 
     m_RingBuffer.Shutdown();
     if (m_Allocator) vmaDestroyAllocator(m_Allocator);
-    DestroyFramesInFlightSync();
-    DestroySwapchain();
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 
@@ -73,12 +74,13 @@ void VulkanDevice::GarbageCollect()
     m_GraphicsImmidiateCommandList->GarbageCollect();
 }
 
+RefPtr<Texture> VulkanDevice::GetCurrentBackBuffer()
+{
+    return m_SwapchainImages[m_CurrentImageIndex];
+}
+
 void VulkanDevice::Present()
 {
-    TextureBarrier tb{};
-    tb.NewState = ResourceState::Present;
-    tb.Texture = m_SwapchainImages[m_CurrentImageIndex];
-    m_GraphicsImmidiateCommandList->ResourceBarrier({ tb }, {});
     m_GraphicsImmidiateCommandList->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
     m_GraphicsImmidiateCommandList->Flush();
 
@@ -312,7 +314,7 @@ void VulkanDevice::CreateSwapchain()
         texDesc.SampleCount = 1;
         texDesc.BindFlags = RenderTarget;
         texDesc.Usage = ResourceUsage::Default;
-        m_SwapchainImages[i] = MakeRef<VulkanTexture>(texDesc, images[i]);
+        m_SwapchainImages[i] = MakeRef<VulkanTexture>(texDesc, images[i], this);
     }
 }
 

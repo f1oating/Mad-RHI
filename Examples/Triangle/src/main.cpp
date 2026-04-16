@@ -109,6 +109,21 @@ int main()
 
             cb->Map();
 
+            rhi::RefPtr<rhi::Texture> backBuffer = device->GetCurrentBackBuffer();
+
+            icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::RenderTarget} }, {});
+
+            icl->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+
+            float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+            icl->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+
+            icl->Draw(0, 0);
+
+            icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::Present} }, {});
+
+            icl->Flush();
+
             device->EndFrame();
             device->GarbageCollect();
             device->Present();

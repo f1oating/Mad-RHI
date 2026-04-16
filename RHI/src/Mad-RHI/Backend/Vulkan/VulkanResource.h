@@ -17,7 +17,7 @@ protected:
     ~VulkanTexture();
 
 public:
-    VulkanTexture(const TextureDesc& desc, VkImage image);
+    VulkanTexture(const TextureDesc& desc, VkImage image, VulkanDevice* context);
     VulkanTexture(const TextureDesc& desc, VulkanDevice* context);
 
     virtual RefPtr<TextureView> GetDefaultSRV() override;
@@ -106,6 +106,9 @@ protected:
 public:
     VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
         VulkanTexture* tex, VulkanDevice* context);
+
+    VulkanTexture* GetTexture() { return m_Texture; }
+    VkImageView GetView() { return m_View; }
 
 private:
     TextureViewDesc m_Desc;

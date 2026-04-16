@@ -17,6 +17,8 @@ public:
     virtual void EndFrame() = 0;
     virtual void GarbageCollect() = 0;
     
+    virtual RefPtr<Texture> GetCurrentBackBuffer() = 0;
+
     virtual void Present() = 0;
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;

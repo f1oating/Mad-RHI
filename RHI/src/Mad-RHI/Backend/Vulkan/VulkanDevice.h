@@ -24,6 +24,8 @@ public:
     virtual void EndFrame() override;
     virtual void GarbageCollect() override;
 
+    virtual RefPtr<Texture> GetCurrentBackBuffer() override;
+
     virtual void Present() override;
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;

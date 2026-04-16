@@ -35,12 +35,14 @@ VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
 void VulkanImmidiateCommandList::ResourceBarrier(
     std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers)
 {
+    EndRenderingScope();
+
     std::vector<VkImageMemoryBarrier> imageMemoryBarriers;
     std::vector<VkBufferMemoryBarrier> bufferMemoryBarriers;
 
     for (TextureBarrier& tb : textureBarriers)
     {
-        VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(tb.Texture.Get());
+        VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(tb.Texture);
         VkImageMemoryBarrier imgBarrier{};
         imgBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         imgBarrier.srcAccessMask       = ToVkAccessMask(vulkanTexture->GetCurrentResourceState());
@@ -63,7 +65,7 @@ void VulkanImmidiateCommandList::ResourceBarrier(
 
     for (BufferBarrier& bb : bufferBarriers)
     {
-        VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(bb.Buffer.Get());
+        VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(bb.Buffer);
         VkBufferMemoryBarrier bufBarrier{};
         bufBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         bufBarrier.srcAccessMask       = ToVkAccessMask(vulkanBuffer->GetCurrentResourceState());
@@ -88,8 +90,96 @@ void VulkanImmidiateCommandList::ResourceBarrier(
     );
 }
 
+void VulkanImmidiateCommandList::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
+{
+    EndRenderingScope();
+
+    m_ColorAttachments.clear();
+    m_HasDepthAttachment = false;
+
+    uint32_t width = 0, height = 0;
+
+    for (TextureView* view : colorViews)
+    {
+        VulkanTextureView* vkView = static_cast<VulkanTextureView*>(view);
+
+        if (width == 0)
+        {
+            width  = vkView->GetTexture()->GetDesc().Width;
+            height = vkView->GetTexture()->GetDesc().Height;
+        }
+
+        VkRenderingAttachmentInfoKHR att{};
+        att.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        att.imageView = vkView->GetView();
+        att.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        att.resolveMode = VK_RESOLVE_MODE_NONE;
+        att.resolveImageView = VK_NULL_HANDLE;
+        att.resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        att.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        att.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        att.clearValue = {};
+        m_ColorAttachments.push_back(att);
+    }
+
+    if (depthView)
+    {
+        VulkanTextureView* vkView = static_cast<VulkanTextureView*>(depthView);
+
+        m_DepthAttachment = {};
+        m_DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        m_DepthAttachment.imageView = vkView->GetView();
+        m_DepthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        m_DepthAttachment.resolveMode = VK_RESOLVE_MODE_NONE;
+        m_DepthAttachment.resolveImageView = VK_NULL_HANDLE;
+        m_DepthAttachment.resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        m_DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        m_DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        m_DepthAttachment.clearValue = {};
+        m_HasDepthAttachment = true;
+    }
+
+    m_RenderingInfo = {};
+    m_RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    m_RenderingInfo.renderArea = {{0, 0}, {width, height}};
+    m_RenderingInfo.layerCount = 1;
+    m_RenderingInfo.colorAttachmentCount = (uint32_t)m_ColorAttachments.size();
+    m_RenderingInfo.pColorAttachments = m_ColorAttachments.data();
+    m_RenderingInfo.pDepthAttachment = m_HasDepthAttachment ? &m_DepthAttachment : nullptr;
+    m_RenderingInfo.pStencilAttachment = nullptr;
+}
+
+void VulkanImmidiateCommandList::ClearRenderTarget(TextureView* view, const float color[4])
+{
+    VulkanTextureView* vkView = static_cast<VulkanTextureView*>(view);
+    VkImageView target = vkView->GetView();
+
+    for (VkRenderingAttachmentInfoKHR& att : m_ColorAttachments)
+    {
+        if (att.imageView == target)
+        {
+            att.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            att.clearValue.color = {{ color[0], color[1], color[2], color[3] }};
+            break;
+        }
+    }
+}
+
+void VulkanImmidiateCommandList::ClearDepthStencil(TextureView* view, float depth, uint8_t stencil)
+{
+    m_DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    m_DepthAttachment.clearValue.depthStencil = { depth, stencil };
+}
+
+void VulkanImmidiateCommandList::Draw(uint32_t numVertices, uint32_t firstVertex)
+{
+    BeginRenderingIfNeeded();
+    //vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
+}
+
 void VulkanImmidiateCommandList::Flush()
 {
+    EndRenderingScope();
     vkEndCommandBuffer(m_CurrentCommandBuffer);
 
     AddSignalSemaphore(m_TimelineSemaphore, ++m_TimelineSemaphoreValue);
@@ -219,6 +309,25 @@ void VulkanImmidiateCommandList::AcquireCommandBuffer()
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &cbbi);
 
     m_CommandBufferNumber++;
+}
+
+void VulkanImmidiateCommandList::BeginRenderingIfNeeded()
+{
+    if (m_IsInRenderingScope) return;
+    if (m_ColorAttachments.empty() && !m_HasDepthAttachment) return;
+
+    m_RenderingInfo.pColorAttachments = m_ColorAttachments.data();
+    m_RenderingInfo.pDepthAttachment = m_HasDepthAttachment ? &m_DepthAttachment : nullptr;
+
+    vkCmdBeginRendering(m_CurrentCommandBuffer, &m_RenderingInfo);
+    m_IsInRenderingScope = true;
+}
+
+void VulkanImmidiateCommandList::EndRenderingScope()
+{
+    if (!m_IsInRenderingScope) return;
+    vkCmdEndRendering(m_CurrentCommandBuffer);
+    m_IsInRenderingScope = false;
 }
 
 }

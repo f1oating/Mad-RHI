@@ -3,10 +3,11 @@
 
 namespace mad::rhi {
 
-VulkanTexture::VulkanTexture(const TextureDesc& desc, VkImage image)
+VulkanTexture::VulkanTexture(const TextureDesc& desc, VkImage image, VulkanDevice* context)
 {
     m_Desc = desc;
     m_Image = image;
+    m_Context = context;
 }
 
 VulkanTexture::VulkanTexture(const TextureDesc& desc, VulkanDevice* context)
