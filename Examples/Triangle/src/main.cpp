@@ -57,17 +57,11 @@ int main()
         pipelineDesc.Rendering.SampleCount = 1;
         rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = device->CreateGraphicsPipeline(pipelineDesc);
 
-        rhi::BufferDesc ibd{};
-        ibd.Usage = rhi::ResourceUsage::Default;
-        ibd.Size = 12;
-        ibd.BindFlags = rhi::ResourceBindFlags::IndexBuffer;
-
         rhi::BufferDesc cbd{};
         cbd.Usage = rhi::ResourceUsage::Dynamic;
         cbd.Size = 512;
-        cbd.BindFlags = rhi::ResourceBindFlags::UniformBuffer;
+        cbd.BindFlags = rhi::RESOURCE_BIND_UNIFORM_BUFFER;
 
-        rhi::RefPtr<rhi::Buffer> ib = device->CreateBuffer(ibd);
         rhi::RefPtr<rhi::Buffer> cb = device->CreateBuffer(cbd);
         
         rhi::TextureDesc texDesc{};
@@ -78,7 +72,7 @@ int main()
         texDesc.MipLevels = 1;
         texDesc.ArraySize = 1;
         texDesc.SampleCount = 1;
-        texDesc.BindFlags = rhi::ShaderResource;
+        texDesc.BindFlags = rhi::RESOURCE_BIND_SHADER_RESOURSE;
         texDesc.Usage = rhi::ResourceUsage::Default;
 
         rhi::RefPtr<rhi::Texture> texture = device->CreateTexture(texDesc);
@@ -105,6 +99,26 @@ int main()
 
         rhi::RefPtr<rhi::Fence> fence = device->CreateFence();
 
+        struct Vertex { float x, y; float r, g, b; };
+
+        Vertex vertices[] = 
+        {
+            {  0.0f, -0.5f,  1.0f, 0.0f, 0.0f },
+            {  0.5f,  0.5f,  0.0f, 1.0f, 0.0f },
+            { -0.5f,  0.5f,  0.0f, 0.0f, 1.0f },
+        };
+
+        rhi::BufferDesc vbd{};
+        vbd.Usage = rhi::ResourceUsage::Default;
+        vbd.Size = sizeof(vertices);
+        vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+        rhi::RefPtr<rhi::Buffer> vb = device->CreateBuffer(vbd);
+
+        icl->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::CopyDst} });
+        icl->UpdateBuffer(vb.Get(), vertices, sizeof(vertices));
+        icl->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::VertexBuffer} });
+        icl->Flush();
+
         while (window.IsRunning())
         {
             window.Update();
@@ -121,7 +135,8 @@ int main()
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             icl->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
             
-            icl->Draw(0, 0);
+            icl->SetVertexBuffers(0, { vb.Get() }, { 0 });
+            icl->Draw(3, 0);
 
             icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::Present} }, {});
 

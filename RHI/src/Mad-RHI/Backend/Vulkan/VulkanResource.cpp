@@ -31,10 +31,10 @@ VulkanTexture::VulkanTexture(const TextureDesc& desc, VulkanDevice* context)
         desc.Dimension == TextureDimension::TextureCubeArray);
 
     VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    if (desc.BindFlags & RenderTarget) usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    if (desc.BindFlags & DepthStencil) usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    if (desc.BindFlags & ShaderResource) usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-    if (desc.BindFlags & UnorderedAccess) usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_RENDER_TARGET) usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_DEPTH_STENCIL) usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_SHADER_RESOURSE) usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_UNORDERED_ACCESS) usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 
     VkImageCreateInfo ici{};
     ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -137,11 +137,11 @@ VulkanBuffer::VulkanBuffer(const BufferDesc& desc, VulkanDevice* context)
     }
 
     VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    if (desc.BindFlags & VertexBuffer) usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    if (desc.BindFlags & IndexBuffer) usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    if (desc.BindFlags & UniformBuffer) usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    if (desc.BindFlags & ShaderResource) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    if (desc.BindFlags & UnorderedAccess) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_VERTEX_BUFFER) usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_INDEX_BUFFER) usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_UNIFORM_BUFFER) usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_SHADER_RESOURSE) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (desc.BindFlags & RESOURCE_BIND_UNORDERED_ACCESS) usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
     VkBufferCreateInfo bci{};
     bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

@@ -4,6 +4,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include <algorithm>
 #include "Mad-RHI/Backend/Vulkan/VulkanFence.h"
+#include <cstring>
 
 namespace mad::rhi {
 
@@ -194,7 +195,86 @@ void VulkanImmidiateCommandList::SetVertexBuffers(uint32_t startSlot, std::vecto
 void VulkanImmidiateCommandList::Draw(uint32_t numVertices, uint32_t firstVertex)
 {
     BeginRenderingIfNeeded();
-    //vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
+    vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
+}
+
+void VulkanImmidiateCommandList::UpdateTexture(Texture* texture, const void* data, uint64_t size)
+{
+    VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(texture);
+    const TextureDesc& desc = vulkanTexture->GetDesc();
+    VmaAllocator allocator = m_Context->GetVmaAllocator();
+
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingAllocation;
+
+    VkBufferCreateInfo bci{};
+    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size = size;
+    bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo aci{};
+    aci.usage = VMA_MEMORY_USAGE_AUTO;
+    aci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+    vmaCreateBuffer(allocator, &bci, &aci, &stagingBuffer, &stagingAllocation, nullptr);
+
+    void* mapped;
+    vmaMapMemory(allocator, stagingAllocation, &mapped);
+    memcpy(mapped, data, size);
+    vmaUnmapMemory(allocator, stagingAllocation);
+
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = { desc.Width, desc.Height, 1 };
+
+    vkCmdCopyBufferToImage(
+        m_CurrentCommandBuffer,
+        stagingBuffer,
+        vulkanTexture->GetImage(),
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1, &region);
+
+    SafeReleaseResource(vk::StaleResourceWrapper::Create(new VkBufferResource{ stagingBuffer, stagingAllocation, allocator }));
+}
+
+void VulkanImmidiateCommandList::UpdateBuffer(Buffer* buffer, const void* data, uint64_t size)
+{
+    VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(buffer);
+    VmaAllocator allocator = m_Context->GetVmaAllocator();
+
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingAllocation;
+
+    VkBufferCreateInfo bci{};
+    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bci.size = size;
+    bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo aci{};
+    aci.usage = VMA_MEMORY_USAGE_AUTO;
+    aci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+    vmaCreateBuffer(allocator, &bci, &aci, &stagingBuffer, &stagingAllocation, nullptr);
+
+    void* mapped;
+    vmaMapMemory(allocator, stagingAllocation, &mapped);
+    memcpy(mapped, data, size);
+    vmaUnmapMemory(allocator, stagingAllocation);
+
+    VkBufferCopy region{};
+    region.size = size;
+    vkCmdCopyBuffer(m_CurrentCommandBuffer, stagingBuffer, vulkanBuffer->GetBuffer(), 1, &region);
+
+    SafeReleaseResource(vk::StaleResourceWrapper::Create(new VkBufferResource{ stagingBuffer, stagingAllocation, allocator }));
 }
 
 void VulkanImmidiateCommandList::EnqueueSignal(Fence* fence, uint64_t value)
@@ -255,7 +335,7 @@ void VulkanImmidiateCommandList::Flush()
 
 void VulkanImmidiateCommandList::SafeReleaseResource(vk::StaleResourceWrapper&& wrapper)
 {
-    m_ReleaseManager.SafeReleaseResource(wrapper, m_CommandBufferNumber);
+    m_ReleaseManager.SafeReleaseResource(std::move(wrapper), m_CommandBufferNumber);
 }
 
 void VulkanImmidiateCommandList::SafeReleaseResource(const vk::StaleResourceWrapper& wrapper)
@@ -354,6 +434,17 @@ void VulkanImmidiateCommandList::BeginRenderingIfNeeded()
     m_RenderingInfo.pDepthAttachment = m_HasDepthAttachment ? &m_DepthAttachment : nullptr;
 
     vkCmdBeginRendering(m_CurrentCommandBuffer, &m_RenderingInfo);
+    
+    VkViewport viewport{};
+    viewport.width    = (float)m_RenderingInfo.renderArea.extent.width;
+    viewport.height   = (float)m_RenderingInfo.renderArea.extent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(m_CurrentCommandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor{ {0, 0}, m_RenderingInfo.renderArea.extent };
+    vkCmdSetScissor(m_CurrentCommandBuffer, 0, 1, &scissor);
+
     m_IsInRenderingScope = true;
 }
 

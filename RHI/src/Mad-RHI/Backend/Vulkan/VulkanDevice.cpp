@@ -318,7 +318,7 @@ void VulkanDevice::CreateSwapchain()
         texDesc.Format = FromVkFormat(chosenFormat.format);
         texDesc.MipLevels = 1;
         texDesc.SampleCount = 1;
-        texDesc.BindFlags = RenderTarget;
+        texDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET;
         texDesc.Usage = ResourceUsage::Default;
         m_SwapchainImages[i] = MakeRef<VulkanTexture>(texDesc, images[i], this);
     }

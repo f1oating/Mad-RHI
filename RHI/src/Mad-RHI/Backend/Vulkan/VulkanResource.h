@@ -427,6 +427,7 @@ inline VkAccessFlags ToVkAccessMask(ResourceState state)
     switch (state)
     {
     case ResourceState::Undefined:        return 0;
+    case ResourceState::VertexBuffer:     return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
     case ResourceState::RenderTarget:     return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     case ResourceState::ShaderResource:   return VK_ACCESS_SHADER_READ_BIT;
     case ResourceState::UnorderedAccess:  return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;

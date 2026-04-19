@@ -45,7 +45,7 @@ void VulkanShaderResourceReflection::Merge(const VulkanShaderResourceReflection*
 void VulkanShaderResourceReflection::AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage)
 {
     SpvReflectShaderModule spvModule;
-    spvReflectCreateShaderModule(size, byteCode, &spvModule);
+    spvReflectCreateShaderModule(size * sizeof(uint32_t), byteCode, &spvModule);
 
     uint32_t descBindingCount;
     spvReflectEnumerateDescriptorBindings(&spvModule, &descBindingCount, nullptr);
@@ -97,7 +97,7 @@ VulkanShader::VulkanShader(VkDevice device, const uint32_t* byteCode, uint64_t s
     m_Device = device;
 
     SpvReflectShaderModule spvModule;
-    spvReflectCreateShaderModule(size, byteCode, &spvModule);
+    spvReflectCreateShaderModule(size * sizeof(uint32_t), byteCode, &spvModule);
     m_ShaderStage = static_cast<VkShaderStageFlagBits>(spvModule.shader_stage);
 
     m_ResourceReflection.AddStage(byteCode, size, m_ShaderStage);

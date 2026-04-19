@@ -9,6 +9,13 @@
 
 namespace mad::rhi {
 
+enum QueueType : uint8_t
+{
+    QUEUE_TYPE_GRAPHICS = 1 << 0,
+    QUEUE_TYPE_COMPUTE = 2 << 0,
+    QUEUE_TYPE_TRANSFER = 3 << 0,
+};
+
 class ImmidiateCommandList : public Object
 {
 public:
@@ -26,6 +33,9 @@ public:
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
+
+    virtual void UpdateTexture(Texture* texture, const void* data, uint64_t size) = 0;
+    virtual void UpdateBuffer(Buffer* buffer, const void* data, uint64_t size) = 0;
 
     virtual void EnqueueSignal(Fence* fence, uint64_t value) = 0;
     virtual void WaitForFence(Fence* fence, uint64_t value) = 0;

@@ -32,6 +32,9 @@ public:
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
 
+    virtual void UpdateTexture(Texture* texture, const void* data, uint64_t size) override;
+    virtual void UpdateBuffer(Buffer* buffer, const void* data, uint64_t size) override;
+    
     virtual void EnqueueSignal(Fence* fence, uint64_t value) override;
     virtual void WaitForFence(Fence* fence, uint64_t value) override;
 

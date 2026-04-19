@@ -15,16 +15,16 @@ enum class ResourceUsage
     Readback,
 };
 
-enum ResourceBindFlags : uint32_t
+enum ResourceBind : uint8_t
 {
-    BindNone         = 0,
-    VertexBuffer     = 1 << 0,
-    IndexBuffer      = 1 << 1,
-    UniformBuffer    = 1 << 2,
-    ShaderResource   = 1 << 3,
-    RenderTarget     = 1 << 4,
-    DepthStencil     = 1 << 5,
-    UnorderedAccess  = 1 << 6,
+    RESOURCE_BIND_NONE = 0,
+    RESOURCE_BIND_VERTEX_BUFFER = 1 << 0,
+    RESOURCE_BIND_INDEX_BUFFER = 1 << 1,
+    RESOURCE_BIND_UNIFORM_BUFFER = 1 << 2,
+    RESOURCE_BIND_SHADER_RESOURSE = 1 << 3,
+    RESOURCE_BIND_RENDER_TARGET = 1 << 4,
+    RESOURCE_BIND_DEPTH_STENCIL = 1 << 5,
+    RESOURCE_BIND_UNORDERED_ACCESS = 1 << 6,
 };
 
 enum class TextureDimension
@@ -86,7 +86,7 @@ struct TextureDesc
     TextureFormat Format = TextureFormat::RGBA8_UNorm;
     uint32_t MipLevels = 1;
     uint32_t SampleCount = 1;
-    ResourceBindFlags BindFlags = BindNone;
+    ResourceBind BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
 };
 
@@ -101,7 +101,7 @@ enum class BufferMode
 struct BufferDesc 
 {
     uint64_t Size = 0;
-    ResourceBindFlags BindFlags = BindNone;
+    ResourceBind BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
     BufferMode Mode = BufferMode::Undefined;
     uint32_t ElementByteStride = 0;
@@ -110,6 +110,7 @@ struct BufferDesc
 enum class ResourceState
 {
     Undefined,
+    VertexBuffer,
     RenderTarget,
     ShaderResource,
     UnorderedAccess,
@@ -120,7 +121,7 @@ enum class ResourceState
     Present,
 };
 
-enum class FilterType : uint8_t
+enum class FilterType
 {
     Point,
     Linear,
@@ -131,7 +132,7 @@ enum class FilterType : uint8_t
     ComparisonAnisotropic,
 };
 
-enum class TextureAddressMode : uint8_t
+enum class TextureAddressMode
 {
     Wrap,
     Mirror,
@@ -151,11 +152,11 @@ enum class CompareOp
     Always,
 };
 
-enum class SamplerFlags : uint8_t
+enum SamplerCreateFlags : uint8_t
 {
-    None                        = 0,
-    Subsampled                  = 1 << 0,
-    SubsampledCoarseReconstruct = 1 << 1,
+    SAMPLER_CREATE_NONE = 0,
+    SAMPLER_CREATE_SUBSAMPLED = 1 << 0,
+    SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCT = 1 << 1,
 };
 
 struct SamplerDesc
@@ -166,7 +167,7 @@ struct SamplerDesc
     TextureAddressMode AddressU = TextureAddressMode::Clamp;
     TextureAddressMode AddressV = TextureAddressMode::Clamp;
     TextureAddressMode AddressW = TextureAddressMode::Clamp;
-    SamplerFlags Flags = SamplerFlags::None;
+    SamplerCreateFlags Flags = SAMPLER_CREATE_NONE;
     float MipLodBias = 0.0f;
     uint32_t MaxAnisotropy = 0;
     CompareOp Compare = CompareOp::Never;
