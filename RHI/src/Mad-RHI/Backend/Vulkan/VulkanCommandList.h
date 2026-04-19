@@ -32,6 +32,9 @@ public:
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
 
+    virtual void EnqueueSignal(Fence* fence, uint64_t value) override;
+    virtual void WaitForFence(Fence* fence, uint64_t value) override;
+
     virtual void Flush() override;
 
     void SafeReleaseResource(vk::StaleResourceWrapper&& wrapper);

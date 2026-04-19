@@ -2,6 +2,7 @@
 
 #include "Mad-RHI/Common.h"
 #include "Mad-RHI/Resource.h"
+#include "Mad-RHI/Fence.h"
 #include "Mad-RHI/PipelineState.h"
 #include <cstdint>
 #include <vector>
@@ -25,6 +26,9 @@ public:
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
+
+    virtual void EnqueueSignal(Fence* fence, uint64_t value) = 0;
+    virtual void WaitForFence(Fence* fence, uint64_t value) = 0;
 
     virtual void Flush() = 0;
 

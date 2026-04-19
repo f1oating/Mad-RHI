@@ -4,6 +4,7 @@
 #include "Mad-RHI/CommandList.h"
 #include "Mad-RHI/PipelineState.h"
 #include "Mad-RHI/Resource.h"
+#include "Mad-RHI/Fence.h"
 
 namespace mad::rhi {
     
@@ -28,6 +29,7 @@ public:
     virtual RefPtr<Sampler> CreateSampler(const SamplerDesc& desc) = 0;
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) = 0;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
+    virtual RefPtr<Fence> CreateFence() = 0;
 
 };
 

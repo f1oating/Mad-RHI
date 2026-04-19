@@ -3,6 +3,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include <algorithm>
+#include "Mad-RHI/Backend/Vulkan/VulkanFence.h"
 
 namespace mad::rhi {
 
@@ -194,6 +195,20 @@ void VulkanImmidiateCommandList::Draw(uint32_t numVertices, uint32_t firstVertex
 {
     BeginRenderingIfNeeded();
     //vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
+}
+
+void VulkanImmidiateCommandList::EnqueueSignal(Fence* fence, uint64_t value)
+{
+    VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
+
+    AddSignalSemaphore(vulkanFence->GetTimelineSemaphore(), value);
+}
+
+void VulkanImmidiateCommandList::WaitForFence(Fence* fence, uint64_t value)
+{
+    VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
+
+    AddWaitSemaphore(vulkanFence->GetTimelineSemaphore(), value);
 }
 
 void VulkanImmidiateCommandList::Flush()

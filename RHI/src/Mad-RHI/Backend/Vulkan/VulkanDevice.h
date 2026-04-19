@@ -35,6 +35,7 @@ public:
     virtual RefPtr<Sampler> CreateSampler(const SamplerDesc& desc) override;
     virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
     virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
+    virtual RefPtr<Fence> CreateFence() override;
 
     void SafeReleaseResource(vk::StaleResourceBase* resource);
 

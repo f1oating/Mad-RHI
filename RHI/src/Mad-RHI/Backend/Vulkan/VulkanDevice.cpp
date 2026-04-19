@@ -4,6 +4,7 @@
 #include <set>
 #include <algorithm>
 #include "Mad-RHI/Backend/Vulkan/VulkanPipelineState.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanFence.h"
 
 namespace mad::rhi {
 
@@ -134,6 +135,11 @@ RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
 RefPtr<GraphicsPipelineState> VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineDesc& desc)
 {
     return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc, this);
+}
+
+RefPtr<Fence> VulkanDevice::CreateFence()
+{
+    return MakeRef<VulkanFence>(this);
 }
 
 void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)

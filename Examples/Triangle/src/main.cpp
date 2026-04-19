@@ -103,6 +103,8 @@ int main()
             device->Resize();
         });
 
+        rhi::RefPtr<rhi::Fence> fence = device->CreateFence();
+
         while (window.IsRunning())
         {
             window.Update();
@@ -122,6 +124,9 @@ int main()
             icl->Draw(0, 0);
 
             icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::Present} }, {});
+
+            fence->IncrementCurrentValue();
+            icl->EnqueueSignal(fence.Get(), fence->GetCurrentValue());
 
             icl->Flush();
 
