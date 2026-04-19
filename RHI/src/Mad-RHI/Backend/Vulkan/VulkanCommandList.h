@@ -5,6 +5,7 @@
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/Vk/CommandListPool.h"
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanPipelineState.h"
 
 namespace mad::rhi {
 
@@ -24,6 +25,10 @@ public:
     virtual void SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView) override;
     virtual void ClearRenderTarget(TextureView* view, const float color[4]) override;
     virtual void ClearDepthStencil(TextureView* view, float depth, uint8_t stencil) override;
+
+    virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) override;
+
+    virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) override;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
 
@@ -60,6 +65,8 @@ private:
     VkCommandBuffer m_CurrentCommandBuffer = nullptr;
 
     vk::ReleaseManager m_ReleaseManager;
+
+    VulkanGraphicsPipelineState* m_BoundPipeline = nullptr;
 
     std::vector<VkRenderingAttachmentInfoKHR> m_ColorAttachments;
     VkRenderingAttachmentInfoKHR m_DepthAttachment{};

@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
+#include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 
 namespace mad::rhi {
 
@@ -105,6 +106,36 @@ private:
 
     VulkanDevice* m_Context;
 
+};
+
+struct VkPipelineResource : vk::StaleResourceBase
+{
+    VkPipeline Pipeline;
+    VkDevice Device;
+
+    VkPipelineResource(VkPipeline p, VkDevice d) : Pipeline(p), Device(d) {}
+
+    void Destroy() override { vkDestroyPipeline(Device, Pipeline, nullptr); }
+};
+
+struct VkPipelineLayoutResource : vk::StaleResourceBase
+{
+    VkPipelineLayout Layout;
+    VkDevice Device;
+
+    VkPipelineLayoutResource(VkPipelineLayout l, VkDevice d) : Layout(l), Device(d) {}
+
+    void Destroy() override { vkDestroyPipelineLayout(Device, Layout, nullptr); }
+};
+
+struct VkDescriptorSetLayoutResource : vk::StaleResourceBase
+{
+    VkDescriptorSetLayout SetLayout;
+    VkDevice Device;
+
+    VkDescriptorSetLayoutResource(VkDescriptorSetLayout sl, VkDevice d) : SetLayout(sl), Device(d) {}
+
+    void Destroy() override { vkDestroyDescriptorSetLayout(Device, SetLayout, nullptr); }
 };
 
 inline ShaderType FromVkShaderStage(VkShaderStageFlagBits shaderStage)

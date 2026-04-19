@@ -113,11 +113,12 @@ int main()
 
             icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::RenderTarget} }, {});
 
+            icl->SetGraphicsPipeline(pipeline.Get());
             icl->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
 
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             icl->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-
+            
             icl->Draw(0, 0);
 
             icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::Present} }, {});

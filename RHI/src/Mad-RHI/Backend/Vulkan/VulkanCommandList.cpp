@@ -171,6 +171,25 @@ void VulkanImmidiateCommandList::ClearDepthStencil(TextureView* view, float dept
     m_DepthAttachment.clearValue.depthStencil = { depth, stencil };
 }
 
+void VulkanImmidiateCommandList::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
+{
+    m_BoundPipeline = static_cast<VulkanGraphicsPipelineState*>(pipeline);
+
+    vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_BoundPipeline->GetPipeline());
+}
+
+void VulkanImmidiateCommandList::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets)
+{
+    std::vector<VkBuffer> vkBuffers;
+    vkBuffers.reserve(buffers.size());
+    for (Buffer* buf : buffers)
+    {
+        vkBuffers.push_back(static_cast<VulkanBuffer*>(buf)->GetBuffer());
+    }
+    vkCmdBindVertexBuffers(m_CurrentCommandBuffer, startSlot, (uint32_t)vkBuffers.size(), vkBuffers.data(), offsets.data());
+}
+
+
 void VulkanImmidiateCommandList::Draw(uint32_t numVertices, uint32_t firstVertex)
 {
     BeginRenderingIfNeeded();

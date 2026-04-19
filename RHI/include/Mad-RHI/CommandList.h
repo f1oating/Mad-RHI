@@ -2,6 +2,7 @@
 
 #include "Mad-RHI/Common.h"
 #include "Mad-RHI/Resource.h"
+#include "Mad-RHI/PipelineState.h"
 #include <cstdint>
 #include <vector>
 
@@ -19,6 +20,10 @@ public:
     virtual void ClearRenderTarget(TextureView* view, const float color[4]) = 0;
     virtual void ClearDepthStencil(TextureView* view, float depth, uint8_t stencil) = 0;    
     
+    virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) = 0;
+
+    virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;
+
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
 
     virtual void Flush() = 0;

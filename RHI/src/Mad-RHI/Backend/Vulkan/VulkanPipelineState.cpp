@@ -173,15 +173,17 @@ VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState()
 {
     if (m_Pipeline)
     {
-        vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
+        m_Context->SafeReleaseResource(new VkPipelineResource{ m_Pipeline, m_Device });
     }
+
     if (m_Layout)
     {
-        vkDestroyPipelineLayout(m_Device, m_Layout, nullptr);
+        m_Context->SafeReleaseResource(new VkPipelineLayoutResource{ m_Layout, m_Device });
     }
-    for (auto layout : m_SetLayouts)
+
+    for (auto setLayout : m_SetLayouts)
     {
-        vkDestroyDescriptorSetLayout(m_Device, layout, nullptr);
+        m_Context->SafeReleaseResource(new VkDescriptorSetLayoutResource{ setLayout, m_Device });
     }
 }
 
