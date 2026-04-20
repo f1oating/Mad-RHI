@@ -31,8 +31,6 @@ class Device : public Object
 public:
     virtual ~Device() = default;
 
-    virtual void Resize() = 0;
-
     virtual void EndFrame() = 0;
     virtual void GarbageCollect() = 0;
     

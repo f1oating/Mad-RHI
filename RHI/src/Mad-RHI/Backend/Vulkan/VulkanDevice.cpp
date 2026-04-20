@@ -46,22 +46,6 @@ VulkanDevice::~VulkanDevice()
     std::cout << "Device destroyed" << std::endl;
 }
 
-void VulkanDevice::Resize()
-{
-    vkDeviceWaitIdle(m_Device);
-
-    DestroyFramesInFlightSync();
-    DestroySwapchain();
-
-    CreateSwapchain();
-    CreateFramesInFlightSync();
-
-    m_GraphicsImmidiateCommandList->FlushWaitSemaphores();
-    m_GraphicsImmidiateCommandList->FlushSignalSemaphores();
-
-    AcquireNextImage();
-}
-
 void VulkanDevice::EndFrame()
 {
     VkDeviceSize ringBufferHead = m_RingBuffer.GetHead();
@@ -102,7 +86,8 @@ void VulkanDevice::Present()
     VkResult res = vkQueuePresentKHR(m_PresentQueue, &pi);
     if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        Resize();
+        RecreateSwapchain();
+        return;
     }
 
     m_CurrentFrameInFlight = (m_CurrentFrameInFlight + 1) % 2;
@@ -405,6 +390,22 @@ void VulkanDevice::CreateAllocator()
     vmaCreateAllocator(&info, &m_Allocator);
 }
 
+void VulkanDevice::RecreateSwapchain()
+{
+    vkDeviceWaitIdle(m_Device);
+
+    DestroyFramesInFlightSync();
+    DestroySwapchain();
+
+    CreateSwapchain();
+    CreateFramesInFlightSync();
+
+    m_GraphicsImmidiateCommandList->FlushWaitSemaphores();
+    m_GraphicsImmidiateCommandList->FlushSignalSemaphores();
+
+    AcquireNextImage();
+}
+
 void VulkanDevice::AcquireNextImage()
 {
     vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight], VK_TRUE, UINT64_MAX);
@@ -415,7 +416,7 @@ void VulkanDevice::AcquireNextImage()
 
     if (res == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        Resize();
+        RecreateSwapchain();
         return;
     }
 

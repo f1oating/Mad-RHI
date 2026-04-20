@@ -20,8 +20,6 @@ protected:
 public:
     VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory);
 
-    virtual void Resize() override;
-
     virtual void EndFrame() override;
     virtual void GarbageCollect() override;
 
@@ -87,6 +85,7 @@ private:
     void DestroyFramesInFlightSync();
     void CreateAllocator();
 
+    void RecreateSwapchain();
     void AcquireNextImage();
 
 };

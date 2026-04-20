@@ -99,11 +99,7 @@ int main()
         rhi::RefPtr<rhi::TextureView> textureSRV = texture->GetDefaultSRV();
         rhi::RefPtr<rhi::TextureView> textureRTV = texture->GetDefaultRTV();
         texture.Reset();
-
-        common::EventBus::Subscribe<common::WindowResizeEvent>([&device](const common::WindowResizeEvent& event) {
-            device->Resize();
-        });
-
+        
         rhi::RefPtr<rhi::Fence> fence = nullptr;
         device->CreateFence(fence.GetAddress());
 
