@@ -9,13 +9,6 @@
 
 namespace mad::rhi {
 
-enum QueueType : uint8_t
-{
-    QUEUE_TYPE_GRAPHICS = 1 << 0,
-    QUEUE_TYPE_COMPUTE = 2 << 0,
-    QUEUE_TYPE_TRANSFER = 3 << 0,
-};
-
 class ImmidiateCommandList : public Object
 {
 public:

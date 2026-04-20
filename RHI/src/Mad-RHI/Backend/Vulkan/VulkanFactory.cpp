@@ -35,7 +35,7 @@ VulkanFactory::VulkanFactory(const FactoryInitInfo& info)
 
     vkCreateInstance(&vkInstInfo, nullptr, &m_Instance);
     volkLoadInstance(m_Instance);
-
+    
     std::cout << "Factory Created" << std::endl;
 }
 
@@ -48,9 +48,9 @@ VulkanFactory::~VulkanFactory()
     std::cout << "Factory Destroyed" << std::endl;
 }
 
-void VulkanFactory::CreateDevice(Device** ppDevice, const WindowHandle& wh)
+void VulkanFactory::CreateDevice(Device** ppDevice, const DeviceDesc& desc)
 {
-    *ppDevice = new VulkanDevice(m_Instance, wh);
+    *ppDevice = new VulkanDevice(desc, this);
 }
 
 }

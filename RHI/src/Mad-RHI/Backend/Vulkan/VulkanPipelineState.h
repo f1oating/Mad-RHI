@@ -79,8 +79,7 @@ protected:
     ~VulkanGraphicsPipelineState();
 
 public:
-    VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineDesc& desc,
-        VulkanDevice* context);
+    VulkanGraphicsPipelineState(const GraphicsPipelineDesc& desc, VulkanDevice* context);
 
     VkPipeline GetPipeline() { return m_Pipeline; }
     VkPipelineLayout GetPipelineLayout() { return m_Layout; }
@@ -95,7 +94,6 @@ private:
     void CreatePipeline();
 
 private:
-    VkDevice m_Device = nullptr;
     GraphicsPipelineDesc m_Desc;
 
     VkPipeline m_Pipeline = nullptr;

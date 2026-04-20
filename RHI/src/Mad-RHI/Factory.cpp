@@ -31,7 +31,7 @@ void Factory::Shutdown()
     if (s_Factory) delete s_Factory;
 }
 
-Factory* Factory::GetInstance()
+Factory* Factory::Get()
 {
     return s_Factory;
 }

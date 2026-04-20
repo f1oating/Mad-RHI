@@ -21,7 +21,7 @@ int main()
     rhi::Factory::Init(info);
 
     {
-        rhi::Factory* factory = rhi::Factory::GetInstance();
+        rhi::Factory* factory = rhi::Factory::Get();
 
         rhi::RefPtr<rhi::Device> device = nullptr;
         rhi::RefPtr<rhi::ImmidiateCommandList> icl = nullptr;
@@ -32,14 +32,17 @@ int main()
         wh.platform = rhi::WindowHandle::Platform::XCB;
         wh.xcb.connection = winInfo.Connection;
         wh.xcb.window = winInfo.Window;
-        factory->CreateDevice(&device, wh);
+        factory->CreateDevice(device.GetAddress(), { wh });
         icl = device->GetImmidiateCommandList();
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
 
-        rhi::RefPtr<rhi::Shader> vertexShader = device->CreateShader(spirvVertex.data(), spirvVertex.size());
-        rhi::RefPtr<rhi::Shader> fragmentShader = device->CreateShader(spirvFragment.data(), spirvFragment.size());
+        rhi::RefPtr<rhi::Shader> vertexShader = nullptr;
+        rhi::RefPtr<rhi::Shader> fragmentShader = nullptr; 
+
+        device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+        device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
 
         rhi::GraphicsPipelineDesc pipelineDesc{};
         pipelineDesc.VertexShader   = vertexShader;
@@ -55,14 +58,16 @@ int main()
         pipelineDesc.BlendAttachments.push_back(colorBlend);
         pipelineDesc.Rendering.ColorFormats.push_back(rhi::TextureFormat::BGRA8_UNorm_SRGB);
         pipelineDesc.Rendering.SampleCount = 1;
-        rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = device->CreateGraphicsPipeline(pipelineDesc);
+        rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = nullptr;
+        device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
 
         rhi::BufferDesc cbd{};
         cbd.Usage = rhi::ResourceUsage::Dynamic;
         cbd.Size = 512;
         cbd.BindFlags = rhi::RESOURCE_BIND_UNIFORM_BUFFER;
 
-        rhi::RefPtr<rhi::Buffer> cb = device->CreateBuffer(cbd);
+        rhi::RefPtr<rhi::Buffer> cb = nullptr;
+        device->CreateBuffer(cb.GetAddress(), cbd);
         
         rhi::TextureDesc texDesc{};
         texDesc.Dimension = rhi::TextureDimension::Texture2D;
@@ -75,7 +80,8 @@ int main()
         texDesc.BindFlags = rhi::RESOURCE_BIND_SHADER_RESOURSE;
         texDesc.Usage = rhi::ResourceUsage::Default;
 
-        rhi::RefPtr<rhi::Texture> texture = device->CreateTexture(texDesc);
+        rhi::RefPtr<rhi::Texture> texture = nullptr;
+        device->CreateTexture(texture.GetAddress(), texDesc);
 
         rhi::SamplerDesc samplerDesc{};
         samplerDesc.MinFilter = rhi::FilterType::Linear;
@@ -87,7 +93,8 @@ int main()
         samplerDesc.MinLod = 0.0f;
         samplerDesc.MaxLod = 3.402823466e+38f;
 
-        rhi::RefPtr<rhi::Sampler> sampler = device->CreateSampler(samplerDesc);
+        rhi::RefPtr<rhi::Sampler> sampler = nullptr;
+        device->CreateSampler(sampler.GetAddress(), samplerDesc);
 
         rhi::RefPtr<rhi::TextureView> textureSRV = texture->GetDefaultSRV();
         rhi::RefPtr<rhi::TextureView> textureRTV = texture->GetDefaultRTV();
@@ -97,7 +104,8 @@ int main()
             device->Resize();
         });
 
-        rhi::RefPtr<rhi::Fence> fence = device->CreateFence();
+        rhi::RefPtr<rhi::Fence> fence = nullptr;
+        device->CreateFence(fence.GetAddress());
 
         struct Vertex { float x, y; float r, g, b; };
 
@@ -112,7 +120,8 @@ int main()
         vbd.Usage = rhi::ResourceUsage::Default;
         vbd.Size = sizeof(vertices);
         vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
-        rhi::RefPtr<rhi::Buffer> vb = device->CreateBuffer(vbd);
+        rhi::RefPtr<rhi::Buffer> vb = nullptr;
+        device->CreateBuffer(vb.GetAddress(), vbd);
 
         icl->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::CopyDst} });
         icl->UpdateBuffer(vb.Get(), vertices, sizeof(vertices));
@@ -125,9 +134,9 @@ int main()
 
             cb->Map();
 
-            rhi::RefPtr<rhi::Texture> backBuffer = device->GetCurrentBackBuffer();
+            rhi::Texture* backBuffer = device->GetCurrentBackBuffer();
 
-            icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::RenderTarget} }, {});
+            icl->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
 
             icl->SetGraphicsPipeline(pipeline.Get());
             icl->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
@@ -138,7 +147,7 @@ int main()
             icl->SetVertexBuffers(0, { vb.Get() }, { 0 });
             icl->Draw(3, 0);
 
-            icl->ResourceBarrier({ {backBuffer.Get(), rhi::ResourceState::Present} }, {});
+            icl->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
 
             fence->IncrementCurrentValue();
             icl->EnqueueSignal(fence.Get(), fence->GetCurrentValue());

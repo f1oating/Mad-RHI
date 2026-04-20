@@ -8,6 +8,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
 #include <vk_mem_alloc.h>
 #include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
 
 namespace mad::rhi {
 
@@ -17,25 +18,25 @@ protected:
     ~VulkanDevice();
 
 public:
-    VulkanDevice(VkInstance instance, const WindowHandle& wh);
+    VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory);
 
     virtual void Resize() override;
 
     virtual void EndFrame() override;
     virtual void GarbageCollect() override;
 
-    virtual RefPtr<Texture> GetCurrentBackBuffer() override;
+    virtual Texture* GetCurrentBackBuffer() override;
 
     virtual void Present() override;
 
     virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
 
-    virtual RefPtr<Texture> CreateTexture(const TextureDesc& desc) override;
-    virtual RefPtr<Buffer> CreateBuffer(const BufferDesc& desc) override;
-    virtual RefPtr<Sampler> CreateSampler(const SamplerDesc& desc) override;
-    virtual RefPtr<Shader> CreateShader(const uint32_t* data, uint64_t size) override;
-    virtual RefPtr<GraphicsPipelineState> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) override;
-    virtual RefPtr<Fence> CreateFence() override;
+    virtual void CreateTexture(Texture** ppTex, const TextureDesc& desc) override;
+    virtual void CreateBuffer(Buffer** ppBuff, const BufferDesc& desc) override;
+    virtual void CreateSampler(Sampler** ppSampler, const SamplerDesc& desc) override;
+    virtual void CreateShader(Shader** ppShader, const uint32_t* data, uint64_t size) override;
+    virtual void CreateGraphicsPipeline(GraphicsPipelineState** ppPipeline, const GraphicsPipelineDesc& desc) override;
+    virtual void CreateFence(Fence** ppFence) override;
 
     void SafeReleaseResource(vk::StaleResourceBase* resource);
 
@@ -46,13 +47,15 @@ public:
     vk::RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
 private:
+    VulkanFactory* m_Factory = nullptr;
+
     VkInstance m_Instance = nullptr;
     VkSurfaceKHR m_Surface = nullptr;
     VkPhysicalDevice m_PhysicalDevice = nullptr;
     VkDevice m_Device = nullptr;
     
     VkSwapchainKHR m_Swapchain = nullptr;
-    std::vector<RefPtr<VulkanTexture>> m_SwapchainImages;
+    std::vector<VulkanTexture*> m_SwapchainImages;
 
     VkQueue m_GraphicsQueue = nullptr;
     VkQueue m_PresentQueue = nullptr;

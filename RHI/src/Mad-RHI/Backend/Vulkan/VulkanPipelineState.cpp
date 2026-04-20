@@ -158,10 +158,8 @@ ShaderType VulkanShader::GetType()
     return FromVkShaderStage(m_ShaderStage);
 }
 
-VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, 
-    const GraphicsPipelineDesc& desc, VulkanDevice* context)
+VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(const GraphicsPipelineDesc& desc, VulkanDevice* context)
 {
-    m_Device = device;
     m_Desc = desc;
     m_Context = context;
 
@@ -173,17 +171,17 @@ VulkanGraphicsPipelineState::~VulkanGraphicsPipelineState()
 {
     if (m_Pipeline)
     {
-        m_Context->SafeReleaseResource(new VkPipelineResource{ m_Pipeline, m_Device });
+        m_Context->SafeReleaseResource(new VkPipelineResource{ m_Pipeline, m_Context->GetDevice() });
     }
 
     if (m_Layout)
     {
-        m_Context->SafeReleaseResource(new VkPipelineLayoutResource{ m_Layout, m_Device });
+        m_Context->SafeReleaseResource(new VkPipelineLayoutResource{ m_Layout, m_Context->GetDevice() });
     }
 
     for (auto setLayout : m_SetLayouts)
     {
-        m_Context->SafeReleaseResource(new VkDescriptorSetLayoutResource{ setLayout, m_Device });
+        m_Context->SafeReleaseResource(new VkDescriptorSetLayoutResource{ setLayout, m_Context->GetDevice() });
     }
 }
 
@@ -216,7 +214,7 @@ void VulkanGraphicsPipelineState::CreateLayout()
         dslCI.pBindings = bindings.data();
 
         VkDescriptorSetLayout layout;
-        vkCreateDescriptorSetLayout(m_Device, &dslCI, nullptr, &layout);
+        vkCreateDescriptorSetLayout(m_Context->GetDevice(), &dslCI, nullptr, &layout);
         m_SetLayouts.push_back(layout);
     };
 
@@ -224,7 +222,7 @@ void VulkanGraphicsPipelineState::CreateLayout()
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = (uint32_t)m_SetLayouts.size();
     layoutCI.pSetLayouts = m_SetLayouts.data();
-    vkCreatePipelineLayout(m_Device, &layoutCI, nullptr, &m_Layout);
+    vkCreatePipelineLayout(m_Context->GetDevice(), &layoutCI, nullptr, &m_Layout);
 }
 
 void VulkanGraphicsPipelineState::CreatePipeline()
@@ -350,7 +348,7 @@ void VulkanGraphicsPipelineState::CreatePipeline()
     pipelineCI.pDynamicState = &dynamicState;
     pipelineCI.layout = m_Layout;
 
-    vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &m_Pipeline);
+    vkCreateGraphicsPipelines(m_Context->GetDevice(), VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &m_Pipeline);
 }
 
 }

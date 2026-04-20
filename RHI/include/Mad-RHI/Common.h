@@ -169,6 +169,7 @@ public:
     T* operator->() const { return m_Ptr; }
     T& operator*() const { return *m_Ptr; }
     T* Get() const { return m_Ptr; }
+    T** GetAddress() { return &m_Ptr; }
 
     T** operator&()
     {

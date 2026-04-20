@@ -8,11 +8,13 @@
 
 namespace mad::rhi {
 
-VulkanDevice::VulkanDevice(VkInstance instance, const WindowHandle& wh)
+VulkanDevice::VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory)
 {
-    m_Instance = instance;
+    m_Factory = factory;
+    
+    m_Instance = factory->GetInstance();
 
-    CreateSurface(wh);
+    CreateSurface(desc.Window);
     CreatePhysicalDevice();
     CreateLogicalDevice();
     CreateSwapchain();
@@ -75,7 +77,7 @@ void VulkanDevice::GarbageCollect()
     m_GraphicsImmidiateCommandList->GarbageCollect();
 }
 
-RefPtr<Texture> VulkanDevice::GetCurrentBackBuffer()
+Texture* VulkanDevice::GetCurrentBackBuffer()
 {
     return m_SwapchainImages[m_CurrentImageIndex];
 }
@@ -112,34 +114,34 @@ RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
     return m_GraphicsImmidiateCommandList;
 }
 
-RefPtr<Texture> VulkanDevice::CreateTexture(const TextureDesc& desc)
+void VulkanDevice::CreateTexture(Texture** ppTex, const TextureDesc& desc)
 {
-    return MakeRef<VulkanTexture>(desc, this);
+    *ppTex = new VulkanTexture(desc, this);
 }
 
-RefPtr<Buffer> VulkanDevice::CreateBuffer(const BufferDesc& desc)
+void VulkanDevice::CreateBuffer(Buffer** ppBuff, const BufferDesc& desc)
 {
-    return MakeRef<VulkanBuffer>(desc, this);
+    *ppBuff = new VulkanBuffer(desc, this);
 }
 
-RefPtr<Sampler> VulkanDevice::CreateSampler(const SamplerDesc& desc)
+void VulkanDevice::CreateSampler(Sampler** ppSampler, const SamplerDesc& desc)
 {
-    return MakeRef<VulkanSampler>(desc, this);
+    *ppSampler = new VulkanSampler(desc, this);
 }
 
-RefPtr<Shader> VulkanDevice::CreateShader(const uint32_t* data, uint64_t size)
+void VulkanDevice::CreateShader(Shader** ppShader, const uint32_t* data, uint64_t size)
 {
-    return MakeRef<VulkanShader>(m_Device, data, size);
+    *ppShader = new VulkanShader(m_Device, data, size);
 }
 
-RefPtr<GraphicsPipelineState> VulkanDevice::CreateGraphicsPipeline(const GraphicsPipelineDesc& desc)
+void VulkanDevice::CreateGraphicsPipeline(GraphicsPipelineState** ppPipeline, const GraphicsPipelineDesc& desc)
 {
-    return MakeRef<VulkanGraphicsPipelineState>(m_Device, desc, this);
+    *ppPipeline = new VulkanGraphicsPipelineState(desc, this);
 }
 
-RefPtr<Fence> VulkanDevice::CreateFence()
+void VulkanDevice::CreateFence(Fence** ppFence)
 {
-    return MakeRef<VulkanFence>(this);
+    *ppFence = new VulkanFence(this);
 }
 
 void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)
@@ -320,7 +322,7 @@ void VulkanDevice::CreateSwapchain()
         texDesc.SampleCount = 1;
         texDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET;
         texDesc.Usage = ResourceUsage::Default;
-        m_SwapchainImages[i] = MakeRef<VulkanTexture>(texDesc, images[i], this);
+        m_SwapchainImages[i] = new VulkanTexture(texDesc, images[i], this);
     }
 }
 
@@ -329,6 +331,10 @@ void VulkanDevice::DestroySwapchain()
     if (m_Swapchain)
     {
         vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
+        for (auto image : m_SwapchainImages)
+        {
+            image->Release();
+        }
         m_SwapchainImages.clear();
     }
 }
