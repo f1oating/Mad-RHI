@@ -8,13 +8,13 @@
 
 namespace mad::rhi {
 
-VulkanImmidiateCommandList::VulkanImmidiateCommandList(VulkanDevice* context)
+VulkanImmidiateCommandList::VulkanImmidiateCommandList(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context)
 {
     m_Context = context;
 
     m_Device = m_Context->GetDevice();
-    m_Queue = m_Context->GetGraphicsQueue();
-    m_QueueFamilyIndex = m_Context->GetGraphicsQueueFamilyIndex();
+    m_Queue = queue;
+    m_QueueFamilyIndex = queueFamilyIndex;
 
     CreateQueueSync();
     m_CommandListPool.Init(m_Device, m_QueueFamilyIndex);

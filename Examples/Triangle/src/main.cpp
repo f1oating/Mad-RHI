@@ -25,6 +25,7 @@ int main()
 
         rhi::RefPtr<rhi::Device> device = nullptr;
         rhi::RefPtr<rhi::ImmidiateCommandList> icl = nullptr;
+        rhi::RefPtr<rhi::Swapchain> swapchain = nullptr;
 
         common::WindowInfo winInfo = window.GetWindowInfo();
 
@@ -32,8 +33,10 @@ int main()
         wh.platform = rhi::WindowHandle::Platform::XCB;
         wh.xcb.connection = winInfo.Connection;
         wh.xcb.window = winInfo.Window;
-        factory->CreateDevice(device.GetAddress(), { wh });
+
+        factory->CreateDevice(device.GetAddress(), {});
         icl = device->GetImmidiateCommandList();
+        device->CreateSwapchain(swapchain.GetAddress(), wh);
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
@@ -130,7 +133,7 @@ int main()
 
             cb->Map();
 
-            rhi::Texture* backBuffer = device->GetCurrentBackBuffer();
+            rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
             icl->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
 
@@ -152,7 +155,7 @@ int main()
 
             device->EndFrame();
             device->GarbageCollect();
-            device->Present();
+            swapchain->Present();
         }
     }
 

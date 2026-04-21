@@ -17,7 +17,7 @@ protected:
     ~VulkanImmidiateCommandList();
 
 public:
-    VulkanImmidiateCommandList(VulkanDevice* context);
+    VulkanImmidiateCommandList(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context);
 
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) override;
@@ -50,6 +50,8 @@ public:
     void AddWaitSemaphore(VkSemaphore sem, uint64_t value = 0);
     void FlushSignalSemaphores();
     void AddSignalSemaphore(VkSemaphore sem, uint64_t value = 0);
+
+    VkQueue GetQueue() { return m_Queue; }
 
 private:
     VulkanDevice* m_Context = nullptr;
