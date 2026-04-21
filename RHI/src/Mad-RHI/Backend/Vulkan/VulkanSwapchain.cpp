@@ -35,10 +35,11 @@ Texture* VulkanSwapchain::GetCurrentBackBuffer()
 
 void VulkanSwapchain::Present()
 {
+    m_ImmidiateCommandList->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
+    m_ImmidiateCommandList->Flush();
+
     VkSubmitInfo si{};
     si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.signalSemaphoreCount = 1;
-    si.pSignalSemaphores = &m_RenderFinishedSamephores[m_CurrentImageIndex];
     vkQueueSubmit(m_ImmidiateCommandList->GetQueue(), 1, &si, m_Fences[m_CurrentFrameInFlight]);
 
     VkPresentInfoKHR pi{};
@@ -219,10 +220,7 @@ void VulkanSwapchain::RecreateSwapchain()
 
     CreateSwapchain();
     CreateFramesInFlightSync();
-
-    m_ImmidiateCommandList->FlushWaitSemaphores();
-    m_ImmidiateCommandList->FlushSignalSemaphores();
-
+    
     AcquireNextImage();
 }
 
