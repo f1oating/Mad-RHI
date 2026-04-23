@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mad-RHI/CommandList.h"
+#include "Mad-RHI/CommandQueue.h"
 #include <volk/volk.h>
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/Vk/CommandListPool.h"
@@ -11,13 +11,13 @@ namespace mad::rhi {
 
 class VulkanDevice;
 
-class VulkanImmidiateCommandList : public ObjectBase<ImmidiateCommandList>
+class VulkanCommandQueue : public ObjectBase<CommandQueue>
 {
 protected:
-    ~VulkanImmidiateCommandList();
+    ~VulkanCommandQueue();
 
 public:
-    VulkanImmidiateCommandList(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context);
+    VulkanCommandQueue(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context);
 
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) override;

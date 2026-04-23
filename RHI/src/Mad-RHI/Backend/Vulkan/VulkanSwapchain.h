@@ -4,7 +4,7 @@
 #include <volk/volk.h>
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
-#include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
 
 namespace mad::rhi {
 
@@ -17,7 +17,7 @@ protected:
 
 public:
     VulkanSwapchain(VkInstance instance, VkDevice device, VkPhysicalDevice physDevice,
-        WindowHandle window, VulkanImmidiateCommandList* immidiateCommandList, VulkanDevice* context);
+        WindowHandle window, VulkanCommandQueue* commandQueue, VulkanDevice* context);
 
     virtual Texture* GetCurrentBackBuffer() override;
     virtual void Present() override;
@@ -41,7 +41,7 @@ private:
     std::vector<VkSemaphore> m_PresentCompleteSemaphores;
     std::vector<VkFence> m_Fences;
 
-    VulkanImmidiateCommandList* m_ImmidiateCommandList = nullptr;
+    VulkanCommandQueue* m_CommandQueue = nullptr;
 
 private:
     void CreateSurface(const WindowHandle& wh);

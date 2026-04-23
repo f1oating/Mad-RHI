@@ -1,4 +1,4 @@
-#include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
 #include <iostream>
 #include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
@@ -8,7 +8,7 @@
 
 namespace mad::rhi {
 
-VulkanImmidiateCommandList::VulkanImmidiateCommandList(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context)
+VulkanCommandQueue::VulkanCommandQueue(VkQueue queue, uint32_t queueFamilyIndex, VulkanDevice* context)
 {
     m_Context = context;
 
@@ -25,7 +25,7 @@ VulkanImmidiateCommandList::VulkanImmidiateCommandList(VkQueue queue, uint32_t q
     std::cout << "VulkanImmidiateCommandList created" << std::endl;
 }
 
-VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
+VulkanCommandQueue::~VulkanCommandQueue()
 {
     m_ReleaseManager.Shutdown();
     m_CommandListPool.Shutdown();
@@ -34,7 +34,7 @@ VulkanImmidiateCommandList::~VulkanImmidiateCommandList()
     std::cout << "VulkanImmidiateCommandList destroyed" << std::endl;
 }
 
-void VulkanImmidiateCommandList::ResourceBarrier(
+void VulkanCommandQueue::ResourceBarrier(
     std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers)
 {
     EndRenderingScope();
@@ -92,7 +92,7 @@ void VulkanImmidiateCommandList::ResourceBarrier(
     );
 }
 
-void VulkanImmidiateCommandList::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
+void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
 {
     EndRenderingScope();
 
@@ -151,7 +151,7 @@ void VulkanImmidiateCommandList::SetRenderTargets(std::vector<TextureView*> colo
     m_RenderingInfo.pStencilAttachment = nullptr;
 }
 
-void VulkanImmidiateCommandList::ClearRenderTarget(TextureView* view, const float color[4])
+void VulkanCommandQueue::ClearRenderTarget(TextureView* view, const float color[4])
 {
     VulkanTextureView* vkView = static_cast<VulkanTextureView*>(view);
     VkImageView target = vkView->GetView();
@@ -167,20 +167,20 @@ void VulkanImmidiateCommandList::ClearRenderTarget(TextureView* view, const floa
     }
 }
 
-void VulkanImmidiateCommandList::ClearDepthStencil(TextureView* view, float depth, uint8_t stencil)
+void VulkanCommandQueue::ClearDepthStencil(TextureView* view, float depth, uint8_t stencil)
 {
     m_DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     m_DepthAttachment.clearValue.depthStencil = { depth, stencil };
 }
 
-void VulkanImmidiateCommandList::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
+void VulkanCommandQueue::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
 {
     m_BoundPipeline = static_cast<VulkanGraphicsPipelineState*>(pipeline);
 
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_BoundPipeline->GetPipeline());
 }
 
-void VulkanImmidiateCommandList::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets)
+void VulkanCommandQueue::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets)
 {
     std::vector<VkBuffer> vkBuffers;
     vkBuffers.reserve(buffers.size());
@@ -192,13 +192,13 @@ void VulkanImmidiateCommandList::SetVertexBuffers(uint32_t startSlot, std::vecto
 }
 
 
-void VulkanImmidiateCommandList::Draw(uint32_t numVertices, uint32_t firstVertex)
+void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
 {
     BeginRenderingIfNeeded();
     vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
 }
 
-void VulkanImmidiateCommandList::UpdateTexture(Texture* texture, const void* data, uint64_t size)
+void VulkanCommandQueue::UpdateTexture(Texture* texture, const void* data, uint64_t size)
 {
     VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(texture);
     const TextureDesc& desc = vulkanTexture->GetDesc();
@@ -245,7 +245,7 @@ void VulkanImmidiateCommandList::UpdateTexture(Texture* texture, const void* dat
     SafeReleaseResource(vk::StaleResourceWrapper::Create(new VkBufferResource{ stagingBuffer, stagingAllocation, allocator }));
 }
 
-void VulkanImmidiateCommandList::UpdateBuffer(Buffer* buffer, const void* data, uint64_t size)
+void VulkanCommandQueue::UpdateBuffer(Buffer* buffer, const void* data, uint64_t size)
 {
     VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(buffer);
     VmaAllocator allocator = m_Context->GetVmaAllocator();
@@ -277,21 +277,21 @@ void VulkanImmidiateCommandList::UpdateBuffer(Buffer* buffer, const void* data, 
     SafeReleaseResource(vk::StaleResourceWrapper::Create(new VkBufferResource{ stagingBuffer, stagingAllocation, allocator }));
 }
 
-void VulkanImmidiateCommandList::EnqueueSignal(Fence* fence, uint64_t value)
+void VulkanCommandQueue::EnqueueSignal(Fence* fence, uint64_t value)
 {
     VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
 
     AddSignalSemaphore(vulkanFence->GetTimelineSemaphore(), value);
 }
 
-void VulkanImmidiateCommandList::WaitForFence(Fence* fence, uint64_t value)
+void VulkanCommandQueue::WaitForFence(Fence* fence, uint64_t value)
 {
     VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
 
     AddWaitSemaphore(vulkanFence->GetTimelineSemaphore(), value);
 }
 
-void VulkanImmidiateCommandList::Flush()
+void VulkanCommandQueue::Flush()
 {
     EndRenderingScope();
     vkEndCommandBuffer(m_CurrentCommandBuffer);
@@ -333,33 +333,33 @@ void VulkanImmidiateCommandList::Flush()
     m_CommandListPool.Purge(GetTimelineSemaphoreValue());
 }
 
-void VulkanImmidiateCommandList::SafeReleaseResource(vk::StaleResourceWrapper&& wrapper)
+void VulkanCommandQueue::SafeReleaseResource(vk::StaleResourceWrapper&& wrapper)
 {
     m_ReleaseManager.SafeReleaseResource(std::move(wrapper), m_CommandBufferNumber);
 }
 
-void VulkanImmidiateCommandList::SafeReleaseResource(const vk::StaleResourceWrapper& wrapper)
+void VulkanCommandQueue::SafeReleaseResource(const vk::StaleResourceWrapper& wrapper)
 {
     m_ReleaseManager.SafeReleaseResource(wrapper, m_CommandBufferNumber);
 }
 
-void VulkanImmidiateCommandList::EndFrame()
+void VulkanCommandQueue::EndFrame()
 {
     m_ReleaseManager.DiscardStaleResources(m_TimelineSemaphoreValue);
 }
 
-void VulkanImmidiateCommandList::GarbageCollect()
+void VulkanCommandQueue::GarbageCollect()
 {
     m_ReleaseManager.Purge(GetTimelineSemaphoreValue());
 }
 
-void VulkanImmidiateCommandList::FlushWaitSemaphores()
+void VulkanCommandQueue::FlushWaitSemaphores()
 {
     m_WaitSemaphores.clear();
     m_WaitSemaphoresValues.clear();
 }
 
-void VulkanImmidiateCommandList::AddWaitSemaphore(VkSemaphore sem, uint64_t value)
+void VulkanCommandQueue::AddWaitSemaphore(VkSemaphore sem, uint64_t value)
 {
     if (std::find(m_WaitSemaphores.begin(), m_WaitSemaphores.end(), sem) != m_WaitSemaphores.end())
         return;
@@ -368,13 +368,13 @@ void VulkanImmidiateCommandList::AddWaitSemaphore(VkSemaphore sem, uint64_t valu
     m_WaitSemaphoresValues.push_back(value);
 }
 
-void VulkanImmidiateCommandList::FlushSignalSemaphores()
+void VulkanCommandQueue::FlushSignalSemaphores()
 {
     m_SignalSemaphores.clear();
     m_SignalSemaphoresValues.clear();
 }
 
-void VulkanImmidiateCommandList::AddSignalSemaphore(VkSemaphore sem, uint64_t value)
+void VulkanCommandQueue::AddSignalSemaphore(VkSemaphore sem, uint64_t value)
 {
     if (std::find(m_SignalSemaphores.begin(), m_SignalSemaphores.end(), sem) != m_SignalSemaphores.end())
         return;
@@ -383,7 +383,7 @@ void VulkanImmidiateCommandList::AddSignalSemaphore(VkSemaphore sem, uint64_t va
     m_SignalSemaphoresValues.push_back(value);
 }
 
-void VulkanImmidiateCommandList::CreateQueueSync()
+void VulkanCommandQueue::CreateQueueSync()
 {
     VkSemaphoreTypeCreateInfo stci{};
     stci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
@@ -397,7 +397,7 @@ void VulkanImmidiateCommandList::CreateQueueSync()
     vkCreateSemaphore(m_Device, &sci, nullptr, &m_TimelineSemaphore);
 }
 
-void VulkanImmidiateCommandList::DestroyQueueSync()
+void VulkanCommandQueue::DestroyQueueSync()
 {
     if (m_TimelineSemaphore != nullptr)
     {
@@ -405,7 +405,7 @@ void VulkanImmidiateCommandList::DestroyQueueSync()
     }
 }
 
-uint64_t VulkanImmidiateCommandList::GetTimelineSemaphoreValue()
+uint64_t VulkanCommandQueue::GetTimelineSemaphoreValue()
 {
     uint64_t value;
     vkGetSemaphoreCounterValue(m_Device, m_TimelineSemaphore,
@@ -413,7 +413,7 @@ uint64_t VulkanImmidiateCommandList::GetTimelineSemaphoreValue()
     return value;
 }
 
-void VulkanImmidiateCommandList::AcquireCommandBuffer()
+void VulkanCommandQueue::AcquireCommandBuffer()
 {
     m_CurrentCommandBuffer = m_CommandListPool.AcquireCommandBuffer();
     VkCommandBufferBeginInfo cbbi{};
@@ -425,7 +425,7 @@ void VulkanImmidiateCommandList::AcquireCommandBuffer()
     m_CommandBufferNumber++;
 }
 
-void VulkanImmidiateCommandList::BeginRenderingIfNeeded()
+void VulkanCommandQueue::BeginRenderingIfNeeded()
 {
     if (m_IsInRenderingScope) return;
     if (m_ColorAttachments.empty() && !m_HasDepthAttachment) return;
@@ -448,7 +448,7 @@ void VulkanImmidiateCommandList::BeginRenderingIfNeeded()
     m_IsInRenderingScope = true;
 }
 
-void VulkanImmidiateCommandList::EndRenderingScope()
+void VulkanCommandQueue::EndRenderingScope()
 {
     if (!m_IsInRenderingScope) return;
     vkCmdEndRendering(m_CurrentCommandBuffer);

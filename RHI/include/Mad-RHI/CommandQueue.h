@@ -9,10 +9,10 @@
 
 namespace mad::rhi {
 
-class ImmidiateCommandList : public Object
+class CommandQueue : public Object
 {
 public:
-    virtual ~ImmidiateCommandList() = default;
+    virtual ~CommandQueue() = default;
 
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) = 0;

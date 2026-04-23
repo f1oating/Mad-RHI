@@ -3,12 +3,12 @@
 namespace mad::rhi {
     
 VulkanSwapchain::VulkanSwapchain(VkInstance instance, VkDevice device, VkPhysicalDevice physDevice,
-    WindowHandle window, VulkanImmidiateCommandList* immidiateCommandList, VulkanDevice* context)
+    WindowHandle window, VulkanCommandQueue* commandQueue, VulkanDevice* context)
 {
     m_Instance = instance;
     m_Device = device;
     m_PhysicalDevice = physDevice;
-    m_ImmidiateCommandList = immidiateCommandList;
+    m_CommandQueue = commandQueue;
     m_Context = context;
 
     CreateSurface(window);
@@ -35,12 +35,12 @@ Texture* VulkanSwapchain::GetCurrentBackBuffer()
 
 void VulkanSwapchain::Present()
 {
-    m_ImmidiateCommandList->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
-    m_ImmidiateCommandList->Flush();
+    m_CommandQueue->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
+    m_CommandQueue->Flush();
 
     VkSubmitInfo si{};
     si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    vkQueueSubmit(m_ImmidiateCommandList->GetQueue(), 1, &si, m_Fences[m_CurrentFrameInFlight]);
+    vkQueueSubmit(m_CommandQueue->GetQueue(), 1, &si, m_Fences[m_CurrentFrameInFlight]);
 
     VkPresentInfoKHR pi{};
     pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -50,7 +50,7 @@ void VulkanSwapchain::Present()
     pi.pSwapchains = &m_Swapchain;
     pi.pImageIndices = &m_CurrentImageIndex;
 
-    VkResult res = vkQueuePresentKHR(m_ImmidiateCommandList->GetQueue(), &pi);
+    VkResult res = vkQueuePresentKHR(m_CommandQueue->GetQueue(), &pi);
     if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
     {
         RecreateSwapchain();
@@ -239,7 +239,7 @@ void VulkanSwapchain::AcquireNextImage()
     }
 
     vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight]);
-    m_ImmidiateCommandList->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrameInFlight]);
+    m_CommandQueue->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrameInFlight]);
 }
 
 }

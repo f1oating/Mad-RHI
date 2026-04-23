@@ -20,7 +20,7 @@ VulkanDevice::VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory)
     CreateAllocator();
     m_RingBuffer.Init(m_Allocator);
 
-    m_GraphicsImmidiateCommandList = MakeRef<VulkanImmidiateCommandList>(m_GraphicsQueue, m_GraphicsFamily, this);
+    m_GraphicsCommandQueue = MakeRef<VulkanCommandQueue>(m_GraphicsQueue, m_GraphicsFamily, this);
 
     std::cout << "Device created" << std::endl;
 }
@@ -29,7 +29,7 @@ VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
 
-    m_GraphicsImmidiateCommandList = nullptr;
+    m_GraphicsCommandQueue = nullptr;
 
     m_RingBuffer.Shutdown();
     if (m_Allocator) vmaDestroyAllocator(m_Allocator);
@@ -43,25 +43,25 @@ void VulkanDevice::EndFrame()
     VkDeviceSize ringBufferHead = m_RingBuffer.GetHead();
     SafeReleaseResource(new VkRingBufferResource{ ringBufferHead, &m_RingBuffer });
 
-    m_GraphicsImmidiateCommandList->EndFrame();
+    m_GraphicsCommandQueue->EndFrame();
 
     m_CurrentFrame++;
 }
 
 void VulkanDevice::GarbageCollect()
 {
-    m_GraphicsImmidiateCommandList->GarbageCollect();
+    m_GraphicsCommandQueue->GarbageCollect();
 }
 
-RefPtr<ImmidiateCommandList> VulkanDevice::GetImmidiateCommandList()
+RefPtr<CommandQueue> VulkanDevice::GetCommandQueue()
 {
-    return m_GraphicsImmidiateCommandList;
+    return m_GraphicsCommandQueue;
 }
 
 void VulkanDevice::CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window)
 {
     *ppSwapchain = new VulkanSwapchain(m_Instance, m_Device, m_PhysicalDevice, window, 
-        m_GraphicsImmidiateCommandList.Get(), this);
+        m_GraphicsCommandQueue.Get(), this);
 }
 
 void VulkanDevice::CreateTexture(Texture** ppTex, const TextureDesc& desc)
@@ -98,7 +98,7 @@ void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)
 {
     auto wrapper = vk::StaleResourceWrapper::Create(resource, 1);
 
-    m_GraphicsImmidiateCommandList->SafeReleaseResource(wrapper); 
+    m_GraphicsCommandQueue->SafeReleaseResource(wrapper); 
 
     wrapper.GiveUpOwnership();
 }

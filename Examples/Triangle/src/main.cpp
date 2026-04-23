@@ -2,7 +2,7 @@
 
 #include "Mad-RHI/Factory.h"
 #include "Mad-RHI/Device.h"
-#include "Mad-RHI/CommandList.h"
+#include "Mad-RHI/CommandQueue.h"
 #include "Common/Window.h"
 #include "Common/Event.h"
 #include "Common/ShaderCompiler.h"
@@ -24,7 +24,7 @@ int main()
         rhi::Factory* factory = rhi::Factory::Get();
 
         rhi::RefPtr<rhi::Device> device = nullptr;
-        rhi::RefPtr<rhi::ImmidiateCommandList> icl = nullptr;
+        rhi::RefPtr<rhi::CommandQueue> commandQueue = nullptr;
         rhi::RefPtr<rhi::Swapchain> swapchain = nullptr;
 
         common::WindowInfo winInfo = window.GetWindowInfo();
@@ -35,7 +35,7 @@ int main()
         wh.xcb.window = winInfo.Window;
 
         factory->CreateDevice(device.GetAddress(), {});
-        icl = device->GetImmidiateCommandList();
+        commandQueue = device->GetCommandQueue();
         device->CreateSwapchain(swapchain.GetAddress(), wh);
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
@@ -122,10 +122,10 @@ int main()
         rhi::RefPtr<rhi::Buffer> vb = nullptr;
         device->CreateBuffer(vb.GetAddress(), vbd);
 
-        icl->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::CopyDst} });
-        icl->UpdateBuffer(vb.Get(), vertices, sizeof(vertices));
-        icl->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::VertexBuffer} });
-        icl->Flush();
+        commandQueue->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::CopyDst} });
+        commandQueue->UpdateBuffer(vb.Get(), vertices, sizeof(vertices));
+        commandQueue->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::VertexBuffer} });
+        commandQueue->Flush();
 
         while (window.IsRunning())
         {
@@ -135,23 +135,23 @@ int main()
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
-            icl->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
 
-            icl->SetGraphicsPipeline(pipeline.Get());
-            icl->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+            commandQueue->SetGraphicsPipeline(pipeline.Get());
+            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
 
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-            icl->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+            commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
             
-            icl->SetVertexBuffers(0, { vb.Get() }, { 0 });
-            icl->Draw(3, 0);
+            commandQueue->SetVertexBuffers(0, { vb.Get() }, { 0 });
+            commandQueue->Draw(3, 0);
 
-            icl->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
 
             fence->IncrementCurrentValue();
-            icl->EnqueueSignal(fence.Get(), fence->GetCurrentValue());
+            commandQueue->EnqueueSignal(fence.Get(), fence->GetCurrentValue());
 
-            icl->Flush();
+            commandQueue->Flush();
 
             device->EndFrame();
             device->GarbageCollect();

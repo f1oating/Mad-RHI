@@ -5,7 +5,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include <volk/volk.h>
 #include <vector>
-#include "Mad-RHI/Backend/Vulkan/VulkanCommandList.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
 #include <vk_mem_alloc.h>
 #include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
@@ -23,7 +23,7 @@ public:
     virtual void EndFrame() override;
     virtual void GarbageCollect() override;
 
-    virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() override;
+    virtual RefPtr<CommandQueue> GetCommandQueue() override;
 
     virtual void CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window) override;
     virtual void CreateTexture(Texture** ppTex, const TextureDesc& desc) override;
@@ -51,7 +51,7 @@ private:
 
     uint64_t m_CurrentFrame = 0;
 
-    RefPtr<VulkanImmidiateCommandList> m_GraphicsImmidiateCommandList = nullptr;
+    RefPtr<VulkanCommandQueue> m_GraphicsCommandQueue = nullptr;
 
     VmaAllocator m_Allocator = nullptr;
 

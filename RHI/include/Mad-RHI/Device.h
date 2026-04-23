@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Common.h"
-#include "Mad-RHI/CommandList.h"
+#include "Mad-RHI/CommandQueue.h"
 #include "Mad-RHI/PipelineState.h"
 #include "Mad-RHI/Resource.h"
 #include "Mad-RHI/Fence.h"
@@ -22,7 +22,7 @@ public:
     virtual void EndFrame() = 0;
     virtual void GarbageCollect() = 0;
 
-    virtual RefPtr<ImmidiateCommandList> GetImmidiateCommandList() = 0;
+    virtual RefPtr<CommandQueue> GetCommandQueue() = 0;
 
     virtual void CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window) = 0;
     virtual void CreateTexture(Texture** ppTex, const TextureDesc& desc) = 0;
