@@ -24,7 +24,8 @@ int main()
         rhi::Factory* factory = rhi::Factory::Get();
 
         rhi::RefPtr<rhi::Device> device = nullptr;
-        rhi::RefPtr<rhi::CommandQueue> commandQueue = nullptr;
+        rhi::CommandQueue* commandQueue = nullptr;
+
         rhi::RefPtr<rhi::Swapchain> swapchain = nullptr;
 
         common::WindowInfo winInfo = window.GetWindowInfo();
@@ -34,9 +35,37 @@ int main()
         wh.xcb.connection = winInfo.Connection;
         wh.xcb.window = winInfo.Window;
 
-        factory->CreateDevice(device.GetAddress(), {});
-        commandQueue = device->GetCommandQueue();
-        device->CreateSwapchain(swapchain.GetAddress(), wh);
+        uint32_t numAdapters = 0;
+        factory->EnumerateAdapters(numAdapters, nullptr);
+
+        std::vector<rhi::AdapterInfo> adapters(numAdapters);
+        factory->EnumerateAdapters(numAdapters, adapters.data());
+
+        const rhi::AdapterInfo& adapter = adapters[0];
+        uint32_t graphicsFamilyIndex = UINT32_MAX;
+
+        for (uint32_t i = 0; i < adapter.NumFamilies; i++)
+        {
+            if (adapter.Families[i].Flags & rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT)
+            {
+                graphicsFamilyIndex = adapter.Families[i].Index;
+                break;
+            }
+        }
+
+        rhi::CommandQueueDesc queueDesc{};
+        queueDesc.Index = graphicsFamilyIndex;
+        queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+
+        rhi::DeviceDesc deviceDesc{};
+        deviceDesc.AdapterId = 0;
+        deviceDesc.pCommandQueues = &queueDesc;
+        deviceDesc.NumCommandQueues = 1;
+
+        factory->CreateDevice(device.GetAddress(), deviceDesc);
+        commandQueue = device->GetCommandQueue(0);
+        
+        device->CreateSwapchain(swapchain.GetAddress(), wh, commandQueue);
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });

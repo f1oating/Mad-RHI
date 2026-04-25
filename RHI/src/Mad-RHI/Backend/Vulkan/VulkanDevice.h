@@ -23,9 +23,9 @@ public:
     virtual void EndFrame() override;
     virtual void GarbageCollect() override;
 
-    virtual RefPtr<CommandQueue> GetCommandQueue() override;
+    virtual CommandQueue* GetCommandQueue(uint32_t index) override;
 
-    virtual void CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window) override;
+    virtual void CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window, CommandQueue* queue) override;
     virtual void CreateTexture(Texture** ppTex, const TextureDesc& desc) override;
     virtual void CreateBuffer(Buffer** ppBuff, const BufferDesc& desc) override;
     virtual void CreateSampler(Sampler** ppSampler, const SamplerDesc& desc) override;
@@ -46,20 +46,16 @@ private:
     VkPhysicalDevice m_PhysicalDevice = nullptr;
     VkDevice m_Device = nullptr;
 
-    VkQueue m_GraphicsQueue = nullptr;
-    uint32_t m_GraphicsFamily = -1;
-
     uint64_t m_CurrentFrame = 0;
 
-    RefPtr<VulkanCommandQueue> m_GraphicsCommandQueue = nullptr;
+    std::vector<VulkanCommandQueue*> m_CommandQueues;
 
     VmaAllocator m_Allocator = nullptr;
 
     vk::RingBuffer m_RingBuffer;
 
 private:
-    void CreatePhysicalDevice();
-    void CreateLogicalDevice();
+    void CreateLogicalDevice(const DeviceDesc& desc);
     void CreateAllocator();
 
 };

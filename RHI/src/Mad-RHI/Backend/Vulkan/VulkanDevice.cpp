@@ -14,13 +14,11 @@ VulkanDevice::VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory)
     m_Factory = factory;
     
     m_Instance = factory->GetInstance();
+    m_PhysicalDevice = factory->GetPhysicalDevice(desc.AdapterId);
 
-    CreatePhysicalDevice();
-    CreateLogicalDevice();
+    CreateLogicalDevice(desc);
     CreateAllocator();
     m_RingBuffer.Init(m_Allocator);
-
-    m_GraphicsCommandQueue = MakeRef<VulkanCommandQueue>(m_GraphicsQueue, m_GraphicsFamily, this);
 
     std::cout << "Device created" << std::endl;
 }
@@ -29,7 +27,14 @@ VulkanDevice::~VulkanDevice()
 {
     vkDeviceWaitIdle(m_Device);
 
-    m_GraphicsCommandQueue = nullptr;
+    for (auto* queue : m_CommandQueues)
+    {
+        if (queue != nullptr)
+        {
+            queue->Release();
+        }
+    }
+    m_CommandQueues.clear();
 
     m_RingBuffer.Shutdown();
     if (m_Allocator) vmaDestroyAllocator(m_Allocator);
@@ -43,25 +48,33 @@ void VulkanDevice::EndFrame()
     VkDeviceSize ringBufferHead = m_RingBuffer.GetHead();
     SafeReleaseResource(new VkRingBufferResource{ ringBufferHead, &m_RingBuffer });
 
-    m_GraphicsCommandQueue->EndFrame();
+    for (auto* queue : m_CommandQueues)
+    {
+        queue->EndFrame();
+    }
 
     m_CurrentFrame++;
 }
 
 void VulkanDevice::GarbageCollect()
 {
-    m_GraphicsCommandQueue->GarbageCollect();
+    for (auto* queue : m_CommandQueues)
+    {
+        queue->GarbageCollect();
+    }
 }
 
-RefPtr<CommandQueue> VulkanDevice::GetCommandQueue()
+CommandQueue* VulkanDevice::GetCommandQueue(uint32_t index)
 {
-    return m_GraphicsCommandQueue;
+    return m_CommandQueues[index];
 }
 
-void VulkanDevice::CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window)
+void VulkanDevice::CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window, CommandQueue* queue)
 {
+    VulkanCommandQueue* vulkanQueue = static_cast<VulkanCommandQueue*>(queue);
+
     *ppSwapchain = new VulkanSwapchain(m_Instance, m_Device, m_PhysicalDevice, window, 
-        m_GraphicsCommandQueue.Get(), this);
+        vulkanQueue, this);
 }
 
 void VulkanDevice::CreateTexture(Texture** ppTex, const TextureDesc& desc)
@@ -98,51 +111,31 @@ void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)
 {
     auto wrapper = vk::StaleResourceWrapper::Create(resource, 1);
 
-    m_GraphicsCommandQueue->SafeReleaseResource(wrapper); 
+    for (auto* queue : m_CommandQueues)
+    {
+        queue->SafeReleaseResource(wrapper); 
+    }
 
     wrapper.GiveUpOwnership();
 }
 
-void VulkanDevice::CreatePhysicalDevice()
+void VulkanDevice::CreateLogicalDevice(const DeviceDesc& desc)
 {
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr);
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data());
-
-    for (VkPhysicalDevice& pd : devices)
+    std::vector<uint32_t> queueFamilies(desc.NumCommandQueues);
+    for (int i = 0; i < desc.NumCommandQueues; i++)
     {
-        uint32_t queueCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(pd, &queueCount, nullptr);
-        std::vector<VkQueueFamilyProperties> queues(queueCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(pd, &queueCount, queues.data());
-
-        for (uint32_t i = 0; i < queueCount; i++) 
-        {
-            if (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                m_GraphicsFamily = i;
-        }
-
-        if (m_GraphicsFamily != -1) 
-        {
-            m_PhysicalDevice = pd;
-            break;
-        }
+        queueFamilies[i] = desc.pCommandQueues[i].Index;
     }
-}
 
-void VulkanDevice::CreateLogicalDevice()
-{
-    std::set<uint32_t> uniqueFamilies = { m_GraphicsFamily };
     std::vector<VkDeviceQueueCreateInfo> queueInfos;
 
     float priority = 1.0f;
-    for (uint32_t family : uniqueFamilies) 
+    for (uint32_t family : queueFamilies) 
     {
         VkDeviceQueueCreateInfo qi{};
-        qi.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        qi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         qi.queueFamilyIndex = family;
-        qi.queueCount       = 1;
+        qi.queueCount = 1;
         qi.pQueuePriorities = &priority;
         queueInfos.push_back(qi);
     }
@@ -170,7 +163,15 @@ void VulkanDevice::CreateLogicalDevice()
 
     vkCreateDevice(m_PhysicalDevice, &deviceInfo, nullptr, &m_Device);
 
-    vkGetDeviceQueue(m_Device, m_GraphicsFamily, 0, &m_GraphicsQueue);
+    m_CommandQueues.resize(desc.NumCommandQueues);
+    for (int i = 0; i < desc.NumCommandQueues; i++)
+    {
+        VkQueue vkQueue = VK_NULL_HANDLE;
+        vkGetDeviceQueue(m_Device, queueFamilies[i], 0, &vkQueue);
+
+        auto* queue = new VulkanCommandQueue(vkQueue, queueFamilies[i], this);
+        m_CommandQueues[i] = queue;
+    }
 }
 
 void VulkanDevice::CreateAllocator()

@@ -16,6 +16,15 @@ struct FactoryInitInfo
     const char* pEngineName;
 };
 
+struct AdapterInfo
+{
+    char Description[256];
+    uint32_t VendorId;
+    uint32_t DeviceId;
+    QueueFamilyInfo Families[8];
+    uint32_t NumFamilies;
+};
+
 class Factory
 {
 protected:
@@ -27,6 +36,8 @@ public:
 
     static void Init(const FactoryInitInfo& info);
     static void Shutdown();
+
+    virtual void EnumerateAdapters(uint32_t& numAdapters, AdapterInfo* adapters) = 0;
 
     virtual void CreateDevice(Device** ppDevice, const DeviceDesc& desc) = 0;
 
