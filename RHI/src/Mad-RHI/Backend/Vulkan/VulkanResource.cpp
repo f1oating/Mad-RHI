@@ -162,6 +162,7 @@ VulkanBuffer::VulkanBuffer(const BufferDesc& desc, VulkanDevice* context)
     }
 
     vmaCreateBuffer(m_Context->GetVmaAllocator(), &bci, &aci, &m_Buffer, &m_Allocation, nullptr);
+    m_ID = m_Context->GenerateBufferId();
 }
 
 VulkanBuffer::~VulkanBuffer()
@@ -241,6 +242,7 @@ VulkanSampler::VulkanSampler(const SamplerDesc& desc, VulkanDevice* context)
     sci.unnormalizedCoordinates = VK_FALSE;
 
     vkCreateSampler(m_Context->GetDevice(), &sci, nullptr, &m_Sampler);
+    m_ID = m_Context->GenerateBufferId();
 }
 
 VulkanSampler::~VulkanSampler()
@@ -315,6 +317,7 @@ VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureVie
     }
 
     vkCreateImageView(m_Context->GetDevice(), &ci, nullptr, &m_View);
+    m_ID = m_Context->GenerateBufferId();
 }
 
 VulkanTextureView::~VulkanTextureView()

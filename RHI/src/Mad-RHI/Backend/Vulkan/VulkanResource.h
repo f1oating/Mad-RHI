@@ -57,6 +57,7 @@ public:
     virtual const BufferDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
 
+    uint64_t GetID() { return m_ID; }
     VkBuffer GetBuffer() { return m_Buffer; }
     VmaAllocation GetAllocation() { return m_Allocation; }
     VkDeviceSize GetOffset() { return m_Offset; }
@@ -67,6 +68,7 @@ private:
     ResourceState m_CurrentState = ResourceState::Undefined;
     BufferDesc m_Desc;
 
+    uint64_t m_ID = 0;
     VkBuffer m_Buffer = nullptr;
     void* m_MappedPtr = nullptr;
     VmaAllocation m_Allocation = nullptr;
@@ -87,9 +89,12 @@ public:
 
     virtual const SamplerDesc& GetDesc() override;
 
+    uint64_t GetID() { return m_ID; }
+
 private:
     SamplerDesc m_Desc;
 
+    uint64_t m_ID = 0;
     VkSampler m_Sampler = nullptr;
 
     VulkanDevice* m_Context = nullptr;
@@ -107,6 +112,7 @@ public:
     VulkanTextureView(RefCounter* sharedCounter, const TextureViewDesc& desc, 
         VulkanTexture* tex, VulkanDevice* context);
 
+    uint64_t GetID() { return m_ID; }
     VulkanTexture* GetTexture() { return m_Texture; }
     VkImageView GetView() { return m_View; }
 
@@ -115,6 +121,7 @@ private:
 
     VkImageView m_View = nullptr;
 
+    uint64_t m_ID = 0;
     VulkanDevice* m_Context = nullptr;
     VulkanTexture* m_Texture = nullptr;
 

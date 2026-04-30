@@ -5,6 +5,7 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include <volk/volk.h>
 #include <vector>
+#include <atomic>
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
 #include <vk_mem_alloc.h>
 #include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
@@ -39,6 +40,10 @@ public:
     VmaAllocator GetVmaAllocator() { return m_Allocator; }
     vk::RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
 
+    uint64_t GenerateBufferId() { return m_BufferIdCounter.fetch_add(1, std::memory_order_relaxed); }
+    uint64_t GenerateImageViewId() { return m_ImageViewIdCounter.fetch_add(1, std::memory_order_relaxed); }
+    uint64_t GenerateSamplerId() { return m_SamplerIdCounter.fetch_add(1, std::memory_order_relaxed); }
+
 private:
     VulkanFactory* m_Factory = nullptr;
 
@@ -53,6 +58,10 @@ private:
     VmaAllocator m_Allocator = nullptr;
 
     vk::RingBuffer m_RingBuffer;
+
+    std::atomic<uint64_t> m_BufferIdCounter { 1 };
+    std::atomic<uint64_t> m_ImageViewIdCounter { 1 };
+    std::atomic<uint64_t> m_SamplerIdCounter { 1 };
 
 private:
     void CreateLogicalDevice(const DeviceDesc& desc);
