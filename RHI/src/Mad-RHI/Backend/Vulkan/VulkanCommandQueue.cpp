@@ -177,6 +177,15 @@ void VulkanCommandQueue::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
 {
     m_BoundPipeline = static_cast<VulkanGraphicsPipelineState*>(pipeline);
 
+    std::vector<VkDescriptorSetLayout> layouts;
+    for (uint32_t i = 0; i < m_BoundPipeline->GetSetCount(); ++i)
+    {
+        layouts.push_back(m_BoundPipeline->GetSetLayout(i));
+    }
+
+    m_DescriptorState.Init(layouts);
+    m_DescriptorState.MarkAllDirty();
+
     vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_BoundPipeline->GetPipeline());
 }
 
@@ -191,10 +200,52 @@ void VulkanCommandQueue::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer
     vkCmdBindVertexBuffers(m_CurrentCommandBuffer, startSlot, (uint32_t)vkBuffers.size(), vkBuffers.data(), offsets.data());
 }
 
+void VulkanCommandQueue::SetUniformBuffer(const char* name, Buffer* buffer)
+{
+    auto* res = m_BoundPipeline->GetReflection().Find(name);
+    if (!res) return;
+
+    auto* vkBuf = static_cast<VulkanBuffer*>(buffer);
+    m_DescriptorState.SetBuffer(res->Set, res->Binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        vkBuf->GetBuffer(), vkBuf->GetID(), vkBuf->GetOffset(), vkBuf->GetDesc().Size);
+}
+
+void VulkanCommandQueue::SetStorageBuffer(const char* name, Buffer* buffer)
+{
+    auto* res = m_BoundPipeline->GetReflection().Find(name);
+    if (!res) return;
+
+    auto* vkBuf = static_cast<VulkanBuffer*>(buffer);
+    m_DescriptorState.SetBuffer(res->Set, res->Binding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        vkBuf->GetBuffer(), vkBuf->GetID(), vkBuf->GetOffset(), vkBuf->GetDesc().Size);
+}
+
+void VulkanCommandQueue::SetTexture(const char* name, TextureView* view, Sampler* sampler)
+{
+    auto* res = m_BoundPipeline->GetReflection().Find(name);
+    if (!res) return;
+
+    auto* vkView = static_cast<VulkanTextureView*>(view);
+    auto* vkSampler = static_cast<VulkanSampler*>(sampler);
+    m_DescriptorState.SetImage(res->Set, res->Binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        vkView->GetView(), vkView->GetID(),
+        vkSampler->GetSampler(), vkSampler->GetID(),
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
 
 void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
 {
     BeginRenderingIfNeeded();
+
+    if (m_DescriptorState.HasAnySets())
+    {
+        m_DescriptorState.UpdateAndBind(
+            m_CurrentCommandBuffer,
+            m_BoundPipeline->GetPipelineLayout(),
+            m_Device,
+            m_DescriptorAllocator);
+    }
+
     vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
 }
 
@@ -325,6 +376,7 @@ void VulkanCommandQueue::Flush()
     m_SignalSemaphores.clear();
     m_SignalSemaphoresValues.clear();
 
+    m_DescriptorAllocator.CommitSubmission(m_TimelineSemaphoreValue);
     m_CommandListPool.ReleaseCommandBuffer(m_CurrentCommandBuffer, m_TimelineSemaphoreValue);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_TimelineSemaphoreValue);
 
@@ -350,7 +402,9 @@ void VulkanCommandQueue::EndFrame()
 
 void VulkanCommandQueue::GarbageCollect()
 {
-    m_ReleaseManager.Purge(GetTimelineSemaphoreValue());
+    uint64_t value = GetTimelineSemaphoreValue();
+    m_ReleaseManager.Purge(value);
+    m_DescriptorAllocator.GC(value);
 }
 
 void VulkanCommandQueue::FlushWaitSemaphores()

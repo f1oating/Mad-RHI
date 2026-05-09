@@ -5,6 +5,7 @@
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/Vk/CommandListPool.h"
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
+#include "Mad-RHI/Backend/Vulkan/Vk/DescriptorState.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanPipelineState.h"
 
 namespace mad::rhi {
@@ -29,6 +30,10 @@ public:
     virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) override;
 
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) override;
+
+    virtual void SetUniformBuffer(const char* name, Buffer* buffer) override;
+    virtual void SetStorageBuffer(const char* name, Buffer* buffer) override;
+    virtual void SetTexture(const char* name, TextureView* view, Sampler* sampler) override;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
 
@@ -81,6 +86,9 @@ private:
     VkRenderingInfoKHR m_RenderingInfo{};
     bool m_HasDepthAttachment = false;
     bool m_IsInRenderingScope = false;
+
+    vk::DescriptorState m_DescriptorState;
+    vk::DescriptorSetAllocator m_DescriptorAllocator;
 
 private:
     void CreateQueueSync();

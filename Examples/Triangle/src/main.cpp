@@ -6,6 +6,8 @@
 #include "Common/Window.h"
 #include "Common/Event.h"
 #include "Common/ShaderCompiler.h"
+#include <chrono>
+#include <cmath>
 
 using namespace mad;
 
@@ -156,11 +158,22 @@ int main()
         commandQueue->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::VertexBuffer} });
         commandQueue->Flush();
 
+        auto startTime = std::chrono::high_resolution_clock::now();
+
         while (window.IsRunning())
         {
+            auto now = std::chrono::high_resolution_clock::now();
+            float t = std::chrono::duration<float>(now - startTime).count();
+
             window.Update();
 
-            cb->Map();
+            struct ColorData { float r, g, b, a; };
+
+            float* mapped = static_cast<float*>(cb->Map());
+            mapped[0] = (std::sin(t * 1.0f) * 0.5f + 0.5f);
+            mapped[1] = (std::sin(t * 1.5f) * 0.5f + 0.5f);
+            mapped[2] = (std::sin(t * 2.0f) * 0.5f + 0.5f);
+            mapped[3] = 1.0f;
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
@@ -173,6 +186,7 @@ int main()
             commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
             
             commandQueue->SetVertexBuffers(0, { vb.Get() }, { 0 });
+            commandQueue->SetUniformBuffer("uColor", cb.Get());
             commandQueue->Draw(3, 0);
 
             commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});

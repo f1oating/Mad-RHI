@@ -76,7 +76,7 @@ void VulkanShaderResourceReflection::AddStage(const uint32_t* byteCode, uint64_t
     spvReflectDestroyShaderModule(&spvModule);
 }
 
-const VulkanReflectedShaderResource* VulkanShaderResourceReflection::Find(std::string name)
+const VulkanReflectedShaderResource* VulkanShaderResourceReflection::Find(std::string name) const
 {
     auto it = m_Resources.find(name);
     return it != m_Resources.end() ? &it->second : nullptr;

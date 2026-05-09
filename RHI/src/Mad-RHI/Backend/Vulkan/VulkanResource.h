@@ -90,6 +90,7 @@ public:
     virtual const SamplerDesc& GetDesc() override;
 
     uint64_t GetID() { return m_ID; }
+    VkSampler GetSampler() { return m_Sampler; }
 
 private:
     SamplerDesc m_Desc;

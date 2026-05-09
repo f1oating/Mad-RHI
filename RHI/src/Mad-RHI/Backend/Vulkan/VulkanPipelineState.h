@@ -35,7 +35,7 @@ public:
 
     void AddStage(const uint32_t* byteCode, uint64_t size, VkShaderStageFlagBits stage);
 
-    const VulkanReflectedShaderResource* Find(std::string name);
+    const VulkanReflectedShaderResource* Find(std::string name) const;
 
     std::vector<const VulkanReflectedShaderResource*> GetSet(uint32_t index);
     uint32_t GetMaxSet() { return m_MaxSet; }

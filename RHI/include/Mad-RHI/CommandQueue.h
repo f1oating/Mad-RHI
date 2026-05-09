@@ -25,6 +25,10 @@ public:
 
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;
 
+    virtual void SetUniformBuffer(const char* name, Buffer* buffer) = 0;
+    virtual void SetStorageBuffer(const char* name, Buffer* buffer) = 0;
+    virtual void SetTexture(const char* name, TextureView* view, Sampler* sampler) = 0;
+
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
 
     virtual void UpdateTexture(Texture* texture, const void* data, uint64_t size) = 0;

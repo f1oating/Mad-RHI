@@ -1,13 +1,19 @@
-struct Output
+struct ColorData
 {
-    float4 color;
+    float4 tint;
+}
+
+ParameterBlock<ColorData> uColor;
+
+struct Output 
+{ 
+    float4 color; 
 }
 
 [shader("fragment")]
 Output main()
 {
     Output output;
-    output.color = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    
+    output.color = uColor.tint;
     return output;
 }
