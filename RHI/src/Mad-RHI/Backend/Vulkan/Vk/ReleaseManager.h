@@ -52,9 +52,6 @@ class ReleaseManager
 using Entry = std::pair<uint64_t, StaleResourceWrapper>;
 
 public:
-    void Init(VkDevice device);
-    void Shutdown();
-
     void SafeReleaseResource(StaleResourceWrapper&& wrapper, uint64_t cmdNum);
     void SafeReleaseResource(const StaleResourceWrapper& wrapper, uint64_t cmdNum);
 
@@ -66,8 +63,6 @@ public:
     void Flush();
 
 private:
-    VkDevice m_Device = nullptr;
-
     std::deque<Entry> m_StaleQueue;
     std::deque<Entry> m_ReleaseQueue;
 

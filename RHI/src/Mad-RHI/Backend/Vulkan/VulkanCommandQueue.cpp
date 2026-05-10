@@ -18,7 +18,6 @@ VulkanCommandQueue::VulkanCommandQueue(VkQueue queue, uint32_t queueFamilyIndex,
 
     CreateQueueSync();
     m_CommandListPool.Init(m_Device, m_QueueFamilyIndex);
-    m_ReleaseManager.Init(m_Device);
 
     AcquireCommandBuffer();
 
@@ -27,7 +26,7 @@ VulkanCommandQueue::VulkanCommandQueue(VkQueue queue, uint32_t queueFamilyIndex,
 
 VulkanCommandQueue::~VulkanCommandQueue()
 {
-    m_ReleaseManager.Shutdown();
+    m_ReleaseManager.Flush();
     m_CommandListPool.Shutdown();
     DestroyQueueSync();
 

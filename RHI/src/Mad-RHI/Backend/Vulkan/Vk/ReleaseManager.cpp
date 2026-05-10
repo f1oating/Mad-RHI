@@ -1,17 +1,7 @@
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 
 namespace mad::rhi::vk {
-
-void ReleaseManager::Init(VkDevice device)
-{
-    m_Device = device;
-}
-
-void ReleaseManager::Shutdown()
-{
-    Flush();
-}
-
+    
 void ReleaseManager::SafeReleaseResource(StaleResourceWrapper&& wrapper, uint64_t cmdNum)
 {
     m_StaleQueue.emplace_back(cmdNum, std::move(wrapper));
