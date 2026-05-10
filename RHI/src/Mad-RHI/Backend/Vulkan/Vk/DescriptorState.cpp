@@ -105,7 +105,7 @@ void DescriptorState::Init(const std::vector<VkDescriptorSetLayout>& setLayouts)
     {
         m_Sets[i].Layout = setLayouts[i];
         m_Sets[i].Slots.resize(16);
-        m_Sets[i].Dirty  = false;
+        m_Sets[i].Dirty = false;
     }
 }
 
@@ -113,12 +113,12 @@ void DescriptorState::SetBuffer(uint32_t set, uint32_t binding, VkDescriptorType
     VkBuffer buffer, uint64_t bufferId, VkDeviceSize offset, VkDeviceSize range)
 {
     auto& slot = m_Sets[set].Slots[binding];
-    slot.Type         = type;
-    slot.Buffer       = buffer;
-    slot.BufferId     = bufferId;
+    slot.Type = type;
+    slot.Buffer = buffer;
+    slot.BufferId = bufferId;
     slot.BufferOffset = offset;
-    slot.BufferRange  = range;
-    slot.Valid        = true;
+    slot.BufferRange = range;
+    slot.Valid = true;
     m_Sets[set].Dirty = true;
 }
 
@@ -127,13 +127,13 @@ void DescriptorState::SetImage(uint32_t set, uint32_t binding, VkDescriptorType 
     VkSampler sampler, uint64_t samplerId, VkImageLayout imageLayout)
 {
     auto& slot = m_Sets[set].Slots[binding];
-    slot.Type        = type;
-    slot.ImageView   = view;
+    slot.Type = type;
+    slot.ImageView = view;
     slot.ImageViewId = imageViewId;
-    slot.Sampler     = sampler;
-    slot.SamplerId   = samplerId;
+    slot.Sampler = sampler;
+    slot.SamplerId = samplerId;
     slot.ImageLayout = imageLayout;
-    slot.Valid       = true;
+    slot.Valid = true;
     m_Sets[set].Dirty = true;
 }
 
@@ -143,8 +143,7 @@ void DescriptorState::UpdateAndBind(VkCommandBuffer cmd, VkPipelineLayout pipeli
     for (uint32_t s = 0; s < uint32_t(m_Sets.size()); ++s)
     {
         auto& setState = m_Sets[s];
-        if (!setState.Dirty)
-            continue;
+        if (!setState.Dirty) continue;
 
         bool cacheHit = false;
         VkDescriptorSet set = allocator.FindOrAllocate(device, setState.Layout, setState, cacheHit);
@@ -164,9 +163,12 @@ void DescriptorState::UpdateAndBind(VkCommandBuffer cmd, VkPipelineLayout pipeli
                     slot.Type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 
                 if (isBuffer)
+                {
                     m_Writer.WriteBuffer(b, slot.Type, slot.Buffer, slot.BufferOffset, slot.BufferRange);
-                else
+                } else
+                {
                     m_Writer.WriteImage(b, slot.Type, slot.ImageView, slot.Sampler, slot.ImageLayout);
+                }
             }
             m_Writer.UpdateSet(device, set);
         }
@@ -259,7 +261,7 @@ bool DescriptorSetCache::Find(uint64_t hash, VkDescriptorSet& out)
 
 VkDescriptorSet DescriptorSetCache::Allocate(VkDevice device, VkDescriptorSetLayout layout)
 {
-    DescriptorPool* pool = GetOrCreatePool(device, layout);
+    DescriptorPool* pool = GetOrCreatePool(device);
     VkDescriptorSet set = VK_NULL_HANDLE;
     pool->TryAllocate(device, layout, set);
     return set;
@@ -284,7 +286,7 @@ bool DescriptorSetCache::IsUnused(uint64_t completedTimelineValue) const
     return completedTimelineValue >= m_LastUsedTimelineValue;
 }
 
-DescriptorPool* DescriptorSetCache::GetOrCreatePool(VkDevice device, VkDescriptorSetLayout layout)
+DescriptorPool* DescriptorSetCache::GetOrCreatePool(VkDevice device)
 {
     if (!m_Pools.empty() && !m_Pools.back()->IsFull())
     {

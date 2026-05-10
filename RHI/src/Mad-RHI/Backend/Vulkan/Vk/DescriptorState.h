@@ -82,8 +82,8 @@ public:
 
     ~DescriptorPool();
 
-    bool TryAllocate(VkDevice, VkDescriptorSetLayout, VkDescriptorSet& out);
-    void Reset(VkDevice);
+    bool TryAllocate(VkDevice device, VkDescriptorSetLayout, VkDescriptorSet& out);
+    void Reset(VkDevice device);
     bool IsFull() const { return m_Used >= m_MaxSets; }
 
 private:
@@ -100,14 +100,14 @@ public:
     ~DescriptorSetCache();
 
     bool Find(uint64_t hash, VkDescriptorSet& out);
-    VkDescriptorSet Allocate(VkDevice, VkDescriptorSetLayout);
+    VkDescriptorSet Allocate(VkDevice device, VkDescriptorSetLayout);
     void Register(uint64_t hash, VkDescriptorSet set);
-    void Reset(VkDevice);
+    void Reset(VkDevice device);
     void Touch(uint64_t timelineValue) { m_LastUsedTimelineValue = timelineValue; }
     bool IsUnused(uint64_t completedTimelineValue) const;
 
 private:
-    DescriptorPool* GetOrCreatePool(VkDevice, VkDescriptorSetLayout);
+    DescriptorPool* GetOrCreatePool(VkDevice device);
 
 private:
     std::vector<DescriptorPool*> m_Pools;
@@ -119,7 +119,7 @@ private:
 class DescriptorSetAllocator
 {
 public:
-    VkDescriptorSet FindOrAllocate(VkDevice, VkDescriptorSetLayout,
+    VkDescriptorSet FindOrAllocate(VkDevice device, VkDescriptorSetLayout,
         const DescriptorSet& state, bool& outCacheHit);
 
     void CommitSubmission(uint64_t value);
