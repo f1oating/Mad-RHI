@@ -220,7 +220,7 @@ void VulkanCommandQueue::SetStorageBuffer(const char* name, Buffer* buffer)
         vkBuf->GetBuffer(), vkBuf->GetID(), vkBuf->GetOffset(), vkBuf->GetDesc().Size);
 }
 
-void VulkanCommandQueue::SetTexture(const char* name, TextureView* view, Sampler* sampler)
+void VulkanCommandQueue::SetSampledTexture(const char* name, TextureView* view, Sampler* sampler)
 {
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
@@ -231,6 +231,26 @@ void VulkanCommandQueue::SetTexture(const char* name, TextureView* view, Sampler
         vkView->GetView(), vkView->GetID(),
         vkSampler->GetSampler(), vkSampler->GetID(),
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+void VulkanCommandQueue::SetTexture(const char* name, TextureView* view)
+{
+    auto* res = m_BoundPipeline->GetReflection().Find(name);
+    if (!res) return;
+
+    auto* vkView = static_cast<VulkanTextureView*>(view);
+    m_DescriptorState.SetImage(res->Set, res->Binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        vkView->GetView(), vkView->GetID(), nullptr, 0, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+void VulkanCommandQueue::SetSampler(const char* name, Sampler* sampler)
+{
+    auto* res = m_BoundPipeline->GetReflection().Find(name);
+    if (!res) return;
+
+    auto* vkSampler = static_cast<VulkanSampler*>(sampler);
+    m_DescriptorState.SetImage(res->Set, res->Binding, VK_DESCRIPTOR_TYPE_SAMPLER,
+        nullptr, 0, vkSampler->GetSampler(), vkSampler->GetID(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)

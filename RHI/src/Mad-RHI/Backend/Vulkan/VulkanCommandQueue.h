@@ -33,7 +33,9 @@ public:
 
     virtual void SetUniformBuffer(const char* name, Buffer* buffer) override;
     virtual void SetStorageBuffer(const char* name, Buffer* buffer) override;
-    virtual void SetTexture(const char* name, TextureView* view, Sampler* sampler) override;
+    virtual void SetSampledTexture(const char* name, TextureView* view, Sampler* sampler) override;
+    virtual void SetTexture(const char* name, TextureView* view) override;
+    virtual void SetSampler(const char* name, Sampler* sampler) override;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
 

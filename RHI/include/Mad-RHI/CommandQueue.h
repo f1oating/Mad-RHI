@@ -27,7 +27,9 @@ public:
 
     virtual void SetUniformBuffer(const char* name, Buffer* buffer) = 0;
     virtual void SetStorageBuffer(const char* name, Buffer* buffer) = 0;
-    virtual void SetTexture(const char* name, TextureView* view, Sampler* sampler) = 0;
+    virtual void SetSampledTexture(const char* name, TextureView* view, Sampler* sampler) = 0;
+    virtual void SetTexture(const char* name, TextureView* view) = 0;
+    virtual void SetSampler(const char* name, Sampler* sampler) = 0;
 
     virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
 
