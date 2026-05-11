@@ -42,7 +42,6 @@ public:
     virtual ~Device() = default;
 
     virtual void EndFrame() = 0;
-    virtual void GarbageCollect() = 0;
 
     virtual CommandQueue* GetCommandQueue(uint32_t index) = 0;
 

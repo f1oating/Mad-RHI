@@ -416,11 +416,7 @@ void VulkanCommandQueue::SafeReleaseResource(const vk::StaleResourceWrapper& wra
 
 void VulkanCommandQueue::EndFrame()
 {
-    m_ReleaseManager.DiscardStaleResources(m_TimelineSemaphoreValue);
-}
-
-void VulkanCommandQueue::GarbageCollect()
-{
+    Flush();
     uint64_t value = GetTimelineSemaphoreValue();
     m_ReleaseManager.Purge(value);
     m_DescriptorAllocator.GC(value);

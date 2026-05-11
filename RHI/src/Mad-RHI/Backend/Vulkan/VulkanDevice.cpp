@@ -56,14 +56,6 @@ void VulkanDevice::EndFrame()
     m_CurrentFrame++;
 }
 
-void VulkanDevice::GarbageCollect()
-{
-    for (auto* queue : m_CommandQueues)
-    {
-        queue->GarbageCollect();
-    }
-}
-
 CommandQueue* VulkanDevice::GetCommandQueue(uint32_t index)
 {
     return m_CommandQueues[index];

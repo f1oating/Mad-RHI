@@ -22,7 +22,6 @@ public:
     VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory);
 
     virtual void EndFrame() override;
-    virtual void GarbageCollect() override;
 
     virtual CommandQueue* GetCommandQueue(uint32_t index) override;
 

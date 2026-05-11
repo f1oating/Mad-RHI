@@ -197,7 +197,6 @@ int main()
             commandQueue->Flush();
 
             device->EndFrame();
-            device->GarbageCollect();
             swapchain->Present();
         }
     }
