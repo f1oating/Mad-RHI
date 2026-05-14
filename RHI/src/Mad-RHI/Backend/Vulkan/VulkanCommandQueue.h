@@ -58,6 +58,7 @@ public:
     void AddSignalSemaphore(VkSemaphore sem, uint64_t value = 0);
 
     VkQueue GetQueue() { return m_Queue; }
+    VkFence GetCurrentSubmitFence() { return m_CurrentSubmitFence; }
 
 private:
     VulkanDevice* m_Context = nullptr;
@@ -73,6 +74,7 @@ private:
 
     VkSemaphore m_TimelineSemaphore = nullptr;
     uint64_t m_TimelineSemaphoreValue = 0;
+    VkFence m_CurrentSubmitFence = nullptr;
 
     vk::CommandListPool m_CommandListPool;
     uint64_t m_CommandBufferNumber = 0;

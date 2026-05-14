@@ -281,11 +281,6 @@ void DescriptorSetCache::Reset(VkDevice device)
     m_Cache.clear();
 }
 
-bool DescriptorSetCache::IsUnused(uint64_t completedTimelineValue) const
-{
-    return completedTimelineValue >= m_LastUsedTimelineValue;
-}
-
 DescriptorPool* DescriptorSetCache::GetOrCreatePool(VkDevice device)
 {
     if (!m_Pools.empty() && !m_Pools.back()->IsFull())
@@ -301,52 +296,88 @@ DescriptorPool* DescriptorSetCache::GetOrCreatePool(VkDevice device)
     return pool;
 }
 
+DescriptorSetAllocator::~DescriptorSetAllocator()
+{
+    for (auto& [key, cache] : m_Active)
+        delete cache;
+
+    for (auto& batch : m_InFlight)
+        for (auto& [key, cache] : batch.Caches)
+            delete cache;
+
+    for (auto& [key, list] : m_Idle)
+        for (auto* cache : list)
+            delete cache;
+}
+
+DescriptorSetCache* DescriptorSetAllocator::GetOrCreateActive(VkDevice device, size_t layoutKey)
+{
+    auto it = m_Active.find(layoutKey);
+    if (it != m_Active.end())
+        return it->second;
+
+    auto& idleList = m_Idle[layoutKey];
+    DescriptorSetCache* cache = nullptr;
+    if (!idleList.empty())
+    {
+        cache = idleList.back();
+        idleList.pop_back();
+    }
+    else
+    {
+        cache = new DescriptorSetCache();
+    }
+
+    m_Active[layoutKey] = cache;
+    return cache;
+}
+
 VkDescriptorSet DescriptorSetAllocator::FindOrAllocate(VkDevice device,
     VkDescriptorSetLayout layout, const DescriptorSet& state, bool& outCacheHit)
 {
     size_t layoutKey = reinterpret_cast<size_t>(layout);
-    DescriptorSetCache& cache = m_Caches[layoutKey];
-    m_DirtyLayoutKeys.insert(layoutKey);
+    DescriptorSetCache* cache = GetOrCreateActive(device, layoutKey);
 
     uint64_t hash = ComputeHash(state);
 
     VkDescriptorSet set = VK_NULL_HANDLE;
-    if (cache.Find(hash, set))
+    if (cache->Find(hash, set))
     {
         outCacheHit = true;
         return set;
     }
 
     outCacheHit = false;
-    set = cache.Allocate(device, layout);
-    cache.Register(hash, set);
+    set = cache->Allocate(device, layout);
+    cache->Register(hash, set);
     return set;
 }
 
 void DescriptorSetAllocator::CommitSubmission(uint64_t value)
 {
-    for (size_t key : m_DirtyLayoutKeys)
-    {
-        auto it = m_Caches.find(key);
-        if (it != m_Caches.end())
-        {
-            it->second.Touch(value);
-        }
-    }
-    m_DirtyLayoutKeys.clear();
+    if (m_Active.empty())
+        return;
+
+    Batch batch;
+    batch.Value = value;
+    batch.Caches = std::move(m_Active);
+    m_Active.clear();
+    m_InFlight.push_back(std::move(batch));
 }
 
-void DescriptorSetAllocator::GC(uint64_t completedTimelineValue)
+void DescriptorSetAllocator::GC(VkDevice device, uint64_t completedTimelineValue)
 {
-    for (auto it = m_Caches.begin(); it != m_Caches.end(); )
+    while (!m_InFlight.empty() &&
+           m_InFlight.front().Value <= completedTimelineValue)
     {
-        if (it->second.IsUnused(completedTimelineValue))
+        auto batch = std::move(m_InFlight.front());
+        m_InFlight.pop_front();
+
+        for (auto& [key, cache] : batch.Caches)
         {
-            it = m_Caches.erase(it);
-        } else
-        {
-            ++it;
-        }  
+            cache->Reset(device);
+            m_Idle[key].push_back(cache);
+        }
     }
 }
 

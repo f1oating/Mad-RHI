@@ -103,8 +103,6 @@ public:
     VkDescriptorSet Allocate(VkDevice device, VkDescriptorSetLayout);
     void Register(uint64_t hash, VkDescriptorSet set);
     void Reset(VkDevice device);
-    void Touch(uint64_t timelineValue) { m_LastUsedTimelineValue = timelineValue; }
-    bool IsUnused(uint64_t completedTimelineValue) const;
 
 private:
     DescriptorPool* GetOrCreatePool(VkDevice device);
@@ -112,23 +110,34 @@ private:
 private:
     std::vector<DescriptorPool*> m_Pools;
     std::unordered_map<uint64_t, VkDescriptorSet> m_Cache;
-    uint64_t m_LastUsedTimelineValue = UINT64_MAX;
 
 };
 
 class DescriptorSetAllocator
 {
 public:
+    ~DescriptorSetAllocator();
+
     VkDescriptorSet FindOrAllocate(VkDevice device, VkDescriptorSetLayout,
         const DescriptorSet& state, bool& outCacheHit);
 
     void CommitSubmission(uint64_t value);
-
-    void GC(uint64_t completedTimelineValue);
+    void GC(VkDevice device, uint64_t completedTimelineValue);
 
 private:
-    std::unordered_map<size_t, DescriptorSetCache> m_Caches;
-    std::unordered_set<size_t> m_DirtyLayoutKeys;
+    DescriptorSetCache* GetOrCreateActive(VkDevice device, size_t layoutKey);
+
+private:
+    std::unordered_map<size_t, DescriptorSetCache*> m_Active;
+
+    struct Batch 
+    {
+        uint64_t Value;
+        std::unordered_map<size_t, DescriptorSetCache*> Caches;
+    };
+    std::deque<Batch> m_InFlight;
+
+    std::unordered_map<size_t, std::vector<DescriptorSetCache*>> m_Idle;
 
 };
 

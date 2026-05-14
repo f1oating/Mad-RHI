@@ -419,7 +419,7 @@ void VulkanCommandQueue::EndFrame()
     Flush();
     uint64_t value = GetTimelineSemaphoreValue();
     m_ReleaseManager.Purge(value);
-    m_DescriptorAllocator.GC(value);
+    m_DescriptorAllocator.GC(m_Device, value);
 }
 
 void VulkanCommandQueue::FlushWaitSemaphores()
