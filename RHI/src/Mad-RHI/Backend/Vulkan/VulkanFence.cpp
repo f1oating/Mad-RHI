@@ -40,9 +40,9 @@ uint64_t VulkanFence::GetCurrentValue()
     return m_TimelineSemaphoreValue; 
 }
 
-void VulkanFence::IncrementCurrentValue() 
+uint64_t VulkanFence::IncrementCurrentValue() 
 { 
-    m_TimelineSemaphoreValue++; 
+    return ++m_TimelineSemaphoreValue;
 }
 
 void VulkanFence::Wait(uint64_t value)

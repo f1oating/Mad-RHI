@@ -5,6 +5,7 @@
 #include <vector>
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanFence.h"
 
 namespace mad::rhi {
 
@@ -39,7 +40,8 @@ private:
 
     std::vector<VkSemaphore> m_RenderFinishedSamephores;
     std::vector<VkSemaphore> m_PresentCompleteSemaphores;
-    std::vector<VkFence> m_Fences;
+    std::vector<uint64_t> m_FenceValues;
+    VulkanFence* m_Fence = nullptr;
 
     VulkanCommandQueue* m_CommandQueue = nullptr;
 

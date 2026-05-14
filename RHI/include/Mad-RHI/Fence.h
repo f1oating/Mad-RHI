@@ -13,7 +13,7 @@ public:
     virtual uint64_t GetCompletedValue() = 0;
     virtual uint64_t GetCurrentValue() = 0;
     
-    virtual void IncrementCurrentValue() = 0;
+    virtual uint64_t IncrementCurrentValue() = 0;
 
     virtual void Wait(uint64_t value) = 0;
 

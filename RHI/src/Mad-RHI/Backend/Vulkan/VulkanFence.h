@@ -19,7 +19,7 @@ public:
     virtual uint64_t GetCompletedValue() override;
     virtual uint64_t GetCurrentValue() override;
     
-    virtual void IncrementCurrentValue() override;
+    virtual uint64_t IncrementCurrentValue() override;
 
     virtual void Wait(uint64_t value) override;
     

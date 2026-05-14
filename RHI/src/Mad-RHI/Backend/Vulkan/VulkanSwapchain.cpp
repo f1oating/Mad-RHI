@@ -14,6 +14,7 @@ VulkanSwapchain::VulkanSwapchain(VkInstance instance, VkDevice device, VkPhysica
     CreateSurface(window);
     CreateSwapchain();
     CreateFramesInFlightSync();
+    m_Fence = new VulkanFence(m_Context);
 
     AcquireNextImage();
 }
@@ -22,6 +23,7 @@ VulkanSwapchain::~VulkanSwapchain()
 {
     vkDeviceWaitIdle(m_Device);
 
+    m_Fence->Release();
     DestroyFramesInFlightSync();
     DestroySwapchain();
 
@@ -35,12 +37,10 @@ Texture* VulkanSwapchain::GetCurrentBackBuffer()
 
 void VulkanSwapchain::Present()
 {
+    m_FenceValues[m_CurrentFrameInFlight] = m_Fence->IncrementCurrentValue();
     m_CommandQueue->AddSignalSemaphore(m_RenderFinishedSamephores[m_CurrentImageIndex]);
+    m_CommandQueue->EnqueueSignal(m_Fence, m_Fence->GetCurrentValue());
     m_CommandQueue->Flush();
-
-    VkSubmitInfo si{};
-    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    vkQueueSubmit(m_CommandQueue->GetQueue(), 1, &si, m_Fences[m_CurrentFrameInFlight]);
 
     VkPresentInfoKHR pi{};
     pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -165,7 +165,7 @@ void VulkanSwapchain::CreateFramesInFlightSync()
 {
     m_RenderFinishedSamephores.resize(m_SwapchainImages.size());
     m_PresentCompleteSemaphores.resize(2);
-    m_Fences.resize(2);
+    m_FenceValues.resize(2);
 
     for (int i = 0; i < m_SwapchainImages.size(); i++)
     {
@@ -179,10 +179,7 @@ void VulkanSwapchain::CreateFramesInFlightSync()
         sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         vkCreateSemaphore(m_Device, &sci, nullptr, &m_PresentCompleteSemaphores[i]);
 
-        VkFenceCreateInfo fci{};
-        fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        vkCreateFence(m_Device, &fci, nullptr, &m_Fences[i]);
+        m_FenceValues[i] = 0;
     }
 }
 
@@ -202,13 +199,6 @@ void VulkanSwapchain::DestroyFramesInFlightSync()
             vkDestroySemaphore(m_Device, sem, nullptr);
         }
     }
-    for (auto& fence : m_Fences)
-    {
-        if (fence != nullptr)
-        {
-            vkDestroyFence(m_Device, fence, nullptr);
-        }
-    }
 }
 
 void VulkanSwapchain::RecreateSwapchain()
@@ -226,7 +216,7 @@ void VulkanSwapchain::RecreateSwapchain()
 
 void VulkanSwapchain::AcquireNextImage()
 {
-    vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight], VK_TRUE, UINT64_MAX);
+    m_Fence->Wait(m_FenceValues[m_CurrentFrameInFlight]);
     VkResult res = vkAcquireNextImageKHR(
         m_Device, m_Swapchain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentFrameInFlight],
         nullptr, &m_CurrentImageIndex
@@ -238,7 +228,6 @@ void VulkanSwapchain::AcquireNextImage()
         return;
     }
 
-    vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrameInFlight]);
     m_CommandQueue->AddWaitSemaphore(m_PresentCompleteSemaphores[m_CurrentFrameInFlight]);
 }
 
