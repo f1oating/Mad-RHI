@@ -15,9 +15,6 @@ struct Entry
 };
 
 public:
-    CommandListPool() = default;
-    ~CommandListPool() = default;
-
     void Init(VkDevice device, uint32_t queueIndex);
     void Shutdown();
 
