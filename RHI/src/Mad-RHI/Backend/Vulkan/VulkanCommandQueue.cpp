@@ -36,6 +36,8 @@ VulkanCommandQueue::~VulkanCommandQueue()
 void VulkanCommandQueue::ResourceBarrier(
     std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers)
 {
+    m_HasRecordedCommands = true;
+
     EndRenderingScope();
 
     std::vector<VkImageMemoryBarrier> imageMemoryBarriers;
@@ -45,20 +47,20 @@ void VulkanCommandQueue::ResourceBarrier(
     {
         VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(tb.Texture);
         VkImageMemoryBarrier imgBarrier{};
-        imgBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        imgBarrier.srcAccessMask       = ToVkAccessMask(vulkanTexture->GetCurrentResourceState());
-        imgBarrier.dstAccessMask       = ToVkAccessMask(tb.NewState);
-        imgBarrier.oldLayout           = ToVkImageLayout(vulkanTexture->GetCurrentResourceState());
-        imgBarrier.newLayout           = ToVkImageLayout(tb.NewState);
+        imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        imgBarrier.srcAccessMask = ToVkAccessMask(vulkanTexture->GetCurrentResourceState());
+        imgBarrier.dstAccessMask = ToVkAccessMask(tb.NewState);
+        imgBarrier.oldLayout = ToVkImageLayout(vulkanTexture->GetCurrentResourceState());
+        imgBarrier.newLayout = ToVkImageLayout(tb.NewState);
         imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        imgBarrier.image               = vulkanTexture->GetImage();
+        imgBarrier.image = vulkanTexture->GetImage();
         imgBarrier.subresourceRange    = {
-            .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel   = tb.BaseMip,
-            .levelCount     = tb.MipCount ? tb.MipCount : VK_REMAINING_MIP_LEVELS,
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = tb.BaseMip,
+            .levelCount = tb.MipCount ? tb.MipCount : VK_REMAINING_MIP_LEVELS,
             .baseArrayLayer = tb.BaseSlice,
-            .layerCount     = tb.SliceCount ? tb.SliceCount : VK_REMAINING_ARRAY_LAYERS,
+            .layerCount = tb.SliceCount ? tb.SliceCount : VK_REMAINING_ARRAY_LAYERS,
         };
         imageMemoryBarriers.emplace_back(imgBarrier);
         vulkanTexture->SetResourceState(tb.NewState);
@@ -68,14 +70,14 @@ void VulkanCommandQueue::ResourceBarrier(
     {
         VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(bb.Buffer);
         VkBufferMemoryBarrier bufBarrier{};
-        bufBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-        bufBarrier.srcAccessMask       = ToVkAccessMask(vulkanBuffer->GetCurrentResourceState());
-        bufBarrier.dstAccessMask       = ToVkAccessMask(bb.NewState);
+        bufBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        bufBarrier.srcAccessMask = ToVkAccessMask(vulkanBuffer->GetCurrentResourceState());
+        bufBarrier.dstAccessMask = ToVkAccessMask(bb.NewState);
         bufBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         bufBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        bufBarrier.buffer              = vulkanBuffer->GetBuffer();
-        bufBarrier.offset              = 0;
-        bufBarrier.size                = VK_WHOLE_SIZE;
+        bufBarrier.buffer = vulkanBuffer->GetBuffer();
+        bufBarrier.offset = 0;
+        bufBarrier.size = VK_WHOLE_SIZE;
         vulkanBuffer->SetResourceState(bb.NewState);
     }
 
@@ -93,6 +95,8 @@ void VulkanCommandQueue::ResourceBarrier(
 
 void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
 {
+    m_HasRecordedCommands = true;
+
     EndRenderingScope();
 
     m_ColorAttachments.clear();
@@ -152,6 +156,8 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, 
 
 void VulkanCommandQueue::ClearRenderTarget(TextureView* view, const float color[4])
 {
+    m_HasRecordedCommands = true;
+
     VulkanTextureView* vkView = static_cast<VulkanTextureView*>(view);
     VkImageView target = vkView->GetView();
 
@@ -168,12 +174,16 @@ void VulkanCommandQueue::ClearRenderTarget(TextureView* view, const float color[
 
 void VulkanCommandQueue::ClearDepthStencil(TextureView* view, float depth, uint8_t stencil)
 {
+    m_HasRecordedCommands = true;
+
     m_DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     m_DepthAttachment.clearValue.depthStencil = { depth, stencil };
 }
 
 void VulkanCommandQueue::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
 {
+    m_HasRecordedCommands = true;
+
     m_BoundPipeline = static_cast<VulkanGraphicsPipelineState*>(pipeline);
 
     std::vector<VkDescriptorSetLayout> layouts;
@@ -190,6 +200,8 @@ void VulkanCommandQueue::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
 
 void VulkanCommandQueue::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets)
 {
+    m_HasRecordedCommands = true;
+
     std::vector<VkBuffer> vkBuffers;
     vkBuffers.reserve(buffers.size());
     for (Buffer* buf : buffers)
@@ -201,6 +213,8 @@ void VulkanCommandQueue::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer
 
 void VulkanCommandQueue::SetUniformBuffer(const char* name, Buffer* buffer)
 {
+    m_HasRecordedCommands = true;
+
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
 
@@ -211,6 +225,8 @@ void VulkanCommandQueue::SetUniformBuffer(const char* name, Buffer* buffer)
 
 void VulkanCommandQueue::SetStorageBuffer(const char* name, Buffer* buffer)
 {
+    m_HasRecordedCommands = true;
+
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
 
@@ -221,6 +237,8 @@ void VulkanCommandQueue::SetStorageBuffer(const char* name, Buffer* buffer)
 
 void VulkanCommandQueue::SetSampledTexture(const char* name, TextureView* view, Sampler* sampler)
 {
+    m_HasRecordedCommands = true;
+
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
 
@@ -234,6 +252,8 @@ void VulkanCommandQueue::SetSampledTexture(const char* name, TextureView* view, 
 
 void VulkanCommandQueue::SetTexture(const char* name, TextureView* view)
 {
+    m_HasRecordedCommands = true;
+
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
 
@@ -244,6 +264,8 @@ void VulkanCommandQueue::SetTexture(const char* name, TextureView* view)
 
 void VulkanCommandQueue::SetSampler(const char* name, Sampler* sampler)
 {
+    m_HasRecordedCommands = true;
+
     auto* res = m_BoundPipeline->GetReflection().Find(name);
     if (!res) return;
 
@@ -254,6 +276,8 @@ void VulkanCommandQueue::SetSampler(const char* name, Sampler* sampler)
 
 void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
 {
+    m_HasRecordedCommands = true;
+
     BeginRenderingIfNeeded();
 
     if (m_DescriptorState.HasAnySets())
@@ -270,6 +294,8 @@ void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
 
 void VulkanCommandQueue::UpdateTexture(Texture* texture, const void* data, uint64_t size)
 {
+    m_HasRecordedCommands = true;
+
     VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(texture);
     const TextureDesc& desc = vulkanTexture->GetDesc();
     VmaAllocator allocator = m_Context->GetVmaAllocator();
@@ -317,6 +343,8 @@ void VulkanCommandQueue::UpdateTexture(Texture* texture, const void* data, uint6
 
 void VulkanCommandQueue::UpdateBuffer(Buffer* buffer, const void* data, uint64_t size)
 {
+    m_HasRecordedCommands = true;
+
     VulkanBuffer* vulkanBuffer = static_cast<VulkanBuffer*>(buffer);
     VmaAllocator allocator = m_Context->GetVmaAllocator();
 
@@ -349,6 +377,8 @@ void VulkanCommandQueue::UpdateBuffer(Buffer* buffer, const void* data, uint64_t
 
 void VulkanCommandQueue::EnqueueSignal(Fence* fence, uint64_t value)
 {
+    m_HasRecordedCommands = true;
+
     VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
 
     AddSignalSemaphore(vulkanFence->GetTimelineSemaphore(), value);
@@ -356,6 +386,8 @@ void VulkanCommandQueue::EnqueueSignal(Fence* fence, uint64_t value)
 
 void VulkanCommandQueue::WaitForFence(Fence* fence, uint64_t value)
 {
+    m_HasRecordedCommands = true;
+
     VulkanFence* vulkanFence = static_cast<VulkanFence*>(fence);
 
     AddWaitSemaphore(vulkanFence->GetTimelineSemaphore(), value);
@@ -378,15 +410,15 @@ void VulkanCommandQueue::Flush()
     tssi.pSignalSemaphoreValues = m_SignalSemaphoresValues.data();
 
     VkSubmitInfo si{};
-    si.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.pNext                = &tssi;
-    si.waitSemaphoreCount   = (uint32_t)m_WaitSemaphores.size();
-    si.pWaitSemaphores      = m_WaitSemaphores.data();
-    si.pWaitDstStageMask    = waitStages.data();
-    si.commandBufferCount   = 1;
-    si.pCommandBuffers      = &m_CurrentCommandBuffer;
+    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    si.pNext = &tssi;
+    si.waitSemaphoreCount = (uint32_t)m_WaitSemaphores.size();
+    si.pWaitSemaphores = m_WaitSemaphores.data();
+    si.pWaitDstStageMask = waitStages.data();
+    si.commandBufferCount = 1;
+    si.pCommandBuffers = &m_CurrentCommandBuffer;
     si.signalSemaphoreCount = (uint32_t)m_SignalSemaphores.size();
-    si.pSignalSemaphores    = m_SignalSemaphores.data();
+    si.pSignalSemaphores = m_SignalSemaphores.data();
 
     vkQueueSubmit(m_Queue, 1, &si, VK_NULL_HANDLE);
 
@@ -400,6 +432,7 @@ void VulkanCommandQueue::Flush()
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_TimelineSemaphoreValue);
 
     AcquireCommandBuffer();
+    m_HasRecordedCommands = false;
 
     m_CommandListPool.Purge(GetTimelineSemaphoreValue());
 }
@@ -416,7 +449,14 @@ void VulkanCommandQueue::SafeReleaseResource(const vk::StaleResourceWrapper& wra
 
 void VulkanCommandQueue::EndFrame()
 {
-    Flush();
+    if (m_HasRecordedCommands)
+    {
+        Flush();
+    } else
+    {
+        m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_TimelineSemaphoreValue);
+    }
+
     uint64_t value = GetTimelineSemaphoreValue();
     m_ReleaseManager.Purge(value);
     m_DescriptorAllocator.GC(m_Device, value);
@@ -505,8 +545,8 @@ void VulkanCommandQueue::BeginRenderingIfNeeded()
     vkCmdBeginRendering(m_CurrentCommandBuffer, &m_RenderingInfo);
     
     VkViewport viewport{};
-    viewport.width    = (float)m_RenderingInfo.renderArea.extent.width;
-    viewport.height   = (float)m_RenderingInfo.renderArea.extent.height;
+    viewport.width = (float)m_RenderingInfo.renderArea.extent.width;
+    viewport.height = (float)m_RenderingInfo.renderArea.extent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     vkCmdSetViewport(m_CurrentCommandBuffer, 0, 1, &viewport);

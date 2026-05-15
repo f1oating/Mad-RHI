@@ -91,6 +91,8 @@ private:
     vk::DescriptorState m_DescriptorState;
     vk::DescriptorSetAllocator m_DescriptorAllocator;
 
+    bool m_HasRecordedCommands = false;
+
 private:
     void CreateQueueSync();
     void DestroyQueueSync();
