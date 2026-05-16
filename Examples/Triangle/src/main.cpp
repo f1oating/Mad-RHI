@@ -1,9 +1,6 @@
 #include <iostream>
 
-#include "Mad-RHI/Factory.h"
-#include "Mad-RHI/Device.h"
-#include "Mad-RHI/CommandQueue.h"
-#include "Common/Window.h"
+#include "Common/BootStrap.h"
 #include "Common/Event.h"
 #include "Common/ShaderCompiler.h"
 #include <chrono>
@@ -13,61 +10,14 @@ using namespace mad;
 
 int main()
 {
-    common::Window window("Triangle", 800, 600);
-
-    rhi::FactoryInitInfo info;
-    info.pAppName = "Triangle";
-    info.pEngineName = "Mad-RHI";
-    info.Backend = rhi::FactoryBackend::Vulkan;
-
-    rhi::Factory::Init(info);
+    common::BootStrap bootStrap;
+    bootStrap.Init("Triangle");
 
     {
-        rhi::Factory* factory = rhi::Factory::Get();
-
-        rhi::RefPtr<rhi::Device> device = nullptr;
-        rhi::CommandQueue* commandQueue = nullptr;
-
-        rhi::RefPtr<rhi::Swapchain> swapchain = nullptr;
-
-        common::WindowInfo winInfo = window.GetWindowInfo();
-
-        rhi::WindowHandle wh{};
-        wh.platform = rhi::WindowHandle::Platform::XCB;
-        wh.xcb.connection = winInfo.Connection;
-        wh.xcb.window = winInfo.Window;
-
-        uint32_t numAdapters = 0;
-        factory->EnumerateAdapters(numAdapters, nullptr);
-
-        std::vector<rhi::AdapterInfo> adapters(numAdapters);
-        factory->EnumerateAdapters(numAdapters, adapters.data());
-
-        const rhi::AdapterInfo& adapter = adapters[0];
-        uint32_t graphicsFamilyIndex = UINT32_MAX;
-
-        for (uint32_t i = 0; i < adapter.NumFamilies; i++)
-        {
-            if (adapter.Families[i].Flags & rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT)
-            {
-                graphicsFamilyIndex = adapter.Families[i].Index;
-                break;
-            }
-        }
-
-        rhi::CommandQueueDesc queueDesc{};
-        queueDesc.Index = graphicsFamilyIndex;
-        queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
-
-        rhi::DeviceDesc deviceDesc{};
-        deviceDesc.AdapterId = 0;
-        deviceDesc.pCommandQueues = &queueDesc;
-        deviceDesc.NumCommandQueues = 1;
-
-        factory->CreateDevice(device.GetAddress(), deviceDesc);
-        commandQueue = device->GetCommandQueue(0);
-        
-        device->CreateSwapchain(swapchain.GetAddress(), wh, commandQueue);
+        common::Window* window = bootStrap.GetWindow();
+        rhi::Device* device = bootStrap.GetDevice();
+        rhi::CommandQueue* commandQueue = bootStrap.GetQueue();
+        rhi::Swapchain* swapchain = bootStrap.GetSwapchain();
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
@@ -160,12 +110,12 @@ int main()
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
-        while (window.IsRunning())
+        while (window->IsRunning())
         {
             auto now = std::chrono::high_resolution_clock::now();
             float t = std::chrono::duration<float>(now - startTime).count();
 
-            window.Update();
+            window->Update();
 
             struct ColorData { float r, g, b, a; };
 
@@ -202,7 +152,7 @@ int main()
     }
 
     common::EventBus::Clear();
-    rhi::Factory::Shutdown();
+    bootStrap.Shutdown();
 
     return 0;
 }
