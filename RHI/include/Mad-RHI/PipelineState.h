@@ -39,14 +39,14 @@ enum class FrontFace
 
 struct RasterizationDesc
 {
-    PolygonMode     Polygon             = PolygonMode::Fill;
-    CullMode        Cull                = CullMode::Back;
-    FrontFace       Face                = FrontFace::CCW;
-    bool            DepthClampEnable    = false;
-    bool            DepthBiasEnable     = false;
-    float           DepthBiasConstant   = 0.0f;
-    float           DepthBiasSlope      = 0.0f;
-    float           LineWidth           = 1.0f;
+    PolygonMode Polygon = PolygonMode::Fill;
+    CullMode Cull = CullMode::Back;
+    FrontFace Face = FrontFace::CW;
+    bool DepthClampEnable = false;
+    bool DepthBiasEnable = false;
+    float DepthBiasConstant = 0.0f;
+    float DepthBiasSlope = 0.0f;
+    float LineWidth = 1.0f;
 };
 
 enum class StencilOp
@@ -57,23 +57,23 @@ enum class StencilOp
 
 struct StencilOpDesc 
 {
-    StencilOp   Fail          = StencilOp::Keep;
-    StencilOp   Pass          = StencilOp::Keep;
-    StencilOp   DepthFail     = StencilOp::Keep;
-    CompareOp   Compare       = CompareOp::Always;
-    uint32_t    CompareMask   = 0;
-    uint32_t    WriteMask     = 0;
-    uint32_t    Reference     = 0;
+    StencilOp Fail = StencilOp::Keep;
+    StencilOp Pass = StencilOp::Keep;
+    StencilOp DepthFail = StencilOp::Keep;
+    CompareOp Compare = CompareOp::Always;
+    uint32_t CompareMask = 0;
+    uint32_t WriteMask = 0;
+    uint32_t Reference = 0;
 };
 
 struct DepthStencilDesc 
 {
-    bool            DepthTestEnable   = true;
-    bool            DepthWriteEnable  = true;
-    CompareOp       DepthCompareOp    = CompareOp::Less;
-    bool            StencilTestEnable = false;
-    StencilOpDesc   Front;
-    StencilOpDesc   Back;
+    bool DepthTestEnable = true;
+    bool DepthWriteEnable = true;
+    CompareOp DepthCompareOp = CompareOp::Less;
+    bool StencilTestEnable = false;
+    StencilOpDesc Front;
+    StencilOpDesc Back;
 };
 
 enum class BlendFactor 
@@ -102,22 +102,22 @@ enum ColorWriteMask : uint8_t
 
 struct ColorAttachmentBlend 
 {
-    bool        BlendEnable    = false;
+    bool BlendEnable = false;
     BlendFactor SrcColorFactor = BlendFactor::SrcAlpha;
     BlendFactor DstColorFactor = BlendFactor::OneMinusSrcAlpha;
-    BlendOp     ColorOp        = BlendOp::Add;
+    BlendOp ColorOp = BlendOp::Add;
     BlendFactor SrcAlphaFactor = BlendFactor::One;
     BlendFactor DstAlphaFactor = BlendFactor::Zero;
-    BlendOp     AlphaOp        = BlendOp::Add;
-    uint8_t     WriteMask      = COLOR_WRITE_All;
+    BlendOp AlphaOp = BlendOp::Add;
+    uint8_t WriteMask = COLOR_WRITE_All;
 };
 
 struct RenderingDesc 
 {
-    std::vector<TextureFormat>  ColorFormats;
-    TextureFormat               DepthFormat   = TextureFormat::Unknown;
-    TextureFormat               StencilFormat = TextureFormat::Unknown;
-    uint32_t                    SampleCount   = 1;
+    std::vector<TextureFormat> ColorFormats;
+    TextureFormat DepthFormat = TextureFormat::Unknown;
+    TextureFormat StencilFormat = TextureFormat::Unknown;
+    uint32_t SampleCount = 1;
 };
 
 enum class PrimitiveTopology 
@@ -129,13 +129,13 @@ enum class PrimitiveTopology
 
 struct GraphicsPipelineDesc 
 {
-    RefPtr<Shader>                      VertexShader = nullptr;
-    RefPtr<Shader>                      FragmentShader = nullptr;
-    PrimitiveTopology                   Topology = PrimitiveTopology::TriangleList;
-    RasterizationDesc                   Rasterization;
-    DepthStencilDesc                    DepthStencil;
-    std::vector<ColorAttachmentBlend>   BlendAttachments;
-    RenderingDesc                       Rendering;
+    RefPtr<Shader> VertexShader = nullptr;
+    RefPtr<Shader> FragmentShader = nullptr;
+    PrimitiveTopology Topology = PrimitiveTopology::TriangleList;
+    RasterizationDesc Rasterization;
+    DepthStencilDesc DepthStencil;
+    std::vector<ColorAttachmentBlend> BlendAttachments;
+    RenderingDesc Rendering;
 };
 
 class GraphicsPipelineState : public Object

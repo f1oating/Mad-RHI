@@ -233,9 +233,9 @@ struct TextureBarrier
 {
     Texture* Texture;
     ResourceState NewState;
-    uint32_t BaseMip    = 0;
-    uint32_t MipCount   = 0;
-    uint32_t BaseSlice  = 0;
+    uint32_t BaseMip = 0;
+    uint32_t MipCount = 0;
+    uint32_t BaseSlice = 0;
     uint32_t SliceCount = 0;
 };
 
