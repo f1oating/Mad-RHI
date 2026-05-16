@@ -29,12 +29,12 @@ int main()
         device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
 
         rhi::GraphicsPipelineDesc pipelineDesc{};
-        pipelineDesc.VertexShader   = vertexShader;
+        pipelineDesc.VertexShader = vertexShader;
         pipelineDesc.FragmentShader = fragmentShader;
         pipelineDesc.Topology = rhi::PrimitiveTopology::TriangleList;
         pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = rhi::CullMode::None;
-        pipelineDesc.Rasterization.Face = rhi::FrontFace::CCW;
+        pipelineDesc.Rasterization.Cull = rhi::CullMode::Back;
+        pipelineDesc.Rasterization.Face = rhi::FrontFace::CW;
         pipelineDesc.DepthStencil.DepthTestEnable = false;
         pipelineDesc.DepthStencil.DepthWriteEnable = false;
         rhi::ColorAttachmentBlend colorBlend{};
@@ -55,7 +55,7 @@ int main()
         
         rhi::TextureDesc texDesc{};
         texDesc.Dimension = rhi::TextureDimension::Texture2D;
-        texDesc.Width  = 512;
+        texDesc.Width = 512;
         texDesc.Height = 512;
         texDesc.Format = rhi::TextureFormat::RGBA8_UNorm;
         texDesc.MipLevels = 1;
