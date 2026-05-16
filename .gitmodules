@@ -13,3 +13,6 @@
 [submodule "thirdparty/VMA"]
 	path = thirdparty/VMA
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "thirdparty/glm"]
+	path = thirdparty/glm
+	url = https://github.com/g-truc/glm.git

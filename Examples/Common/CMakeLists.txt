@@ -15,4 +15,5 @@ target_link_libraries(ExamplesCommon
         SDL3::SDL3
         slang
         X11-xcb
+        glm::glm
 )
