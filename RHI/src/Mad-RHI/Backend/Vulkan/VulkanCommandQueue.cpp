@@ -546,9 +546,10 @@ void VulkanCommandQueue::BeginRenderingIfNeeded()
     
     VkViewport viewport{};
     viewport.width = (float)m_RenderingInfo.renderArea.extent.width;
-    viewport.height = (float)m_RenderingInfo.renderArea.extent.height;
+    viewport.height = -(float)m_RenderingInfo.renderArea.extent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
+    viewport.y = (float)m_RenderingInfo.renderArea.extent.height;
     vkCmdSetViewport(m_CurrentCommandBuffer, 0, 1, &viewport);
 
     VkRect2D scissor{ {0, 0}, m_RenderingInfo.renderArea.extent };
