@@ -111,6 +111,7 @@ enum class ResourceState
 {
     Undefined,
     VertexBuffer,
+    IndexBuffer,
     RenderTarget,
     ShaderResource,
     UnorderedAccess,

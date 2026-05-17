@@ -17,10 +17,21 @@ void BootStrap::Init(const char* appName)
     CreateDeviceAndQueue();
     CreateSwapchain();
     CreateCubeBuffers();
+    CreateFullScreenQuadBuffers();
 }
 
 void BootStrap::Shutdown()
 {
+    if (m_FullScreenQuadVertexBuffer)
+    {
+        m_FullScreenQuadVertexBuffer->Release();
+    }
+
+    if (m_FullScreenQuadIndexBuffer)
+    {
+        m_FullScreenQuadIndexBuffer->Release();
+    }
+
     if (m_CubeVertexBuffer)
     {
         m_CubeVertexBuffer->Release();
@@ -92,7 +103,119 @@ void BootStrap::CreateSwapchain()
 
 void BootStrap::CreateCubeBuffers()
 {
+    float cubeVertices[] =
+    {
+        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
+        0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+
+        0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+    };
+
+    uint32_t cubeIndices[] =
+    {
+        0,  1,  2,   0,  2,  3,
+        4,  5,  6,   4,  6,  7,
+        8,  9, 10,   8, 10, 11,
+        12, 13, 14,  12, 14, 15,
+        16, 17, 18,  16, 18, 19,
+        20, 21, 22,  20, 22, 23,
+    };
+
+    rhi::BufferDesc vbd{};
+    vbd.Usage = rhi::ResourceUsage::Default;
+    vbd.Size = sizeof(cubeVertices);
+    vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+    m_Device->CreateBuffer(&m_CubeVertexBuffer, vbd);
+
+    rhi::BufferDesc ibd{};
+    ibd.Usage = rhi::ResourceUsage::Default;
+    ibd.Size = sizeof(cubeIndices);
+    ibd.BindFlags = rhi::RESOURCE_BIND_INDEX_BUFFER;
+    m_Device->CreateBuffer(&m_CubeIndexBuffer, ibd);
+
+    m_Queue->ResourceBarrier({}, {
+        { m_CubeVertexBuffer, rhi::ResourceState::CopyDst },
+        { m_CubeIndexBuffer, rhi::ResourceState::CopyDst }
+    });
+
+    m_Queue->UpdateBuffer(m_CubeVertexBuffer, cubeVertices, sizeof(cubeVertices));
+    m_Queue->UpdateBuffer(m_CubeIndexBuffer, cubeIndices, sizeof(cubeIndices));
+
+    m_Queue->ResourceBarrier({}, {
+        { m_CubeVertexBuffer, rhi::ResourceState::VertexBuffer },
+        { m_CubeIndexBuffer, rhi::ResourceState::IndexBuffer }
+    });
+    
+    m_Queue->Flush();
+}
+
+void BootStrap::CreateFullScreenQuadBuffers()
+{
+    float quadVertices[] =
+    {
+        -1.0f,  1.0f,  0.0f, 0.0f,
+        1.0f,  1.0f,  1.0f, 0.0f,
+        1.0f, -1.0f,  1.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 1.0f,
+    };
+
+    uint32_t quadIndices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    rhi::BufferDesc vbd{};
+    vbd.Usage = rhi::ResourceUsage::Default;
+    vbd.Size = sizeof(quadVertices);
+    vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+    m_Device->CreateBuffer(&m_FullScreenQuadVertexBuffer, vbd);
+
+    rhi::BufferDesc ibd{};
+    ibd.Usage = rhi::ResourceUsage::Default;
+    ibd.Size = sizeof(quadIndices);
+    ibd.BindFlags = rhi::RESOURCE_BIND_INDEX_BUFFER;
+    m_Device->CreateBuffer(&m_FullScreenQuadIndexBuffer, ibd);
+
+    m_Queue->ResourceBarrier({}, {
+        { m_FullScreenQuadVertexBuffer, rhi::ResourceState::CopyDst },
+        { m_FullScreenQuadIndexBuffer, rhi::ResourceState::CopyDst }
+    });
+
+    m_Queue->UpdateBuffer(m_FullScreenQuadVertexBuffer, quadVertices, sizeof(quadVertices));
+    m_Queue->UpdateBuffer(m_FullScreenQuadIndexBuffer, quadIndices, sizeof(quadIndices));
+
+    m_Queue->ResourceBarrier({}, {
+        { m_FullScreenQuadVertexBuffer, rhi::ResourceState::VertexBuffer },
+        { m_FullScreenQuadIndexBuffer, rhi::ResourceState::IndexBuffer }
+    });
+
+    m_Queue->Flush();
 }
 
 }
