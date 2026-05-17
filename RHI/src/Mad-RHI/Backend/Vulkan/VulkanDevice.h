@@ -1,0 +1,71 @@
+#pragma once
+
+#include "Mad-RHI/Device.h"
+#include "Mad-RHI/Factory.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
+#include <volk/volk.h>
+#include <vector>
+#include <atomic>
+#include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"
+#include <vk_mem_alloc.h>
+#include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
+
+namespace mad::rhi {
+
+class VulkanDevice : public ObjectBase<Device>
+{
+protected:
+    ~VulkanDevice();
+
+public:
+    VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory);
+
+    virtual void EndFrame() override;
+
+    virtual CommandQueue* GetCommandQueue(uint32_t index) override;
+
+    virtual void CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window, CommandQueue* queue) override;
+    virtual void CreateTexture(Texture** ppTex, const TextureDesc& desc) override;
+    virtual void CreateBuffer(Buffer** ppBuff, const BufferDesc& desc) override;
+    virtual void CreateSampler(Sampler** ppSampler, const SamplerDesc& desc) override;
+    virtual void CreateShader(Shader** ppShader, const uint32_t* data, uint64_t size) override;
+    virtual void CreateGraphicsPipeline(GraphicsPipelineState** ppPipeline, const GraphicsPipelineDesc& desc) override;
+    virtual void CreateFence(Fence** ppFence) override;
+
+    void SafeReleaseResource(vk::StaleResourceBase* resource);
+
+    VkDevice GetDevice() { return m_Device; }
+    VmaAllocator GetVmaAllocator() { return m_Allocator; }
+    vk::RingBuffer* GetRingBuffer() { return &m_RingBuffer; }
+
+    uint64_t GenerateBufferId() { return m_BufferIdCounter.fetch_add(1, std::memory_order_relaxed); }
+    uint64_t GenerateImageViewId() { return m_ImageViewIdCounter.fetch_add(1, std::memory_order_relaxed); }
+    uint64_t GenerateSamplerId() { return m_SamplerIdCounter.fetch_add(1, std::memory_order_relaxed); }
+
+private:
+    VulkanFactory* m_Factory = nullptr;
+
+    VkInstance m_Instance = nullptr;
+    VkPhysicalDevice m_PhysicalDevice = nullptr;
+    VkDevice m_Device = nullptr;
+
+    uint64_t m_CurrentFrame = 0;
+
+    std::vector<VulkanCommandQueue*> m_CommandQueues;
+
+    VmaAllocator m_Allocator = nullptr;
+
+    vk::RingBuffer m_RingBuffer;
+
+    std::atomic<uint64_t> m_BufferIdCounter { 1 };
+    std::atomic<uint64_t> m_ImageViewIdCounter { 1 };
+    std::atomic<uint64_t> m_SamplerIdCounter { 1 };
+
+private:
+    void CreateLogicalDevice(const DeviceDesc& desc);
+    void CreateAllocator();
+
+};
+
+}
