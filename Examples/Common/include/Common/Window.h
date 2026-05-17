@@ -19,6 +19,8 @@ public:
 
     void Update();
 
+    void SetRelativeMode(bool enabled);
+
     bool IsRunning() { return m_IsRunning; }
 
     WindowInfo GetWindowInfo();

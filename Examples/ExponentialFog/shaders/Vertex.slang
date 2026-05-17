@@ -8,6 +8,7 @@ struct Output
 {
     float4 sv_position : SV_Position;
     float2 uv : TEXCOORD;
+    float depth : TEXCOORD1;
 }
 
 struct Transform
@@ -27,5 +28,6 @@ Output main(Input input)
     Output output;
     output.sv_position = mul(uTransform.proj, viewPos);;
     output.uv = input.uv;
+    output.depth = length(viewPos.xyz);
     return output;
 }

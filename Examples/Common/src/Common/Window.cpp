@@ -37,6 +37,11 @@ void Window::Update()
     }
 }
 
+void Window::SetRelativeMode(bool enabled)
+{
+    SDL_SetWindowRelativeMouseMode(m_Window, enabled);
+}
+
 WindowInfo Window::GetWindowInfo()
 {
     Display* xDisplay = (Display*)SDL_GetPointerProperty(

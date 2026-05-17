@@ -37,7 +37,7 @@ int main()
         pipelineDesc.Topology = rhi::PrimitiveTopology::TriangleList;
         pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
         pipelineDesc.Rasterization.Cull = rhi::CullMode::Back;
-        pipelineDesc.Rasterization.Face = rhi::FrontFace::CW;
+        pipelineDesc.Rasterization.Face = rhi::FrontFace::CCW;
         pipelineDesc.DepthStencil.DepthTestEnable = true;
         pipelineDesc.DepthStencil.DepthWriteEnable = true;
         rhi::ColorAttachmentBlend colorBlend{};
@@ -95,6 +95,12 @@ int main()
             if (keys[SDL_SCANCODE_D])
             {
                 camera.MoveRight(t);
+            }
+            if (keys[SDL_SCANCODE_ESCAPE])
+            {
+                static bool mode = false;
+                mode = !mode;
+                window->SetRelativeMode(mode);
             }
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
