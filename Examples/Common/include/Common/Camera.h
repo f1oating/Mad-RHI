@@ -25,7 +25,7 @@ private:
 
     float m_Yaw = -90.0f;
     float m_Pitch = 0.0f;
-    float m_Speed = 5.0f;
+    float m_Speed = 0.05f;
 
     float m_Fov, m_Aspect, m_NearPlane, m_FarPlane;
 

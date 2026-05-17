@@ -6,6 +6,8 @@
 #include "Common/Camera.h"
 #include <chrono>
 #include <cmath>
+#include <SDL3/SDL.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace mad;
 
@@ -63,11 +65,6 @@ int main()
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
-        Transform transform;
-        transform.Model = glm::mat4(1.0f);
-        transform.View = camera.GetView();
-        transform.Proj = camera.GetProjection();
-
         auto startTime = std::chrono::high_resolution_clock::now();
 
         while (window->IsRunning())
@@ -77,8 +74,28 @@ int main()
 
             window->Update();
 
-            void* data = cb->Map();
-            memcpy(data, &transform, sizeof(Transform));
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            float dx, dy;
+            SDL_GetRelativeMouseState(&dx, &dy);
+
+            camera.Rotate(dx, dy);
+
+            if (keys[SDL_SCANCODE_W])
+            {
+                camera.MoveForward(t);
+            }
+            if (keys[SDL_SCANCODE_S])
+            {
+                camera.MoveBack(t);
+            }
+            if (keys[SDL_SCANCODE_A])
+            {
+                camera.MoveLeft(t);
+            }
+            if (keys[SDL_SCANCODE_D])
+            {
+                camera.MoveRight(t);
+            }
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
             rhi::Texture* depthTexture = swapchain->GetDepthStencil();
@@ -95,9 +112,23 @@ int main()
             commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
             commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
-            commandQueue->SetUniformBuffer("uTransform", cb.Get());
+            for (int col = 0; col < 3; col++)
+            {
+                for (int row = 0; row < 3; row++)
+                {
+                    Transform transform;
+                    transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(col * 2.5f, 0.0f, row * 2.5f));
+                    transform.View = camera.GetView();
+                    transform.Proj = camera.GetProjection();
 
-            commandQueue->DrawIndexed(36, rhi::IndexType::Uint32);
+                    void* data = cb->Map();
+                    memcpy(data, &transform, sizeof(Transform));
+
+                    commandQueue->SetUniformBuffer("uTransform", cb.Get());
+
+                    commandQueue->DrawIndexed(36, rhi::IndexType::Uint32);
+                }
+            }
 
             commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
 
