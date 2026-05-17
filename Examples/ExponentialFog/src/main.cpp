@@ -3,6 +3,7 @@
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
 #include "Common/ShaderCompiler.h"
+#include "Common/Camera.h"
 #include <chrono>
 #include <cmath>
 
@@ -45,6 +46,27 @@ int main()
         rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = nullptr;
         device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
 
+        struct Transform
+        {
+            glm::mat4 Model;
+            glm::mat4 View;
+            glm::mat4 Proj;
+        };
+
+        rhi::RefPtr<rhi::Buffer> cb = nullptr;
+        rhi::BufferDesc cbd{};
+        cbd.BindFlags = rhi::ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+        cbd.Size = sizeof(Transform);
+        cbd.Usage = rhi::ResourceUsage::Dynamic;
+        device->CreateBuffer(cb.GetAddress(), cbd);
+
+        common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
+
+        Transform transform;
+        transform.Model = glm::mat4(1.0f);
+        transform.View = camera.GetView();
+        transform.Proj = camera.GetProjection();
+
         auto startTime = std::chrono::high_resolution_clock::now();
 
         while (window->IsRunning())
@@ -53,6 +75,9 @@ int main()
             float t = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
+
+            void* data = cb->Map();
+            memcpy(data, &transform, sizeof(Transform));
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
@@ -63,6 +88,13 @@ int main()
 
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+
+            commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+            commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+
+            commandQueue->SetUniformBuffer("uTransform", cb.Get());
+
+            commandQueue->DrawIndexed(36, rhi::IndexType::Uint32);
 
             commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
 
