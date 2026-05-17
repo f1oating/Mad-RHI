@@ -36,12 +36,13 @@ int main()
         pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
         pipelineDesc.Rasterization.Cull = rhi::CullMode::Back;
         pipelineDesc.Rasterization.Face = rhi::FrontFace::CW;
-        pipelineDesc.DepthStencil.DepthTestEnable = false;
-        pipelineDesc.DepthStencil.DepthWriteEnable = false;
+        pipelineDesc.DepthStencil.DepthTestEnable = true;
+        pipelineDesc.DepthStencil.DepthWriteEnable = true;
         rhi::ColorAttachmentBlend colorBlend{};
         colorBlend.BlendEnable = false;
         pipelineDesc.BlendAttachments.push_back(colorBlend);
         pipelineDesc.Rendering.ColorFormats.push_back(rhi::TextureFormat::BGRA8_UNorm_SRGB);
+        pipelineDesc.Rendering.DepthFormat = rhi::TextureFormat::D32_Float;
         pipelineDesc.Rendering.SampleCount = 1;
         rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = nullptr;
         device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
@@ -80,14 +81,16 @@ int main()
             memcpy(data, &transform, sizeof(Transform));
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            rhi::Texture* depthTexture = swapchain->GetCurrentDepthTexture();
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget}, {depthTexture, rhi::ResourceState::DepthWrite} }, {});
 
             commandQueue->SetGraphicsPipeline(pipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthTexture->GetDefaultDSV().Get());
 
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+            commandQueue->ClearDepthStencil(depthTexture->GetDefaultDSV().Get(), 1.0f, 0);
 
             commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
             commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());

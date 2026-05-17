@@ -202,6 +202,7 @@ public:
 
     virtual RefPtr<TextureView> GetDefaultSRV() = 0;
     virtual RefPtr<TextureView> GetDefaultRTV() = 0;
+    virtual RefPtr<TextureView> GetDefaultDSV() = 0;
 
     virtual const TextureDesc& GetDesc() = 0;
     virtual ResourceState GetCurrentResourceState() = 0;

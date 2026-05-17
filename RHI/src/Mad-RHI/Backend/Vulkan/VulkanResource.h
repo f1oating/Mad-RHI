@@ -22,6 +22,7 @@ public:
 
     virtual RefPtr<TextureView> GetDefaultSRV() override;
     virtual RefPtr<TextureView> GetDefaultRTV() override;
+    virtual RefPtr<TextureView> GetDefaultDSV() override;
 
     virtual const TextureDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
@@ -40,6 +41,7 @@ private:
 
     VulkanTextureView* m_DefaultSRV = nullptr;
     VulkanTextureView* m_DefaultRTV = nullptr;
+    VulkanTextureView* m_DefaultDSV = nullptr;
     
 };
 

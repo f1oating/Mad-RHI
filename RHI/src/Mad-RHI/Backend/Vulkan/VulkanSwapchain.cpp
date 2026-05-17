@@ -1,4 +1,5 @@
 #include "Mad-RHI/Backend/Vulkan/VulkanSwapchain.h"
+#include "Mad-RHI/Backend/Vulkan/VulkanDevice.h"
 
 namespace mad::rhi {
     
@@ -33,6 +34,11 @@ VulkanSwapchain::~VulkanSwapchain()
 Texture* VulkanSwapchain::GetCurrentBackBuffer()
 {
     return m_SwapchainImages[m_CurrentImageIndex];
+}
+
+Texture* VulkanSwapchain::GetCurrentDepthTexture()
+{
+    return m_DepthTexture;
 }
 
 void VulkanSwapchain::Present()
@@ -146,6 +152,13 @@ void VulkanSwapchain::CreateSwapchain()
         texDesc.Usage = ResourceUsage::Default;
         m_SwapchainImages[i] = new VulkanTexture(texDesc, images[i], m_Context);
     }
+
+    rhi::TextureDesc depthTextureDesc {};
+    depthTextureDesc.Width = caps.currentExtent.width;
+    depthTextureDesc.Height = caps.currentExtent.height;
+    depthTextureDesc.Format = rhi::TextureFormat::D32_Float;
+    depthTextureDesc.BindFlags = (rhi::ResourceBind) (rhi::ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | rhi::ResourceBind::RESOURCE_BIND_SHADER_RESOURSE);
+    m_DepthTexture = new VulkanTexture(depthTextureDesc, m_Context);
 }
 
 void VulkanSwapchain::DestroySwapchain()
@@ -158,6 +171,7 @@ void VulkanSwapchain::DestroySwapchain()
             image->Release();
         }
         m_SwapchainImages.clear();
+        m_DepthTexture->Release();
     }
 }
 

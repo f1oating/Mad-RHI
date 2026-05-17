@@ -70,6 +70,12 @@ VulkanTexture::~VulkanTexture()
         m_DefaultRTV = nullptr;
     }
 
+    if (m_DefaultDSV)
+    {
+        delete m_DefaultDSV;
+        m_DefaultDSV = nullptr;
+    }
+
     if (m_Image && m_Allocation)
     {
         m_Context->SafeReleaseResource(new VkImageResource{ m_Image, m_Allocation, m_Context->GetVmaAllocator() });
@@ -110,6 +116,24 @@ RefPtr<TextureView> VulkanTexture::GetDefaultRTV()
     }
 
     return RefPtr<TextureView>(m_DefaultRTV);
+}
+
+RefPtr<TextureView> VulkanTexture::GetDefaultDSV()
+{
+    if (!m_DefaultDSV)
+    {
+        TextureViewDesc desc;
+        desc.ViewType = TextureViewType::DSV;
+        desc.Format = m_Desc.Format;
+        desc.MostDetailedMip = 0;
+        desc.NumMipLevels = 1;
+        desc.FirstArraySlice = 0;
+        desc.NumArraySlices = 0;
+
+        m_DefaultDSV = new VulkanTextureView(GetRefCounter(), desc, this, m_Context);
+    }
+
+    return RefPtr<TextureView>(m_DefaultDSV);
 }
 
 const TextureDesc& VulkanTexture::GetDesc()

@@ -46,6 +46,16 @@ void VulkanCommandQueue::ResourceBarrier(
     for (TextureBarrier& tb : textureBarriers)
     {
         VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(tb.Texture);
+
+        VkImageAspectFlags aspectMask;
+        auto fmt = vulkanTexture->GetDesc().Format;
+        if (IsDepthOnlyFormat(fmt))
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        else if (IsDepthStencilFormat(fmt))
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        else
+            aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
         VkImageMemoryBarrier imgBarrier{};
         imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         imgBarrier.srcAccessMask = ToVkAccessMask(vulkanTexture->GetCurrentResourceState());
@@ -55,8 +65,9 @@ void VulkanCommandQueue::ResourceBarrier(
         imgBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imgBarrier.image = vulkanTexture->GetImage();
-        imgBarrier.subresourceRange    = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        imgBarrier.subresourceRange = 
+        {
+            .aspectMask = aspectMask,
             .baseMipLevel = tb.BaseMip,
             .levelCount = tb.MipCount ? tb.MipCount : VK_REMAINING_MIP_LEVELS,
             .baseArrayLayer = tb.BaseSlice,
