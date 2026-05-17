@@ -202,13 +202,23 @@ void VulkanCommandQueue::SetVertexBuffers(uint32_t startSlot, std::vector<Buffer
 {
     m_HasRecordedCommands = true;
 
-    std::vector<VkBuffer> vkBuffers;
-    vkBuffers.reserve(buffers.size());
-    for (Buffer* buf : buffers)
+    m_VertexStreamStartSlot = startSlot;
+    m_VertexStreams.resize(buffers.size());
+    for (uint32_t i = 0; i < buffers.size(); ++i)
     {
-        vkBuffers.push_back(static_cast<VulkanBuffer*>(buf)->GetBuffer());
+        m_VertexStreams[i].Buffer = static_cast<VulkanBuffer*>(buffers[i]);
+        m_VertexStreams[i].Offset = offsets[i];
     }
-    vkCmdBindVertexBuffers(m_CurrentCommandBuffer, startSlot, (uint32_t)vkBuffers.size(), vkBuffers.data(), offsets.data());
+    m_VertexBuffersDirty = true;
+}
+
+void VulkanCommandQueue::SetIndexBuffer(Buffer* buffer, uint64_t byteOffset)
+{
+    m_HasRecordedCommands = true;
+
+    m_IndexBuffer = static_cast<VulkanBuffer*>(buffer);
+    m_IndexBufferOffset = byteOffset;
+    m_IndexBufferDirty = true;
 }
 
 void VulkanCommandQueue::SetUniformBuffer(const char* name, Buffer* buffer)
@@ -274,11 +284,13 @@ void VulkanCommandQueue::SetSampler(const char* name, Sampler* sampler)
         nullptr, 0, vkSampler->GetSampler(), vkSampler->GetID(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
+void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex, 
+    uint32_t numInstances, uint32_t firstInstance)
 {
     m_HasRecordedCommands = true;
 
     BeginRenderingIfNeeded();
+    CommitVertexBuffers();
 
     if (m_DescriptorState.HasAnySets())
     {
@@ -289,7 +301,27 @@ void VulkanCommandQueue::Draw(uint32_t numVertices, uint32_t firstVertex)
             m_DescriptorAllocator);
     }
 
-    vkCmdDraw(m_CurrentCommandBuffer, numVertices, 1, firstVertex, 0);
+    vkCmdDraw(m_CurrentCommandBuffer, numVertices, numInstances, firstVertex, firstInstance);
+}
+
+void VulkanCommandQueue::DrawIndexed(uint32_t numIndices, IndexType indexType, uint32_t firstIndex,
+    int32_t baseVertex, uint32_t numInstances, uint32_t firstInstance)
+{
+    m_HasRecordedCommands = true;
+    BeginRenderingIfNeeded();
+    CommitVertexBuffers();
+
+    VkIndexType vkIndexType = indexType == IndexType::Uint16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+    CommitIndexBuffer(vkIndexType);
+
+    if (m_DescriptorState.HasAnySets())
+    {
+        m_DescriptorState.UpdateAndBind(m_CurrentCommandBuffer,
+            m_BoundPipeline->GetPipelineLayout(), m_Device, m_DescriptorAllocator);
+    }
+
+    vkCmdDrawIndexed(m_CurrentCommandBuffer, numIndices, numInstances,
+        firstIndex, baseVertex, firstInstance);
 }
 
 void VulkanCommandQueue::UpdateTexture(Texture* texture, const void* data, uint64_t size)
@@ -431,7 +463,7 @@ void VulkanCommandQueue::Flush()
     m_CommandListPool.ReleaseCommandBuffer(m_CurrentCommandBuffer, m_TimelineSemaphoreValue);
     m_ReleaseManager.DiscardStaleResources(m_CommandBufferNumber, m_TimelineSemaphoreValue);
 
-    AcquireCommandBuffer();
+    AcquireCommandBuffer();    
     m_HasRecordedCommands = false;
 
     m_CommandListPool.Purge(GetTimelineSemaphoreValue());
@@ -532,6 +564,8 @@ void VulkanCommandQueue::AcquireCommandBuffer()
     vkBeginCommandBuffer(m_CurrentCommandBuffer, &cbbi);
 
     m_CommandBufferNumber++;
+    m_VertexBuffersDirty = true;
+    m_IndexBufferDirty = true;
 }
 
 void VulkanCommandQueue::BeginRenderingIfNeeded()
@@ -563,6 +597,35 @@ void VulkanCommandQueue::EndRenderingScope()
     if (!m_IsInRenderingScope) return;
     vkCmdEndRendering(m_CurrentCommandBuffer);
     m_IsInRenderingScope = false;
+}
+
+void VulkanCommandQueue::CommitVertexBuffers()
+{
+    if (!m_VertexBuffersDirty || m_VertexStreams.empty()) return;
+
+    std::vector<VkBuffer> vkBuffers(m_VertexStreams.size());
+    std::vector<VkDeviceSize> vkOffsets(m_VertexStreams.size());
+    for (uint32_t i = 0; i < m_VertexStreams.size(); ++i)
+    {
+        vkBuffers[i] = m_VertexStreams[i].Buffer->GetBuffer();
+        vkOffsets[i] = m_VertexStreams[i].Offset;
+    }
+
+    vkCmdBindVertexBuffers(m_CurrentCommandBuffer,
+        m_VertexStreamStartSlot, (uint32_t)vkBuffers.size(),
+        vkBuffers.data(), vkOffsets.data());
+
+    m_VertexBuffersDirty = false;
+}
+
+void VulkanCommandQueue::CommitIndexBuffer(VkIndexType indexType)
+{
+    if (!m_IndexBufferDirty || !m_IndexBuffer) return;
+
+    vkCmdBindIndexBuffer(m_CurrentCommandBuffer,
+        m_IndexBuffer->GetBuffer(), m_IndexBufferOffset, indexType);
+
+    m_IndexBufferDirty = false;
 }
 
 }

@@ -9,6 +9,11 @@
 
 namespace mad::rhi {
 
+enum class IndexType 
+{ 
+    Uint16, Uint32
+};
+
 class CommandQueue : public Object
 {
 public:
@@ -24,6 +29,7 @@ public:
     virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) = 0;
 
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;
+    virtual void SetIndexBuffer(Buffer* buffer, uint64_t byteOffset = 0) = 0;
 
     virtual void SetUniformBuffer(const char* name, Buffer* buffer) = 0;
     virtual void SetStorageBuffer(const char* name, Buffer* buffer) = 0;
@@ -31,7 +37,10 @@ public:
     virtual void SetTexture(const char* name, TextureView* view) = 0;
     virtual void SetSampler(const char* name, Sampler* sampler) = 0;
 
-    virtual void Draw(uint32_t numVertices, uint32_t firstVertex) = 0;
+    virtual void Draw(uint32_t numVertices, uint32_t firstVertex = 0, 
+        uint32_t numInstances = 1, uint32_t firstInstance = 0) = 0;
+    virtual void DrawIndexed(uint32_t numIndices, IndexType indexType, uint32_t firstIndex = 0,
+        int32_t baseVertex = 0, uint32_t numInstances = 1, uint32_t firstInstance = 0) = 0;
 
     virtual void UpdateTexture(Texture* texture, const void* data, uint64_t size) = 0;
     virtual void UpdateBuffer(Buffer* buffer, const void* data, uint64_t size) = 0;

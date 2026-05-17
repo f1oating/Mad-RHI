@@ -99,7 +99,7 @@ int main()
             
             commandQueue->SetVertexBuffers(0, { vb.Get() }, { 0 });
             commandQueue->SetUniformBuffer("uColor", cb.Get());
-            commandQueue->Draw(3, 0);
+            commandQueue->Draw(3);
 
             commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
 

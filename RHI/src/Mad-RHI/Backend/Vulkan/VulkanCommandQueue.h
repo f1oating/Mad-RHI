@@ -30,6 +30,7 @@ public:
     virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) override;
 
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) override;
+    virtual void SetIndexBuffer(Buffer* buffer, uint64_t byteOffset = 0) override;
 
     virtual void SetUniformBuffer(const char* name, Buffer* buffer) override;
     virtual void SetStorageBuffer(const char* name, Buffer* buffer) override;
@@ -37,7 +38,10 @@ public:
     virtual void SetTexture(const char* name, TextureView* view) override;
     virtual void SetSampler(const char* name, Sampler* sampler) override;
 
-    virtual void Draw(uint32_t numVertices, uint32_t firstVertex) override;
+    virtual void Draw(uint32_t numVertices, uint32_t firstVertex = 0, 
+        uint32_t numInstances = 1, uint32_t firstInstance = 0) override;
+    virtual void DrawIndexed(uint32_t numIndices, IndexType indexType, uint32_t firstIndex = 0,
+        int32_t baseVertex = 0, uint32_t numInstances = 1, uint32_t firstInstance = 0) override;
 
     virtual void UpdateTexture(Texture* texture, const void* data, uint64_t size) override;
     virtual void UpdateBuffer(Buffer* buffer, const void* data, uint64_t size) override;
@@ -93,6 +97,19 @@ private:
 
     bool m_HasRecordedCommands = false;
 
+    struct VertexStream 
+    {
+        VulkanBuffer* Buffer = nullptr;
+        uint64_t Offset = 0;
+    };
+    std::vector<VertexStream> m_VertexStreams;
+    uint32_t m_VertexStreamStartSlot = 0;
+    bool m_VertexBuffersDirty = false;
+
+    VulkanBuffer* m_IndexBuffer = nullptr;
+    uint64_t m_IndexBufferOffset = 0;
+    bool m_IndexBufferDirty = false;
+
 private:
     void CreateQueueSync();
     void DestroyQueueSync();
@@ -102,6 +119,9 @@ private:
 
     void BeginRenderingIfNeeded();
     void EndRenderingScope();
+
+    void CommitVertexBuffers();
+    void CommitIndexBuffer(VkIndexType indexType);
 
 };
 
