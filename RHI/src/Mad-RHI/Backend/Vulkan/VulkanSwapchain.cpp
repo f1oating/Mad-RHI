@@ -31,14 +31,9 @@ VulkanSwapchain::~VulkanSwapchain()
     if (m_Surface) vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 }
 
-Texture* VulkanSwapchain::GetCurrentBackBuffer()
+void VulkanSwapchain::Resize()
 {
-    return m_SwapchainImages[m_CurrentImageIndex];
-}
-
-Texture* VulkanSwapchain::GetCurrentDepthTexture()
-{
-    return m_DepthTexture;
+    RecreateSwapchain();
 }
 
 void VulkanSwapchain::Present()
@@ -65,6 +60,16 @@ void VulkanSwapchain::Present()
 
     m_CurrentFrameInFlight = (m_CurrentFrameInFlight + 1) % 2;
     AcquireNextImage();
+}
+
+Texture* VulkanSwapchain::GetCurrentBackBuffer()
+{
+    return m_SwapchainImages[m_CurrentImageIndex];
+}
+
+Texture* VulkanSwapchain::GetDepthStencil()
+{
+    return m_DepthStencil;
 }
 
 void VulkanSwapchain::CreateSurface(const WindowHandle& wh)
@@ -158,7 +163,7 @@ void VulkanSwapchain::CreateSwapchain()
     depthTextureDesc.Height = caps.currentExtent.height;
     depthTextureDesc.Format = rhi::TextureFormat::D32_Float;
     depthTextureDesc.BindFlags = (rhi::ResourceBind) (rhi::ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | rhi::ResourceBind::RESOURCE_BIND_SHADER_RESOURSE);
-    m_DepthTexture = new VulkanTexture(depthTextureDesc, m_Context);
+    m_DepthStencil = new VulkanTexture(depthTextureDesc, m_Context);
 }
 
 void VulkanSwapchain::DestroySwapchain()
@@ -171,7 +176,7 @@ void VulkanSwapchain::DestroySwapchain()
             image->Release();
         }
         m_SwapchainImages.clear();
-        m_DepthTexture->Release();
+        m_DepthStencil->Release();
     }
 }
 

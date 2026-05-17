@@ -24,10 +24,12 @@ class Swapchain : public Object
 public:
     virtual ~Swapchain() = default;
 
-    virtual Texture* GetCurrentBackBuffer() = 0;
-    virtual Texture* GetCurrentDepthTexture() = 0;
+    virtual void Resize() = 0;
 
     virtual void Present() = 0;
+
+    virtual Texture* GetCurrentBackBuffer() = 0;
+    virtual Texture* GetDepthStencil() = 0;
 
 };
 

@@ -20,10 +20,12 @@ public:
     VulkanSwapchain(VkInstance instance, VkDevice device, VkPhysicalDevice physDevice,
         WindowHandle window, VulkanCommandQueue* commandQueue, VulkanDevice* context);
 
-    virtual Texture* GetCurrentBackBuffer() override;
-    virtual Texture* GetCurrentDepthTexture() override;
+    virtual void Resize() override;
 
     virtual void Present() override;
+
+    virtual Texture* GetCurrentBackBuffer() override;
+    virtual Texture* GetDepthStencil() override;
 
 private:
     VulkanDevice* m_Context = nullptr;
@@ -36,7 +38,7 @@ private:
 
     VkSwapchainKHR m_Swapchain = nullptr;
     std::vector<VulkanTexture*> m_SwapchainImages;
-    VulkanTexture* m_DepthTexture = nullptr;
+    VulkanTexture* m_DepthStencil = nullptr;
 
     uint32_t m_CurrentFrameInFlight = 0;
     uint32_t m_CurrentImageIndex = 0;

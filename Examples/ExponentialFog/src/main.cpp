@@ -81,7 +81,7 @@ int main()
             memcpy(data, &transform, sizeof(Transform));
 
             rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
-            rhi::Texture* depthTexture = swapchain->GetCurrentDepthTexture();
+            rhi::Texture* depthTexture = swapchain->GetDepthStencil();
 
             commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget}, {depthTexture, rhi::ResourceState::DepthWrite} }, {});
 
