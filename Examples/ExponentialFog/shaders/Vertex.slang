@@ -26,7 +26,7 @@ Output main(Input input)
     float4 worldPos = mul(uTransform.model, float4(input.pos, 1.0f));
     float4 viewPos = mul(uTransform.view, worldPos);
     Output output;
-    output.sv_position = mul(uTransform.proj, viewPos);;
+    output.sv_position = mul(uTransform.proj, viewPos);
     output.uv = input.uv;
     output.depth = length(viewPos.xyz);
     return output;
