@@ -190,8 +190,8 @@ void VulkanGraphicsPipelineState::CreateLayout()
     VulkanShader* vertexShader = static_cast<VulkanShader*>(m_Desc.VertexShader.Get());
     VulkanShader* fragmentShader = static_cast<VulkanShader*>(m_Desc.FragmentShader.Get());
 
-    m_MergedReflection.Merge(&vertexShader->GetShaderResourceReflection());
-    m_MergedReflection.Merge(&fragmentShader->GetShaderResourceReflection());
+    if (vertexShader) m_MergedReflection.Merge(&vertexShader->GetShaderResourceReflection());
+    if (fragmentShader) m_MergedReflection.Merge(&fragmentShader->GetShaderResourceReflection());
 
     for (uint32_t setIndex = 0; setIndex <= m_MergedReflection.GetMaxSet(); setIndex++)
     {
@@ -230,19 +230,25 @@ void VulkanGraphicsPipelineState::CreatePipeline()
     VulkanShader* vertexShader = static_cast<VulkanShader*>(m_Desc.VertexShader.Get());
     VulkanShader* fragmentShader = static_cast<VulkanShader*>(m_Desc.FragmentShader.Get());
 
-    VkPipelineShaderStageCreateInfo shaderStages[] = 
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    if (vertexShader)
     {
+        shaderStages.push_back(
         { 
             VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
             VK_SHADER_STAGE_VERTEX_BIT, vertexShader->GetShaderModule(),
             "main", nullptr 
-        },
+        });
+    }
+    if (fragmentShader)
+    {
+        shaderStages.push_back(
         { 
             VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0,
             VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader->GetShaderModule(),
             "main", nullptr 
-        },
-    };
+        });
+    }
 
     VkPipelineVertexInputStateCreateInfo vertexInputState{};
     vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -336,8 +342,8 @@ void VulkanGraphicsPipelineState::CreatePipeline()
     VkGraphicsPipelineCreateInfo pipelineCI{};
     pipelineCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineCI.pNext = &renderingCI;
-    pipelineCI.stageCount = 2;
-    pipelineCI.pStages = shaderStages;
+    pipelineCI.stageCount = shaderStages.size();
+    pipelineCI.pStages = shaderStages.data();
     pipelineCI.pVertexInputState = &vertexInputState;
     pipelineCI.pInputAssemblyState = &inputAssemblyState;
     pipelineCI.pViewportState = &viewportState;

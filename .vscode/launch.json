@@ -40,6 +40,26 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "Run Ray Marching Shadow Map (Linux)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/RayMarchingShadowMap/RayMarchingShadowMap",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/Examples/RayMarchingShadowMap",
+      "environment": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "Build (Linux)",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
   ]
 }

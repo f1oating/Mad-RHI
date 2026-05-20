@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace mad;
+using namespace rhi;
 
 int main()
 {
@@ -18,35 +19,35 @@ int main()
 
     {
         common::Window* window = bootStrap.GetWindow();
-        rhi::Device* device = bootStrap.GetDevice();
-        rhi::CommandQueue* commandQueue = bootStrap.GetQueue();
-        rhi::Swapchain* swapchain = bootStrap.GetSwapchain();
+        Device* device = bootStrap.GetDevice();
+        CommandQueue* commandQueue = bootStrap.GetQueue();
+        Swapchain* swapchain = bootStrap.GetSwapchain();
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
 
-        rhi::RefPtr<rhi::Shader> vertexShader = nullptr;
-        rhi::RefPtr<rhi::Shader> fragmentShader = nullptr;
+        RefPtr<Shader> vertexShader = nullptr;
+        RefPtr<Shader> fragmentShader = nullptr;
 
         device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
         device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
 
-        rhi::GraphicsPipelineDesc pipelineDesc{};
+        GraphicsPipelineDesc pipelineDesc{};
         pipelineDesc.VertexShader = vertexShader;
         pipelineDesc.FragmentShader = fragmentShader;
-        pipelineDesc.Topology = rhi::PrimitiveTopology::TriangleList;
-        pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = rhi::CullMode::Back;
-        pipelineDesc.Rasterization.Face = rhi::FrontFace::CCW;
+        pipelineDesc.Topology = PrimitiveTopology::TriangleList;
+        pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+        pipelineDesc.Rasterization.Cull = CullMode::Back;
+        pipelineDesc.Rasterization.Face = FrontFace::CCW;
         pipelineDesc.DepthStencil.DepthTestEnable = true;
         pipelineDesc.DepthStencil.DepthWriteEnable = true;
-        rhi::ColorAttachmentBlend colorBlend{};
+        ColorAttachmentBlend colorBlend{};
         colorBlend.BlendEnable = false;
         pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(rhi::TextureFormat::BGRA8_UNorm_SRGB);
-        pipelineDesc.Rendering.DepthFormat = rhi::TextureFormat::D32_Float;
+        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+        pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
         pipelineDesc.Rendering.SampleCount = 1;
-        rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = nullptr;
+        RefPtr<GraphicsPipelineState> pipeline = nullptr;
         device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
 
         struct Transform
@@ -56,11 +57,11 @@ int main()
             glm::mat4 Proj;
         };
 
-        rhi::RefPtr<rhi::Buffer> cb = nullptr;
-        rhi::BufferDesc cbd{};
-        cbd.BindFlags = rhi::ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+        RefPtr<Buffer> cb = nullptr;
+        BufferDesc cbd{};
+        cbd.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
         cbd.Size = sizeof(Transform);
-        cbd.Usage = rhi::ResourceUsage::Dynamic;
+        cbd.Usage = ResourceUsage::Dynamic;
         device->CreateBuffer(cb.GetAddress(), cbd);
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
@@ -103,10 +104,10 @@ int main()
                 window->SetRelativeMode(mode);
             }
 
-            rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
-            rhi::Texture* depthTexture = swapchain->GetDepthStencil();
+            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            Texture* depthTexture = swapchain->GetDepthStencil();
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget}, {depthTexture, rhi::ResourceState::DepthWrite} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {depthTexture, ResourceState::DepthWrite} }, {});
 
             commandQueue->SetGraphicsPipeline(pipeline.Get());
             commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthTexture->GetDefaultDSV().Get());
@@ -132,11 +133,11 @@ int main()
 
                     commandQueue->SetUniformBuffer("uTransform", cb.Get());
 
-                    commandQueue->DrawIndexed(36, rhi::IndexType::Uint32);
+                    commandQueue->DrawIndexed(36, IndexType::Uint32);
                 }
             }
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 
             commandQueue->Flush();
 

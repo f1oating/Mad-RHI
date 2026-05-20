@@ -86,7 +86,7 @@ struct TextureDesc
     TextureFormat Format = TextureFormat::RGBA8_UNorm;
     uint32_t MipLevels = 1;
     uint32_t SampleCount = 1;
-    ResourceBind BindFlags = RESOURCE_BIND_NONE;
+    uint8_t BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
 };
 
@@ -101,7 +101,7 @@ enum class BufferMode
 struct BufferDesc 
 {
     uint64_t Size = 0;
-    ResourceBind BindFlags = RESOURCE_BIND_NONE;
+    uint8_t BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
     BufferMode Mode = BufferMode::Undefined;
     uint32_t ElementByteStride = 0;
@@ -168,7 +168,7 @@ struct SamplerDesc
     TextureAddressMode AddressU = TextureAddressMode::Clamp;
     TextureAddressMode AddressV = TextureAddressMode::Clamp;
     TextureAddressMode AddressW = TextureAddressMode::Clamp;
-    SamplerCreateFlags Flags = SAMPLER_CREATE_NONE;
+    uint8_t Flags = SAMPLER_CREATE_NONE;
     float MipLodBias = 0.0f;
     uint32_t MaxAnisotropy = 0;
     CompareOp Compare = CompareOp::Never;
