@@ -142,6 +142,12 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, 
     {
         VulkanTextureView* vkView = static_cast<VulkanTextureView*>(depthView);
 
+        if (width == 0)
+        {
+            width  = vkView->GetTexture()->GetDesc().Width;
+            height = vkView->GetTexture()->GetDesc().Height;
+        }
+
         m_DepthAttachment = {};
         m_DepthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         m_DepthAttachment.imageView = vkView->GetView();

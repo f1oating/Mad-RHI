@@ -34,6 +34,9 @@ int main()
         RefPtr<Texture> shadowMapTexture = nullptr;
         RefPtr<Buffer> shadowMapConstantBuffer = nullptr;
 
+        RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
+        RefPtr<Buffer> colorConstantBuffer = nullptr;
+
         // Shadow map pass
         {
             std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ShadowMapVertex.slang" });
@@ -71,6 +74,41 @@ int main()
             device->CreateBuffer(shadowMapConstantBuffer.GetAddress(), shadowMapConstantBufferDesc);
         }
 
+        // Color pass
+        {
+            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ColorVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/ColorPixel.slang" });
+
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> pixelShader = nullptr;
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+            GraphicsPipelineDesc colorPipelineDesc {};
+            colorPipelineDesc.VertexShader = vertexShader;
+            colorPipelineDesc.FragmentShader = pixelShader;
+            colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            colorPipelineDesc.Rasterization.Cull = CullMode::Back;
+            colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
+            colorPipelineDesc.DepthStencil.DepthTestEnable = true;
+            colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            colorPipelineDesc.BlendAttachments.push_back(colorBlend);
+            colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+            colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
+            colorPipelineDesc.Rendering.SampleCount = 1;
+            device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
+            
+            BufferDesc colorConstantBufferDesc {};
+            colorConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            colorConstantBufferDesc.Size = sizeof(Transform);
+            colorConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(colorConstantBuffer.GetAddress(), colorConstantBufferDesc);
+        }
+
         glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.5f));
         glm::vec3 lightPos = -lightDir * 50.0f;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -83,6 +121,8 @@ int main()
 
         glm::mat4 lightProj = glm::ortho(-size, size, -size, size, near, far);
 
+        common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
+
         auto startTime = std::chrono::high_resolution_clock::now();
 
         while (window->IsRunning())
@@ -92,33 +132,101 @@ int main()
 
             window->Update();
 
-            rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            // Camera move
+            {
+                const bool* keys = SDL_GetKeyboardState(nullptr);
+                float dx, dy;
+                SDL_GetRelativeMouseState(&dx, &dy);
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget}, {shadowMapTexture.Get(), ResourceState::DepthWrite} }, {});
+                camera.Rotate(dx, dy);
 
-            commandQueue->SetGraphicsPipeline(shadowMapPipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, shadowMapTexture->GetDefaultDSV().Get());
+                if (keys[SDL_SCANCODE_W])
+                {
+                    camera.MoveForward(t);
+                }
+                if (keys[SDL_SCANCODE_S])
+                {
+                    camera.MoveBack(t);
+                }
+                if (keys[SDL_SCANCODE_A])
+                {
+                    camera.MoveLeft(t);
+                }
+                if (keys[SDL_SCANCODE_D])
+                {
+                    camera.MoveRight(t);
+                }
+                if (keys[SDL_SCANCODE_ESCAPE])
+                {
+                    static bool mode = false;
+                    mode = !mode;
+                    window->SetRelativeMode(mode);
+                }
+            }
 
-            float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-            commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-            commandQueue->ClearDepthStencil(shadowMapTexture->GetDefaultDSV().Get(), 1.0f, 0);
+            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            Texture* depthBuffer = swapchain->GetDepthStencil();
 
-            commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-            commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+            commandQueue->ResourceBarrier({ 
+                {backBuffer, ResourceState::RenderTarget}, 
+                {shadowMapTexture.Get(), ResourceState::DepthWrite},
+                {depthBuffer, ResourceState::DepthWrite}
+            }, {});
 
-            Transform transform;
-            transform.Model = glm::mat4(1.0f);
-            transform.View = lightView;
-            transform.Proj = lightProj;
+            // Shadow map pass
+            {
+                commandQueue->SetGraphicsPipeline(shadowMapPipeline.Get());
+                commandQueue->SetRenderTargets({ }, shadowMapTexture->GetDefaultDSV().Get());
 
-            void* data = shadowMapConstantBuffer->Map();
-            memcpy(data, &transform, sizeof(Transform));
+                commandQueue->ClearDepthStencil(shadowMapTexture->GetDefaultDSV().Get(), 1.0f, 0);
 
-            commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
-            commandQueue->DrawIndexed(36, IndexType::Uint32);
+                Transform transform;
+                transform.Model = glm::mat4(1.0f);
+                transform.View = lightView;
+                transform.Proj = lightProj;
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present}, {shadowMapTexture.Get(), ResourceState::ShaderResource} }, {});
+                void* data = shadowMapConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(36, IndexType::Uint32);
+
+                commandQueue->ResourceBarrier({ {shadowMapTexture.Get(), ResourceState::ShaderResource} }, {});
+            }
+            
+            // Color pass
+            {
+                commandQueue->SetGraphicsPipeline(colorPipeline.Get());
+                commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthBuffer->GetDefaultDSV().Get());
+
+                float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+                commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+                commandQueue->ClearDepthStencil(depthBuffer->GetDefaultDSV().Get(), 1.0f, 0);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+
+                Transform transform;
+                transform.Model = glm::mat4(1.0f);
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+
+                void* data = colorConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(36, IndexType::Uint32);
+            }
+
+            commandQueue->ResourceBarrier({ 
+                {backBuffer, rhi::ResourceState::Present},
+                {shadowMapTexture.Get(), ResourceState::ShaderResource} 
+            }, {});
 
             commandQueue->Flush();
 
