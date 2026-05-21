@@ -104,6 +104,16 @@ void VulkanCommandQueue::ResourceBarrier(
     );
 }
 
+void VulkanCommandQueue::BeginRendering()
+{
+
+}
+
+void VulkanCommandQueue::EndRendering()
+{
+
+}
+
 void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
 {
     m_HasRecordedCommands = true;

@@ -37,6 +37,10 @@ int main()
         RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
         RefPtr<Buffer> colorConstantBuffer = nullptr;
 
+        RefPtr<GraphicsPipelineState> godraysPipeline = nullptr;
+        RefPtr<Texture> godraysTexture = nullptr;
+        RefPtr<Buffer> godraysConstantBuffer = nullptr;
+
         // Shadow map pass
         {
             std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ShadowMapVertex.slang" });
@@ -109,6 +113,47 @@ int main()
             device->CreateBuffer(colorConstantBuffer.GetAddress(), colorConstantBufferDesc);
         }
 
+        // Godrays pass
+        {
+            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/GodraysVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/GodraysPixel.slang" });
+            
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> pixelShader = nullptr;
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+            GraphicsPipelineDesc godraysPipelineDesc {};
+            godraysPipelineDesc.VertexShader = vertexShader;
+            godraysPipelineDesc.FragmentShader = pixelShader;
+            godraysPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            godraysPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            godraysPipelineDesc.Rasterization.Cull = CullMode::None;
+            godraysPipelineDesc.Rasterization.Face = FrontFace::CCW;
+            godraysPipelineDesc.DepthStencil.DepthTestEnable = false;
+            godraysPipelineDesc.DepthStencil.DepthWriteEnable = false;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            godraysPipelineDesc.BlendAttachments.push_back(colorBlend);
+            godraysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::RGBA16_Float);
+            godraysPipelineDesc.Rendering.SampleCount = 1;
+            device->CreateGraphicsPipeline(godraysPipeline.GetAddress(), godraysPipelineDesc);
+
+            TextureDesc godraysTextureDesc {};
+            godraysTextureDesc.Width = 400;
+            godraysTextureDesc.Height = 300;
+            godraysTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
+            godraysTextureDesc.Format = TextureFormat::RGBA16_Float;
+            device->CreateTexture(godraysTexture.GetAddress(), godraysTextureDesc);
+            
+            BufferDesc godraysConstantBufferDesc {};
+            godraysConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            godraysConstantBufferDesc.Size = sizeof(Transform);
+            godraysConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(godraysConstantBuffer.GetAddress(), godraysConstantBufferDesc);
+        }
+
         glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.5f));
         glm::vec3 lightPos = -lightDir * 50.0f;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -170,7 +215,8 @@ int main()
             commandQueue->ResourceBarrier({ 
                 {backBuffer, ResourceState::RenderTarget}, 
                 {shadowMapTexture.Get(), ResourceState::DepthWrite},
-                {depthBuffer, ResourceState::DepthWrite}
+                {depthBuffer, ResourceState::DepthWrite},
+                {godraysTexture.Get(), ResourceState::RenderTarget},
             }, {});
 
             // Shadow map pass
@@ -221,11 +267,29 @@ int main()
                 commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
+
+                commandQueue->ResourceBarrier({ {depthBuffer, ResourceState::ShaderResource} }, {});
+            }
+
+            // Godrays pass
+            {
+                commandQueue->SetGraphicsPipeline(godraysPipeline.Get());
+                commandQueue->SetRenderTargets({ godraysTexture->GetDefaultRTV().Get() }, nullptr);
+
+                float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+                commandQueue->ClearRenderTarget(godraysTexture->GetDefaultRTV().Get(), clearColor);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetFullScreenQuadVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
+
+                commandQueue->DrawIndexed(6, IndexType::Uint32);
+
+                commandQueue->ResourceBarrier({ {godraysTexture.Get(), ResourceState::ShaderResource} }, {});
             }
 
             commandQueue->ResourceBarrier({ 
                 {backBuffer, rhi::ResourceState::Present},
-                {shadowMapTexture.Get(), ResourceState::ShaderResource} 
+                {shadowMapTexture.Get(), ResourceState::ShaderResource}
             }, {});
 
             commandQueue->Flush();

@@ -158,11 +158,11 @@ void VulkanSwapchain::CreateSwapchain()
         m_SwapchainImages[i] = new VulkanTexture(texDesc, images[i], m_Context);
     }
 
-    rhi::TextureDesc depthTextureDesc {};
+    TextureDesc depthTextureDesc {};
     depthTextureDesc.Width = caps.currentExtent.width;
     depthTextureDesc.Height = caps.currentExtent.height;
-    depthTextureDesc.Format = rhi::TextureFormat::D32_Float;
-    depthTextureDesc.BindFlags = (rhi::ResourceBind) (rhi::ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | rhi::ResourceBind::RESOURCE_BIND_SHADER_RESOURSE);
+    depthTextureDesc.Format = TextureFormat::D32_Float;
+    depthTextureDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | ResourceBind::RESOURCE_BIND_SHADER_RESOURSE;
     m_DepthStencil = new VulkanTexture(depthTextureDesc, m_Context);
 }
 
