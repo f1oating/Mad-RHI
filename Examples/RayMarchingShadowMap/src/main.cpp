@@ -45,6 +45,8 @@ int main()
         RefPtr<Buffer> shadowMapConstantBuffer = nullptr;
 
         RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
+        RefPtr<Texture> colorTexture = nullptr;
+        RefPtr<Texture> depthTexture = nullptr;
         RefPtr<Buffer> colorConstantBuffer = nullptr;
 
         RefPtr<GraphicsPipelineState> godraysPipeline = nullptr;
@@ -52,6 +54,9 @@ int main()
         RefPtr<Buffer> godraysConstantBuffer = nullptr;
         RefPtr<Sampler> godraysSceneDepthSampler = nullptr;
         RefPtr<Sampler> godraysShadowMapSampler = nullptr;
+
+        RefPtr<GraphicsPipelineState> compositePipeline = nullptr;
+        RefPtr<Sampler> compositeSampler = nullptr;
 
         // Shadow map pass
         {
@@ -118,6 +123,20 @@ int main()
             colorPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
             
+            TextureDesc colorTextureDesc {};
+            colorTextureDesc.Width = 800;
+            colorTextureDesc.Height = 600;
+            colorTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
+            colorTextureDesc.Format = TextureFormat::BGRA8_UNorm_SRGB;
+            device->CreateTexture(colorTexture.GetAddress(), colorTextureDesc);
+
+            TextureDesc depthTextureDesc {};
+            depthTextureDesc.Width = 800;
+            depthTextureDesc.Height = 600;
+            depthTextureDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
+            depthTextureDesc.Format = TextureFormat::D32_Float;
+            device->CreateTexture(depthTexture.GetAddress(), depthTextureDesc);
+
             BufferDesc colorConstantBufferDesc {};
             colorConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
             colorConstantBufferDesc.Size = sizeof(Transform);
@@ -184,6 +203,37 @@ int main()
             device->CreateBuffer(godraysConstantBuffer.GetAddress(), godraysConstantBufferDesc);
         }
 
+        // Composite pass
+        {
+            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/CompositeVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/CompositePixel.slang" });
+
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> pixelShader = nullptr;
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+            GraphicsPipelineDesc compositePipelineDesc {};
+            compositePipelineDesc.VertexShader = vertexShader;
+            compositePipelineDesc.FragmentShader = pixelShader;
+            compositePipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            compositePipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            compositePipelineDesc.Rasterization.Cull = CullMode::None;
+            compositePipelineDesc.Rasterization.Face = FrontFace::CCW;
+            compositePipelineDesc.DepthStencil.DepthTestEnable = false;
+            compositePipelineDesc.DepthStencil.DepthWriteEnable = false;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            compositePipelineDesc.BlendAttachments.push_back(colorBlend);
+            compositePipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+            compositePipelineDesc.Rendering.SampleCount = 1;
+            device->CreateGraphicsPipeline(compositePipeline.GetAddress(), compositePipelineDesc);
+
+            SamplerDesc compositeSamplerDesc {};
+            device->CreateSampler(compositeSampler.GetAddress(), compositeSamplerDesc);
+        }
+
         glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.5f));
         glm::vec3 lightPos = -lightDir * 50.0f;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -240,12 +290,12 @@ int main()
             }
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
-            Texture* depthBuffer = swapchain->GetDepthStencil();
 
             commandQueue->ResourceBarrier({ 
                 {backBuffer, ResourceState::RenderTarget}, 
+                {colorTexture.Get(), ResourceState::RenderTarget},
                 {shadowMapTexture.Get(), ResourceState::DepthWrite},
-                {depthBuffer, ResourceState::DepthWrite},
+                {depthTexture.Get(), ResourceState::DepthWrite},
                 {godraysTexture.Get(), ResourceState::RenderTarget},
             }, {});
 
@@ -277,11 +327,11 @@ int main()
             // Color pass
             {
                 commandQueue->SetGraphicsPipeline(colorPipeline.Get());
-                commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthBuffer->GetDefaultDSV().Get());
+                commandQueue->SetRenderTargets({ colorTexture->GetDefaultRTV().Get() }, depthTexture->GetDefaultDSV().Get());
 
                 float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-                commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-                commandQueue->ClearDepthStencil(depthBuffer->GetDefaultDSV().Get(), 1.0f, 0);
+                commandQueue->ClearRenderTarget(colorTexture->GetDefaultRTV().Get(), clearColor);
+                commandQueue->ClearDepthStencil(depthTexture->GetDefaultDSV().Get(), 1.0f, 0);
 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
@@ -298,7 +348,7 @@ int main()
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
-                commandQueue->ResourceBarrier({ {depthBuffer, ResourceState::ShaderResource} }, {});
+                commandQueue->ResourceBarrier({ {colorTexture.Get(), ResourceState::ShaderResource}, {depthTexture.Get(), ResourceState::ShaderResource} }, {});
             }
 
             // Godrays pass
@@ -314,7 +364,7 @@ int main()
 
                 commandQueue->SetSampler("PointClamp", godraysSceneDepthSampler.Get());
                 commandQueue->SetSampler("ShadowSamp", godraysShadowMapSampler.Get());
-                commandQueue->SetTexture("SceneDepth", depthBuffer->GetDefaultSRV().Get());
+                commandQueue->SetTexture("SceneDepth", depthTexture->GetDefaultSRV().Get());
                 commandQueue->SetTexture("ShadowMap", shadowMapTexture->GetDefaultSRV().Get());
 
                 Scene scene;
@@ -331,6 +381,21 @@ int main()
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {godraysTexture.Get(), ResourceState::ShaderResource} }, {});
+            }
+
+            // Composite pass
+            {
+                commandQueue->SetGraphicsPipeline(compositePipeline.Get());
+                commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetFullScreenQuadVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
+
+                commandQueue->SetTexture("SceneColor", colorTexture->GetDefaultSRV().Get());
+                commandQueue->SetTexture("Godrays", godraysTexture->GetDefaultSRV().Get());
+                commandQueue->SetSampler("LinearClamp", compositeSampler.Get());
+
+                commandQueue->DrawIndexed(6, IndexType::Uint32);
             }
 
             commandQueue->ResourceBarrier({ 
