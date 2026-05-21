@@ -234,7 +234,7 @@ int main()
             device->CreateSampler(compositeSampler.GetAddress(), compositeSamplerDesc);
         }
 
-        glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.5f));
+        glm::vec3 lightDir = glm::normalize(glm::vec3(-0.3f, -0.3f, -1.0f));
         glm::vec3 lightPos = -lightDir * 50.0f;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -325,8 +325,8 @@ int main()
                 commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
 
                 transform.Model = glm::scale(glm::mat4(1), {20, 1, 20});
-                transform.View = camera.GetView();
-                transform.Proj = camera.GetProjection();
+                transform.View = lightView;
+                transform.Proj = lightProj;
 
                 data = shadowMapConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
@@ -334,6 +334,20 @@ int main()
                 commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetColumnVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetColumnIndexBuffer());
+
+                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
+                transform.View = lightView;
+                transform.Proj = lightProj;
+
+                data = shadowMapConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(36, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {shadowMapTexture.Get(), ResourceState::ShaderResource} }, {});
             }
@@ -375,6 +389,20 @@ int main()
                 commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetColumnVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetColumnIndexBuffer());
+
+                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+
+                data = colorConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(36, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {colorTexture.Get(), ResourceState::ShaderResource}, {depthTexture.Get(), ResourceState::ShaderResource} }, {});
             }
