@@ -19,6 +19,16 @@ struct Transform
     glm::mat4 Proj;
 };
 
+struct Scene
+{
+    glm::mat4 InvViewProj;
+    glm::vec3 CameraPos;
+    float _pad0;
+    glm::mat4 LightViewProj;
+    glm::vec3 LightDir;
+    float _pad1;
+};
+
 int main()
 {
     common::BootStrap bootStrap;
@@ -169,7 +179,7 @@ int main()
             
             BufferDesc godraysConstantBufferDesc {};
             godraysConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-            godraysConstantBufferDesc.Size = sizeof(Transform);
+            godraysConstantBufferDesc.Size = sizeof(Scene);
             godraysConstantBufferDesc.Usage = ResourceUsage::Dynamic;
             device->CreateBuffer(godraysConstantBuffer.GetAddress(), godraysConstantBufferDesc);
         }
@@ -301,6 +311,22 @@ int main()
 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetFullScreenQuadVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
+
+                commandQueue->SetSampler("PointClamp", godraysSceneDepthSampler.Get());
+                commandQueue->SetSampler("ShadowSamp", godraysShadowMapSampler.Get());
+                commandQueue->SetTexture("SceneDepth", depthBuffer->GetDefaultSRV().Get());
+                commandQueue->SetTexture("ShadowMap", shadowMapTexture->GetDefaultSRV().Get());
+
+                Scene scene;
+                scene.CameraPos = camera.GetPosition();
+                scene.LightDir = lightDir;
+                scene.LightViewProj = lightProj * lightView;
+                scene.InvViewProj = glm::inverse(camera.GetProjection() * camera.GetView());
+
+                void* data = godraysConstantBuffer->Map();
+                memcpy(data, &scene, sizeof(Scene));
+
+                commandQueue->SetUniformBuffer("uScene", godraysConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 

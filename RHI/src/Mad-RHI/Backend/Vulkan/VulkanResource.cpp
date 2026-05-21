@@ -205,7 +205,7 @@ void* VulkanBuffer::Map()
 {
     if (m_Desc.Usage == ResourceUsage::Dynamic)
     {
-        vk::Allocation allocation = m_Context->GetRingBuffer()->Allocate(m_Desc.Size, 16);
+        vk::Allocation allocation = m_Context->GetRingBuffer()->Allocate(m_Desc.Size, 256);
 
         m_Offset = allocation.Offset;
 
@@ -331,7 +331,7 @@ VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureVie
         else
             ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     }
-    else if (m_Desc.ViewType == TextureViewType::SRV && IsDepthStencilFormat(m_Desc.Format))
+    else if (m_Desc.ViewType == TextureViewType::SRV && (IsDepthStencilFormat(m_Desc.Format) || IsDepthOnlyFormat(m_Desc.Format)))
     {
         ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     }

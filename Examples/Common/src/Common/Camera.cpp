@@ -23,6 +23,11 @@ void Camera::UpdateVectors()
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 }
 
+glm::vec3 Camera::GetPosition() const
+{
+    return m_Position;
+}
+
 glm::mat4 Camera::GetView() const 
 {
     return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
