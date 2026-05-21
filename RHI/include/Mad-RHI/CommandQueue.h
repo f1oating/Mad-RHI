@@ -14,6 +14,24 @@ enum class IndexType
     Uint16, Uint32
 };
 
+struct Viewport
+{
+    float X;
+    float Y;
+    float Width;
+    float Height;
+    float MinDepth;
+    float MaxDepth;
+};
+
+struct ScissorRect
+{
+    int32_t X;
+    int32_t Y;
+    uint32_t Width;
+    uint32_t Height;
+};
+
 class CommandQueue : public Object
 {
 public:
@@ -22,13 +40,13 @@ public:
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) = 0;
 
-    virtual void BeginRendering() = 0;
-    virtual void EndRendering() = 0;
-
     virtual void SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView) = 0;
     virtual void ClearRenderTarget(TextureView* view, const float color[4]) = 0;
     virtual void ClearDepthStencil(TextureView* view, float depth, uint8_t stencil) = 0;    
     
+    virtual void SetViewport(const Viewport& viewport) = 0;
+    virtual void SetScissorRect(const ScissorRect& scissorRect) = 0;
+
     virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) = 0;
 
     virtual void SetVertexBuffers(uint32_t startSlot, std::vector<Buffer*> buffers, std::vector<uint64_t> offsets) = 0;

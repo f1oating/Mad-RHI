@@ -258,11 +258,11 @@ VulkanSampler::VulkanSampler(const SamplerDesc& desc, VulkanDevice* context)
     sci.mipLodBias = desc.MipLodBias;
     sci.anisotropyEnable = (desc.MaxAnisotropy > 1) ? VK_TRUE : VK_FALSE;
     sci.maxAnisotropy = static_cast<float>(desc.MaxAnisotropy);
-    sci.compareEnable = IsComparisonFilter(desc.MinFilter) ? VK_TRUE : VK_FALSE;
+    sci.compareEnable = desc.Compare == CompareOp::Never ? VK_FALSE : VK_TRUE;
     sci.compareOp = ToVkCompareOp(desc.Compare);
     sci.minLod = desc.MinLod;
     sci.maxLod = desc.MaxLod;
-    sci.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    sci.borderColor = ToVkBorderColor(desc.Border);
     sci.unnormalizedCoordinates = VK_FALSE;
 
     vkCreateSampler(m_Context->GetDevice(), &sci, nullptr, &m_Sampler);

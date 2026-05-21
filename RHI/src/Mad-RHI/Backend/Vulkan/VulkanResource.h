@@ -456,13 +456,9 @@ inline VkFilter ToVkFilter(FilterType filter)
 {
     switch (filter)
     {
-    case FilterType::Point:
-    case FilterType::ComparisonPoint:    return VK_FILTER_NEAREST;
-    case FilterType::Linear:
-    case FilterType::ComparisonLinear:   return VK_FILTER_LINEAR;
-    case FilterType::Anisotropic:
-    case FilterType::ComparisonAnisotropic: return VK_FILTER_LINEAR;
-    default:                             return VK_FILTER_LINEAR;
+    case FilterType::Nearest:   return VK_FILTER_NEAREST;
+    case FilterType::Linear:    return VK_FILTER_LINEAR;
+    default:                    return VK_FILTER_LINEAR;
     }
 }
 
@@ -470,28 +466,36 @@ inline VkSamplerMipmapMode ToVkMipmapMode(FilterType mipFilter)
 {
     switch (mipFilter)
     {
-    case FilterType::Point:
-    case FilterType::ComparisonPoint:    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
-    default:                             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    case FilterType::Nearest:    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    case FilterType::Linear:     return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    default:                     return VK_SAMPLER_MIPMAP_MODE_LINEAR;
     }
 }
 
-inline bool IsComparisonFilter(FilterType filter)
+inline VkBorderColor ToVkBorderColor(BorderColor border)
 {
-    return filter == FilterType::ComparisonPoint
-        || filter == FilterType::ComparisonLinear
-        || filter == FilterType::ComparisonAnisotropic;
+    switch (border)
+    {
+    case BorderColor::FloatTransparentBlack:    return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    case BorderColor::IntTransparentBlack:      return VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
+    case BorderColor::FloatOpaqueBlack:         return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    case BorderColor::IntOpaqueBlack:           return VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    case BorderColor::FloatOpaqueWhite:         return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    case BorderColor::IntOpaqueWhite:           return VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    default:                                    return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    }
 }
 
 inline VkSamplerAddressMode ToVkAddressMode(TextureAddressMode mode)
 {
     switch (mode)
     {
-    case TextureAddressMode::Wrap:       return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    case TextureAddressMode::Mirror:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-    case TextureAddressMode::Clamp:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    case TextureAddressMode::MirrorOnce: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
-    default:                             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    case TextureAddressMode::Repeat:            return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    case TextureAddressMode::MirroredRepeat:    return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    case TextureAddressMode::ClampToEdge:       return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    case TextureAddressMode::ClampToBorder:     return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    case TextureAddressMode::MirrorClampToEdge: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+    default:                                    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     }
 }
 

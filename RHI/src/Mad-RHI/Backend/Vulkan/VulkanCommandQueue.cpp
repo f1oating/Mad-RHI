@@ -104,16 +104,6 @@ void VulkanCommandQueue::ResourceBarrier(
     );
 }
 
-void VulkanCommandQueue::BeginRendering()
-{
-
-}
-
-void VulkanCommandQueue::EndRendering()
-{
-
-}
-
 void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)
 {
     m_HasRecordedCommands = true;
@@ -179,6 +169,16 @@ void VulkanCommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, 
     m_RenderingInfo.pColorAttachments = m_ColorAttachments.data();
     m_RenderingInfo.pDepthAttachment = m_HasDepthAttachment ? &m_DepthAttachment : nullptr;
     m_RenderingInfo.pStencilAttachment = nullptr;
+
+    m_Viewport.width = (float)m_RenderingInfo.renderArea.extent.width;
+    m_Viewport.height = -(float)m_RenderingInfo.renderArea.extent.height;
+    m_Viewport.minDepth = 0.0f;
+    m_Viewport.maxDepth = 1.0f;
+    m_Viewport.y = (float)m_RenderingInfo.renderArea.extent.height;
+    m_Viewport.x = 0.0f;
+
+    m_ScissorRect.extent = m_RenderingInfo.renderArea.extent;
+    m_ScissorRect.offset = { 0, 0 };
 }
 
 void VulkanCommandQueue::ClearRenderTarget(TextureView* view, const float color[4])
@@ -205,6 +205,24 @@ void VulkanCommandQueue::ClearDepthStencil(TextureView* view, float depth, uint8
 
     m_DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     m_DepthAttachment.clearValue.depthStencil = { depth, stencil };
+}
+
+void VulkanCommandQueue::SetViewport(const Viewport& viewport)
+{
+    m_Viewport.width = viewport.Width;
+    m_Viewport.height = -viewport.Height;
+    m_Viewport.minDepth = viewport.MinDepth;
+    m_Viewport.maxDepth = viewport.MaxDepth;
+    m_Viewport.y = viewport.Y + viewport.Height;
+    m_Viewport.x = viewport.X;
+}
+
+void VulkanCommandQueue::SetScissorRect(const ScissorRect& scissorRect)
+{
+    m_ScissorRect.offset.x = scissorRect.X;
+    m_ScissorRect.offset.y = scissorRect.Y;
+    m_ScissorRect.extent.width = scissorRect.Width;
+    m_ScissorRect.extent.height = scissorRect.Height;
 }
 
 void VulkanCommandQueue::SetGraphicsPipeline(GraphicsPipelineState* pipeline)
@@ -604,17 +622,8 @@ void VulkanCommandQueue::BeginRenderingIfNeeded()
     m_RenderingInfo.pDepthAttachment = m_HasDepthAttachment ? &m_DepthAttachment : nullptr;
 
     vkCmdBeginRendering(m_CurrentCommandBuffer, &m_RenderingInfo);
-    
-    VkViewport viewport{};
-    viewport.width = (float)m_RenderingInfo.renderArea.extent.width;
-    viewport.height = -(float)m_RenderingInfo.renderArea.extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    viewport.y = (float)m_RenderingInfo.renderArea.extent.height;
-    vkCmdSetViewport(m_CurrentCommandBuffer, 0, 1, &viewport);
-
-    VkRect2D scissor{ {0, 0}, m_RenderingInfo.renderArea.extent };
-    vkCmdSetScissor(m_CurrentCommandBuffer, 0, 1, &scissor);
+    vkCmdSetViewport(m_CurrentCommandBuffer, 0, 1, &m_Viewport);
+    vkCmdSetScissor(m_CurrentCommandBuffer, 0, 1, &m_ScissorRect);
 
     m_IsInRenderingScope = true;
 }

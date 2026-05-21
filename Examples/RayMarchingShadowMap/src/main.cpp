@@ -1,5 +1,5 @@
 #include <iostream>
-
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
 #include "Common/ShaderCompiler.h"
@@ -40,6 +40,8 @@ int main()
         RefPtr<GraphicsPipelineState> godraysPipeline = nullptr;
         RefPtr<Texture> godraysTexture = nullptr;
         RefPtr<Buffer> godraysConstantBuffer = nullptr;
+        RefPtr<Sampler> godraysSceneDepthSampler = nullptr;
+        RefPtr<Sampler> godraysShadowMapSampler = nullptr;
 
         // Shadow map pass
         {
@@ -70,7 +72,7 @@ int main()
             shadowMapDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
             shadowMapDesc.Format = TextureFormat::D32_Float;
             device->CreateTexture(shadowMapTexture.GetAddress(), shadowMapDesc);
-            
+
             BufferDesc shadowMapConstantBufferDesc {};
             shadowMapConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
             shadowMapConstantBufferDesc.Size = sizeof(Transform);
@@ -146,6 +148,24 @@ int main()
             godraysTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
             godraysTextureDesc.Format = TextureFormat::RGBA16_Float;
             device->CreateTexture(godraysTexture.GetAddress(), godraysTextureDesc);
+
+            SamplerDesc godraysSceneDepthSamplerDesc {};
+            godraysSceneDepthSamplerDesc.MinFilter = FilterType::Nearest;
+            godraysSceneDepthSamplerDesc.MagFilter = FilterType::Nearest;
+            godraysSceneDepthSamplerDesc.MipFilter = FilterType::Nearest;
+            godraysSceneDepthSamplerDesc.AddressU = TextureAddressMode::ClampToEdge;
+            godraysSceneDepthSamplerDesc.AddressV = TextureAddressMode::ClampToEdge;
+            device->CreateSampler(godraysSceneDepthSampler.GetAddress(), godraysSceneDepthSamplerDesc);
+
+            SamplerDesc godraysShadowMapSamplerDesc {};
+            godraysShadowMapSamplerDesc.MinFilter = FilterType::Linear;
+            godraysShadowMapSamplerDesc.MagFilter = FilterType::Linear;
+            godraysShadowMapSamplerDesc.MipFilter = FilterType::Nearest;
+            godraysShadowMapSamplerDesc.AddressU = TextureAddressMode::ClampToBorder;
+            godraysShadowMapSamplerDesc.AddressV = TextureAddressMode::ClampToBorder;
+            godraysShadowMapSamplerDesc.Border = BorderColor::FloatOpaqueWhite;
+            godraysShadowMapSamplerDesc.Compare = CompareOp::LessEqual;
+            device->CreateSampler(godraysShadowMapSampler.GetAddress(), godraysShadowMapSamplerDesc);
             
             BufferDesc godraysConstantBufferDesc {};
             godraysConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;

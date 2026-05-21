@@ -23,12 +23,12 @@ public:
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) override;
 
-    virtual void BeginRendering() override;
-    virtual void EndRendering() override;
-
     virtual void SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView) override;
     virtual void ClearRenderTarget(TextureView* view, const float color[4]) override;
     virtual void ClearDepthStencil(TextureView* view, float depth, uint8_t stencil) override;
+
+    virtual void SetViewport(const Viewport& viewport) override;
+    virtual void SetScissorRect(const ScissorRect& scissorRect) override;
 
     virtual void SetGraphicsPipeline(GraphicsPipelineState* pipeline) override;
 
@@ -112,6 +112,9 @@ private:
     VulkanBuffer* m_IndexBuffer = nullptr;
     uint64_t m_IndexBufferOffset = 0;
     bool m_IndexBufferDirty = false;
+
+    VkViewport m_Viewport;
+    VkRect2D m_ScissorRect;
 
 private:
     void CreateQueueSync();
