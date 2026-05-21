@@ -18,10 +18,33 @@ void BootStrap::Init(const char* appName)
     CreateSwapchain();
     CreateCubeBuffers();
     CreateFullScreenQuadBuffers();
+    CreateSquareBuffers();
+    CreateColumnBuffers();
+    m_Queue->Flush();
 }
 
 void BootStrap::Shutdown()
 {
+    if (m_ColumnVertexBuffer)
+    {
+        m_ColumnVertexBuffer->Release();
+    }
+
+    if (m_ColumnIndexBuffer)
+    {
+        m_ColumnIndexBuffer->Release();
+    }
+
+    if (m_SquareVertexBuffer)
+    {
+        m_SquareVertexBuffer->Release();
+    }
+
+    if (m_SquareIndexBuffer)
+    {
+        m_SquareIndexBuffer->Release();
+    }
+
     if (m_FullScreenQuadVertexBuffer)
     {
         m_FullScreenQuadVertexBuffer->Release();
@@ -170,8 +193,6 @@ void BootStrap::CreateCubeBuffers()
         { m_CubeVertexBuffer, rhi::ResourceState::VertexBuffer },
         { m_CubeIndexBuffer, rhi::ResourceState::IndexBuffer }
     });
-    
-    m_Queue->Flush();
 }
 
 void BootStrap::CreateFullScreenQuadBuffers()
@@ -214,8 +235,119 @@ void BootStrap::CreateFullScreenQuadBuffers()
         { m_FullScreenQuadVertexBuffer, rhi::ResourceState::VertexBuffer },
         { m_FullScreenQuadIndexBuffer, rhi::ResourceState::IndexBuffer }
     });
+}
 
-    m_Queue->Flush();
+void BootStrap::CreateSquareBuffers()
+{
+    float squareVertices[] =
+    {
+        -0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
+        0.5f, 0.0f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.0f, -0.5f, 1.0f, 1.0f,
+        -0.5f, 0.0f, -0.5f, 0.0f, 1.0f,
+    };
+
+    uint32_t squareIndices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    rhi::BufferDesc vbd{};
+    vbd.Usage = rhi::ResourceUsage::Default;
+    vbd.Size = sizeof(squareVertices);
+    vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+    m_Device->CreateBuffer(&m_SquareVertexBuffer, vbd);
+
+    rhi::BufferDesc ibd{};
+    ibd.Usage = rhi::ResourceUsage::Default;
+    ibd.Size = sizeof(squareIndices);
+    ibd.BindFlags = rhi::RESOURCE_BIND_INDEX_BUFFER;
+    m_Device->CreateBuffer(&m_SquareIndexBuffer, ibd);
+
+    m_Queue->ResourceBarrier({}, {
+        { m_SquareVertexBuffer, rhi::ResourceState::CopyDst },
+        { m_SquareIndexBuffer, rhi::ResourceState::CopyDst }
+    });
+
+    m_Queue->UpdateBuffer(m_SquareVertexBuffer, squareVertices, sizeof(squareVertices));
+    m_Queue->UpdateBuffer(m_SquareIndexBuffer, squareIndices, sizeof(squareIndices));
+
+    m_Queue->ResourceBarrier({}, {
+        { m_SquareVertexBuffer, rhi::ResourceState::VertexBuffer },
+        { m_SquareIndexBuffer, rhi::ResourceState::IndexBuffer }
+    });
+}
+
+void BootStrap::CreateColumnBuffers()
+{
+    float columnVertices[] =
+    {
+        -0.5f, 1.0f, -0.5f,  0.0f, 0.0f,
+        0.5f, 1.0f, -0.5f,  1.0f, 0.0f,
+        0.5f, 0.0f, -0.5f,  1.0f, 1.0f,
+        -0.5f, 0.0f, -0.5f,  0.0f, 1.0f,
+
+        0.5f, 1.0f,  0.5f,  0.0f, 0.0f,
+        -0.5f, 1.0f,  0.5f,  1.0f, 0.0f,
+        -0.5f, 0.0f,  0.5f,  1.0f, 1.0f,
+        0.5f, 0.0f,  0.5f,  0.0f, 1.0f,
+
+        -0.5f, 1.0f,  0.5f,  0.0f, 0.0f,
+        -0.5f, 1.0f, -0.5f,  1.0f, 0.0f,
+        -0.5f, 0.0f, -0.5f,  1.0f, 1.0f,
+        -0.5f, 0.0f,  0.5f,  0.0f, 1.0f,
+
+        0.5f, 1.0f, -0.5f,  0.0f, 0.0f,
+        0.5f, 1.0f,  0.5f,  1.0f, 0.0f,
+        0.5f, 0.0f,  0.5f,  1.0f, 1.0f,
+        0.5f, 0.0f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f, 1.0f,  0.5f,  0.0f, 0.0f,
+        0.5f, 1.0f,  0.5f,  1.0f, 0.0f,
+        0.5f, 1.0f, -0.5f,  1.0f, 1.0f,
+        -0.5f, 1.0f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f, 0.0f, -0.5f,  0.0f, 0.0f,
+        0.5f, 0.0f, -0.5f,  1.0f, 0.0f,
+        0.5f, 0.0f,  0.5f,  1.0f, 1.0f,
+        -0.5f, 0.0f,  0.5f,  0.0f, 1.0f,
+    };
+
+    uint32_t columnIndices[] =
+    {
+        0, 1, 2, 0, 2, 3,
+        4, 5, 6, 4, 6, 7,
+        8, 9, 10, 8, 10, 11,
+        12, 13, 14, 12, 14, 15,
+        16, 17, 18, 16, 18, 19,
+        20, 21, 22, 20, 22, 23,
+    };
+
+    rhi::BufferDesc vbd{};
+    vbd.Usage = rhi::ResourceUsage::Default;
+    vbd.Size = sizeof(columnVertices);
+    vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+    m_Device->CreateBuffer(&m_ColumnVertexBuffer, vbd);
+
+    rhi::BufferDesc ibd{};
+    ibd.Usage = rhi::ResourceUsage::Default;
+    ibd.Size = sizeof(columnIndices);
+    ibd.BindFlags = rhi::RESOURCE_BIND_INDEX_BUFFER;
+    m_Device->CreateBuffer(&m_ColumnIndexBuffer, ibd);
+
+    m_Queue->ResourceBarrier({}, {
+        { m_ColumnVertexBuffer, rhi::ResourceState::CopyDst },
+        { m_ColumnIndexBuffer, rhi::ResourceState::CopyDst }
+    });
+
+    m_Queue->UpdateBuffer(m_ColumnVertexBuffer, columnVertices, sizeof(columnVertices));
+    m_Queue->UpdateBuffer(m_ColumnIndexBuffer, columnIndices, sizeof(columnIndices));
+
+    m_Queue->ResourceBarrier({}, {
+        { m_ColumnVertexBuffer, rhi::ResourceState::VertexBuffer },
+        { m_ColumnIndexBuffer, rhi::ResourceState::IndexBuffer }
+    });
 }
 
 }

@@ -69,7 +69,7 @@ int main()
             shadowMapPipelineDesc.VertexShader = vertexShader;
             shadowMapPipelineDesc.Topology = PrimitiveTopology::TriangleList;
             shadowMapPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            shadowMapPipelineDesc.Rasterization.Cull = CullMode::Front;
+            shadowMapPipelineDesc.Rasterization.Cull = CullMode::None;
             shadowMapPipelineDesc.Rasterization.Face = FrontFace::CCW;
             shadowMapPipelineDesc.DepthStencil.DepthTestEnable = true;
             shadowMapPipelineDesc.DepthStencil.DepthWriteEnable = true;
@@ -310,7 +310,7 @@ int main()
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 Transform transform;
-                transform.Model = glm::mat4(1.0f);
+                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
                 transform.View = lightView;
                 transform.Proj = lightProj;
 
@@ -320,6 +320,20 @@ int main()
                 commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
+
+                transform.Model = glm::scale(glm::mat4(1), {20, 1, 20});
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+
+                data = shadowMapConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(6, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {shadowMapTexture.Get(), ResourceState::ShaderResource} }, {});
             }
@@ -337,7 +351,7 @@ int main()
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 Transform transform;
-                transform.Model = glm::mat4(1.0f);
+                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
                 transform.View = camera.GetView();
                 transform.Proj = camera.GetProjection();
 
@@ -347,6 +361,20 @@ int main()
                 commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
+
+                transform.Model = glm::scale(glm::mat4(1), {20, 1, 20});
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+
+                data = colorConstantBuffer->Map();
+                memcpy(data, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+
+                commandQueue->DrawIndexed(6, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {colorTexture.Get(), ResourceState::ShaderResource}, {depthTexture.Get(), ResourceState::ShaderResource} }, {});
             }
