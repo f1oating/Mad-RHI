@@ -32,7 +32,7 @@ struct Scene
 int main()
 {
     common::BootStrap bootStrap;
-    bootStrap.Init("Ray Marching Shadow Map");
+    bootStrap.Init("Godray");
 
     {
         common::Window* window = bootStrap.GetWindow();
@@ -49,11 +49,11 @@ int main()
         RefPtr<Texture> depthTexture = nullptr;
         RefPtr<Buffer> colorConstantBuffer = nullptr;
 
-        RefPtr<GraphicsPipelineState> godraysPipeline = nullptr;
-        RefPtr<Texture> godraysTexture = nullptr;
-        RefPtr<Buffer> godraysConstantBuffer = nullptr;
-        RefPtr<Sampler> godraysSceneDepthSampler = nullptr;
-        RefPtr<Sampler> godraysShadowMapSampler = nullptr;
+        RefPtr<GraphicsPipelineState> godrayPipeline = nullptr;
+        RefPtr<Texture> godrayTexture = nullptr;
+        RefPtr<Buffer> godrayConstantBuffer = nullptr;
+        RefPtr<Sampler> godraySceneDepthSampler = nullptr;
+        RefPtr<Sampler> godrayShadowMapSampler = nullptr;
 
         RefPtr<GraphicsPipelineState> compositePipeline = nullptr;
         RefPtr<Sampler> compositeSampler = nullptr;
@@ -144,10 +144,10 @@ int main()
             device->CreateBuffer(colorConstantBuffer.GetAddress(), colorConstantBufferDesc);
         }
 
-        // Godrays pass
+        // Godray pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/GodraysVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/GodraysPixel.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/GodrayVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/GodrayPixel.slang" });
             
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> pixelShader = nullptr;
@@ -155,52 +155,52 @@ int main()
             device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
             device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
 
-            GraphicsPipelineDesc godraysPipelineDesc {};
-            godraysPipelineDesc.VertexShader = vertexShader;
-            godraysPipelineDesc.FragmentShader = pixelShader;
-            godraysPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            godraysPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            godraysPipelineDesc.Rasterization.Cull = CullMode::None;
-            godraysPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            godraysPipelineDesc.DepthStencil.DepthTestEnable = false;
-            godraysPipelineDesc.DepthStencil.DepthWriteEnable = false;
+            GraphicsPipelineDesc godrayPipelineDesc {};
+            godrayPipelineDesc.VertexShader = vertexShader;
+            godrayPipelineDesc.FragmentShader = pixelShader;
+            godrayPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            godrayPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            godrayPipelineDesc.Rasterization.Cull = CullMode::None;
+            godrayPipelineDesc.Rasterization.Face = FrontFace::CCW;
+            godrayPipelineDesc.DepthStencil.DepthTestEnable = false;
+            godrayPipelineDesc.DepthStencil.DepthWriteEnable = false;
             ColorAttachmentBlend colorBlend{};
             colorBlend.BlendEnable = false;
-            godraysPipelineDesc.BlendAttachments.push_back(colorBlend);
-            godraysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::RGBA16_Float);
-            godraysPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(godraysPipeline.GetAddress(), godraysPipelineDesc);
+            godrayPipelineDesc.BlendAttachments.push_back(colorBlend);
+            godrayPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::RGBA16_Float);
+            godrayPipelineDesc.Rendering.SampleCount = 1;
+            device->CreateGraphicsPipeline(godrayPipeline.GetAddress(), godrayPipelineDesc);
 
-            TextureDesc godraysTextureDesc {};
-            godraysTextureDesc.Width = 400;
-            godraysTextureDesc.Height = 300;
-            godraysTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
-            godraysTextureDesc.Format = TextureFormat::RGBA16_Float;
-            device->CreateTexture(godraysTexture.GetAddress(), godraysTextureDesc);
+            TextureDesc godrayTextureDesc {};
+            godrayTextureDesc.Width = 400;
+            godrayTextureDesc.Height = 300;
+            godrayTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
+            godrayTextureDesc.Format = TextureFormat::RGBA16_Float;
+            device->CreateTexture(godrayTexture.GetAddress(), godrayTextureDesc);
 
-            SamplerDesc godraysSceneDepthSamplerDesc {};
-            godraysSceneDepthSamplerDesc.MinFilter = FilterType::Nearest;
-            godraysSceneDepthSamplerDesc.MagFilter = FilterType::Nearest;
-            godraysSceneDepthSamplerDesc.MipFilter = FilterType::Nearest;
-            godraysSceneDepthSamplerDesc.AddressU = TextureAddressMode::ClampToEdge;
-            godraysSceneDepthSamplerDesc.AddressV = TextureAddressMode::ClampToEdge;
-            device->CreateSampler(godraysSceneDepthSampler.GetAddress(), godraysSceneDepthSamplerDesc);
+            SamplerDesc godraySceneDepthSamplerDesc {};
+            godraySceneDepthSamplerDesc.MinFilter = FilterType::Nearest;
+            godraySceneDepthSamplerDesc.MagFilter = FilterType::Nearest;
+            godraySceneDepthSamplerDesc.MipFilter = FilterType::Nearest;
+            godraySceneDepthSamplerDesc.AddressU = TextureAddressMode::ClampToEdge;
+            godraySceneDepthSamplerDesc.AddressV = TextureAddressMode::ClampToEdge;
+            device->CreateSampler(godraySceneDepthSampler.GetAddress(), godraySceneDepthSamplerDesc);
 
-            SamplerDesc godraysShadowMapSamplerDesc {};
-            godraysShadowMapSamplerDesc.MinFilter = FilterType::Linear;
-            godraysShadowMapSamplerDesc.MagFilter = FilterType::Linear;
-            godraysShadowMapSamplerDesc.MipFilter = FilterType::Nearest;
-            godraysShadowMapSamplerDesc.AddressU = TextureAddressMode::ClampToBorder;
-            godraysShadowMapSamplerDesc.AddressV = TextureAddressMode::ClampToBorder;
-            godraysShadowMapSamplerDesc.Border = BorderColor::FloatOpaqueWhite;
-            godraysShadowMapSamplerDesc.Compare = CompareOp::LessEqual;
-            device->CreateSampler(godraysShadowMapSampler.GetAddress(), godraysShadowMapSamplerDesc);
+            SamplerDesc godrayShadowMapSamplerDesc {};
+            godrayShadowMapSamplerDesc.MinFilter = FilterType::Linear;
+            godrayShadowMapSamplerDesc.MagFilter = FilterType::Linear;
+            godrayShadowMapSamplerDesc.MipFilter = FilterType::Nearest;
+            godrayShadowMapSamplerDesc.AddressU = TextureAddressMode::ClampToBorder;
+            godrayShadowMapSamplerDesc.AddressV = TextureAddressMode::ClampToBorder;
+            godrayShadowMapSamplerDesc.Border = BorderColor::FloatOpaqueWhite;
+            godrayShadowMapSamplerDesc.Compare = CompareOp::LessEqual;
+            device->CreateSampler(godrayShadowMapSampler.GetAddress(), godrayShadowMapSamplerDesc);
             
-            BufferDesc godraysConstantBufferDesc {};
-            godraysConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-            godraysConstantBufferDesc.Size = sizeof(Scene);
-            godraysConstantBufferDesc.Usage = ResourceUsage::Dynamic;
-            device->CreateBuffer(godraysConstantBuffer.GetAddress(), godraysConstantBufferDesc);
+            BufferDesc godrayConstantBufferDesc {};
+            godrayConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            godrayConstantBufferDesc.Size = sizeof(Scene);
+            godrayConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(godrayConstantBuffer.GetAddress(), godrayConstantBufferDesc);
         }
 
         // Composite pass
@@ -296,7 +296,7 @@ int main()
                 {colorTexture.Get(), ResourceState::RenderTarget},
                 {shadowMapTexture.Get(), ResourceState::DepthWrite},
                 {depthTexture.Get(), ResourceState::DepthWrite},
-                {godraysTexture.Get(), ResourceState::RenderTarget},
+                {godrayTexture.Get(), ResourceState::RenderTarget},
             }, {});
 
             // Shadow map pass
@@ -407,19 +407,19 @@ int main()
                 commandQueue->ResourceBarrier({ {colorTexture.Get(), ResourceState::ShaderResource}, {depthTexture.Get(), ResourceState::ShaderResource} }, {});
             }
 
-            // Godrays pass
+            // Godray pass
             {
-                commandQueue->SetGraphicsPipeline(godraysPipeline.Get());
-                commandQueue->SetRenderTargets({ godraysTexture->GetDefaultRTV().Get() }, nullptr);
+                commandQueue->SetGraphicsPipeline(godrayPipeline.Get());
+                commandQueue->SetRenderTargets({ godrayTexture->GetDefaultRTV().Get() }, nullptr);
 
                 float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-                commandQueue->ClearRenderTarget(godraysTexture->GetDefaultRTV().Get(), clearColor);
+                commandQueue->ClearRenderTarget(godrayTexture->GetDefaultRTV().Get(), clearColor);
 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetFullScreenQuadVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
 
-                commandQueue->SetSampler("PointClamp", godraysSceneDepthSampler.Get());
-                commandQueue->SetSampler("ShadowSamp", godraysShadowMapSampler.Get());
+                commandQueue->SetSampler("PointClamp", godraySceneDepthSampler.Get());
+                commandQueue->SetSampler("ShadowSamp", godrayShadowMapSampler.Get());
                 commandQueue->SetTexture("SceneDepth", depthTexture->GetDefaultSRV().Get());
                 commandQueue->SetTexture("ShadowMap", shadowMapTexture->GetDefaultSRV().Get());
 
@@ -429,14 +429,14 @@ int main()
                 scene.LightViewProj = lightProj * lightView;
                 scene.InvViewProj = glm::inverse(camera.GetProjection() * camera.GetView());
 
-                void* data = godraysConstantBuffer->Map();
+                void* data = godrayConstantBuffer->Map();
                 memcpy(data, &scene, sizeof(Scene));
 
-                commandQueue->SetUniformBuffer("uScene", godraysConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uScene", godrayConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 
-                commandQueue->ResourceBarrier({ {godraysTexture.Get(), ResourceState::ShaderResource} }, {});
+                commandQueue->ResourceBarrier({ {godrayTexture.Get(), ResourceState::ShaderResource} }, {});
             }
 
             // Composite pass
@@ -448,7 +448,7 @@ int main()
                 commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
 
                 commandQueue->SetTexture("SceneColor", colorTexture->GetDefaultSRV().Get());
-                commandQueue->SetTexture("Godrays", godraysTexture->GetDefaultSRV().Get());
+                commandQueue->SetTexture("Godray", godrayTexture->GetDefaultSRV().Get());
                 commandQueue->SetSampler("LinearClamp", compositeSampler.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);

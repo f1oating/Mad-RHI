@@ -42,13 +42,13 @@
       ]
     },
     {
-      "name": "Run Ray Marching Shadow Map (Linux)",
+      "name": "Run Godray (Linux)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/Examples/RayMarchingShadowMap/RayMarchingShadowMap",
+      "program": "${workspaceFolder}/build/Examples/Godray/Godray",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/RayMarchingShadowMap",
+      "cwd": "${workspaceFolder}/Examples/Godray",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
