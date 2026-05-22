@@ -29,7 +29,6 @@ public:
     virtual void Present() = 0;
 
     virtual Texture* GetCurrentBackBuffer() = 0;
-    virtual Texture* GetDepthStencil() = 0;
 
 };
 

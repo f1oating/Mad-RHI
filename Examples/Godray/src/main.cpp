@@ -248,6 +248,41 @@ int main()
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&depthTexture, &colorTexture,
+            &godrayTexture, &device, &swapchain, &camera](const common::WindowResizeEvent& event){
+            swapchain->Resize();
+
+            colorTexture.Reset();
+            depthTexture.Reset();
+            godrayTexture.Reset();
+
+            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            const TextureDesc& backBufferDesc = backBuffer->GetDesc();
+
+            TextureDesc colorTextureDesc {};
+            colorTextureDesc.Width = backBufferDesc.Width;
+            colorTextureDesc.Height = backBufferDesc.Height;
+            colorTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
+            colorTextureDesc.Format = TextureFormat::BGRA8_UNorm_SRGB;
+            device->CreateTexture(colorTexture.GetAddress(), colorTextureDesc);
+
+            TextureDesc depthTextureDesc {};
+            depthTextureDesc.Width = backBufferDesc.Width;
+            depthTextureDesc.Height = backBufferDesc.Height;
+            depthTextureDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
+            depthTextureDesc.Format = TextureFormat::D32_Float;
+            device->CreateTexture(depthTexture.GetAddress(), depthTextureDesc);
+
+            TextureDesc godrayTextureDesc {};
+            godrayTextureDesc.Width = backBufferDesc.Width / 2;
+            godrayTextureDesc.Height = backBufferDesc.Height / 2;
+            godrayTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
+            godrayTextureDesc.Format = TextureFormat::RGBA16_Float;
+            device->CreateTexture(godrayTexture.GetAddress(), godrayTextureDesc);
+
+            camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));
+        });
+
         auto startTime = std::chrono::high_resolution_clock::now();
 
         while (window->IsRunning())

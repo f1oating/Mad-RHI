@@ -19,6 +19,8 @@ public:
     void MoveLeft(float dt);
     void Rotate(float dx, float dy, float sensitivity = 0.1f);
 
+    void SetAspectRatio(float aspect);
+
 private:
     glm::vec3 m_Position;
     glm::vec3 m_Front, m_Right, m_Up;

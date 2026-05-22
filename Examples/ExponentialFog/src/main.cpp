@@ -64,7 +64,33 @@ int main()
         cbd.Usage = ResourceUsage::Dynamic;
         device->CreateBuffer(cb.GetAddress(), cbd);
 
+        RefPtr<Texture> depthBuffer = nullptr;
+        TextureDesc depthBufferDesc {};
+        depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
+        depthBufferDesc.Width = 800;
+        depthBufferDesc.Height = 600;
+        depthBufferDesc.Format = TextureFormat::D32_Float;
+        device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
+
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
+
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&depthBuffer, &device, &swapchain, &camera](const common::WindowResizeEvent& event){
+            swapchain->Resize();
+
+            depthBuffer.Reset();
+
+            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            const TextureDesc& backBufferDesc = backBuffer->GetDesc();
+
+            TextureDesc depthBufferDesc {};
+            depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
+            depthBufferDesc.Width = backBufferDesc.Width;
+            depthBufferDesc.Height = backBufferDesc.Height;
+            depthBufferDesc.Format = TextureFormat::D32_Float;
+            device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
+
+            camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));
+        });
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -105,16 +131,15 @@ int main()
             }
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
-            Texture* depthTexture = swapchain->GetDepthStencil();
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {depthTexture, ResourceState::DepthWrite} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {depthBuffer.Get(), ResourceState::DepthWrite} }, {});
 
             commandQueue->SetGraphicsPipeline(pipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthTexture->GetDefaultDSV().Get());
+            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthBuffer->GetDefaultDSV().Get());
 
             float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
             commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-            commandQueue->ClearDepthStencil(depthTexture->GetDefaultDSV().Get(), 1.0f, 0);
+            commandQueue->ClearDepthStencil(depthBuffer->GetDefaultDSV().Get(), 1.0f, 0);
 
             commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
             commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());

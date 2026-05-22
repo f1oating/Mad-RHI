@@ -68,4 +68,9 @@ void Camera::Rotate(float dx, float dy, float sensitivity)
     UpdateVectors();
 }
 
+void Camera::SetAspectRatio(float aspect)
+{
+    m_Aspect = aspect;
+}
+
 }

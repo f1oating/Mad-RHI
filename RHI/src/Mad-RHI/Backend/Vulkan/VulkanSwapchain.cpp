@@ -12,6 +12,8 @@ VulkanSwapchain::VulkanSwapchain(VkInstance instance, VkDevice device, VkPhysica
     m_CommandQueue = commandQueue;
     m_Context = context;
 
+    m_FenceValues.resize(2);
+
     CreateSurface(window);
     CreateSwapchain();
     CreateFramesInFlightSync();
@@ -65,11 +67,6 @@ void VulkanSwapchain::Present()
 Texture* VulkanSwapchain::GetCurrentBackBuffer()
 {
     return m_SwapchainImages[m_CurrentImageIndex];
-}
-
-Texture* VulkanSwapchain::GetDepthStencil()
-{
-    return m_DepthStencil;
 }
 
 void VulkanSwapchain::CreateSurface(const WindowHandle& wh)
@@ -157,13 +154,6 @@ void VulkanSwapchain::CreateSwapchain()
         texDesc.Usage = ResourceUsage::Default;
         m_SwapchainImages[i] = new VulkanTexture(texDesc, images[i], m_Context);
     }
-
-    TextureDesc depthTextureDesc {};
-    depthTextureDesc.Width = caps.currentExtent.width;
-    depthTextureDesc.Height = caps.currentExtent.height;
-    depthTextureDesc.Format = TextureFormat::D32_Float;
-    depthTextureDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | ResourceBind::RESOURCE_BIND_SHADER_RESOURSE;
-    m_DepthStencil = new VulkanTexture(depthTextureDesc, m_Context);
 }
 
 void VulkanSwapchain::DestroySwapchain()
@@ -176,7 +166,6 @@ void VulkanSwapchain::DestroySwapchain()
             image->Release();
         }
         m_SwapchainImages.clear();
-        m_DepthStencil->Release();
     }
 }
 
@@ -184,7 +173,6 @@ void VulkanSwapchain::CreateFramesInFlightSync()
 {
     m_RenderFinishedSamephores.resize(m_SwapchainImages.size());
     m_PresentCompleteSemaphores.resize(2);
-    m_FenceValues.resize(2);
 
     for (int i = 0; i < m_SwapchainImages.size(); i++)
     {
@@ -197,8 +185,6 @@ void VulkanSwapchain::CreateFramesInFlightSync()
         VkSemaphoreCreateInfo sci{};
         sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         vkCreateSemaphore(m_Device, &sci, nullptr, &m_PresentCompleteSemaphores[i]);
-
-        m_FenceValues[i] = 0;
     }
 }
 
@@ -223,6 +209,10 @@ void VulkanSwapchain::DestroyFramesInFlightSync()
 void VulkanSwapchain::RecreateSwapchain()
 {
     vkDeviceWaitIdle(m_Device);
+    m_FenceValues[m_CurrentFrameInFlight] = m_Fence->IncrementCurrentValue();
+    m_CommandQueue->EnqueueSignal(m_Fence, m_Fence->GetCurrentValue());
+    m_CommandQueue->Flush();
+    m_Fence->Wait(m_FenceValues[m_CurrentFrameInFlight]);
 
     DestroyFramesInFlightSync();
     DestroySwapchain();
