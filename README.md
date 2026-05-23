@@ -21,3 +21,12 @@ A minimal hello-world example. Renders colored triangle using a hardcoded vertex
 Demonstrates depth-based exponential fog applied to a scene of cubes.
 
 </details>
+
+<details>
+<summary>God Rays</summary>
+
+![Godray](docs/screenshots/godray.jpg)
+
+Volumetric light scattering via ray marching through a shadow-mapped scene using the Henyey-Greenstein phase function. Rendered at half resolution and composited over the color pass.
+
+</details>
