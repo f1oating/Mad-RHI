@@ -357,16 +357,23 @@ int main()
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 Transform transform;
-                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
-                transform.View = lightView;
-                transform.Proj = lightProj;
 
-                void* data = transformConstantBuffer->Map();
-                memcpy(data, &transform, sizeof(Transform));
+                for (int col = 0; col < 3; col++)
+                {
+                    for (int row = 0; row < 3; row++)
+                    {
+                        transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + col * 2, 1.5f + row * 2, 0.0f));
+                        transform.View = lightView;
+                        transform.Proj = lightProj;
 
-                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
+                        void* data = transformConstantBuffer->Map();
+                        memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
+                        commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
+
+                        commandQueue->DrawIndexed(36, IndexType::Uint32);
+                    }
+                }
 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
@@ -375,26 +382,12 @@ int main()
                 transform.View = lightView;
                 transform.Proj = lightProj;
 
-                data = transformConstantBuffer->Map();
+                void* data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
                 commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
-
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
-
-                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
-                transform.View = lightView;
-                transform.Proj = lightProj;
-
-                data = transformConstantBuffer->Map();
-                memcpy(data, &transform, sizeof(Transform));
-
-                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
-
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {shadowMapTexture.Get(), ResourceState::ShaderResource} }, {});
             }
@@ -423,7 +416,28 @@ int main()
                 commandQueue->SetUniformBuffer("uLight", lightConstantBuffer.Get());
 
                 Transform transform;
-                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
+
+                for (int col = 0; col < 3; col++)
+                {
+                    for (int row = 0; row < 3; row++)
+                    {
+                        transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + col * 2, 1.5f + row * 2, 0.0f));
+                        transform.View = camera.GetView();
+                        transform.Proj = camera.GetProjection();
+
+                        void* data = transformConstantBuffer->Map();
+                        memcpy(data, &transform, sizeof(Transform));
+
+                        commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
+
+                        commandQueue->DrawIndexed(36, IndexType::Uint32);
+                    }
+                }
+
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
+
+                transform.Model = glm::scale(glm::mat4(1), {40, 1, 40});
                 transform.View = camera.GetView();
                 transform.Proj = camera.GetProjection();
 
@@ -432,35 +446,7 @@ int main()
 
                 commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
-
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
-
-                transform.Model = glm::scale(glm::mat4(1), {20, 1, 20});
-                transform.View = camera.GetView();
-                transform.Proj = camera.GetProjection();
-
-                data = transformConstantBuffer->Map();
-                memcpy(data, &transform, sizeof(Transform));
-
-                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
-
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
-
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
-
-                transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
-                transform.View = camera.GetView();
-                transform.Proj = camera.GetProjection();
-
-                data = transformConstantBuffer->Map();
-                memcpy(data, &transform, sizeof(Transform));
-
-                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
-
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
 
                 commandQueue->ResourceBarrier({ {colorTexture.Get(), ResourceState::ShaderResource}, {depthTexture.Get(), ResourceState::ShaderResource} }, {});
             }
