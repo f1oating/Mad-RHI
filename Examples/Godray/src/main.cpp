@@ -29,6 +29,13 @@ struct Scene
     float _pad1;
 };
 
+struct Light
+{
+    glm::mat4 LightViewProj;
+    glm::vec3 LightDir;
+    float _pad1;
+};
+
 int main()
 {
     common::BootStrap bootStrap;
@@ -40,23 +47,64 @@ int main()
         CommandQueue* commandQueue = bootStrap.GetQueue();
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
+        RefPtr<Sampler> shadowMapSampler = nullptr;
+        RefPtr<Sampler> sceneDepthSampler = nullptr;
+
+        RefPtr<Buffer> transformConstantBuffer = nullptr;
+        RefPtr<Buffer> sceneConstantBuffer = nullptr;
+        RefPtr<Buffer> lightConstantBuffer = nullptr;
+
         RefPtr<GraphicsPipelineState> shadowMapPipeline = nullptr;
         RefPtr<Texture> shadowMapTexture = nullptr;
-        RefPtr<Buffer> shadowMapConstantBuffer = nullptr;
 
         RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
         RefPtr<Texture> colorTexture = nullptr;
         RefPtr<Texture> depthTexture = nullptr;
-        RefPtr<Buffer> colorConstantBuffer = nullptr;
 
         RefPtr<GraphicsPipelineState> godrayPipeline = nullptr;
         RefPtr<Texture> godrayTexture = nullptr;
-        RefPtr<Buffer> godrayConstantBuffer = nullptr;
-        RefPtr<Sampler> godraySceneDepthSampler = nullptr;
-        RefPtr<Sampler> godrayShadowMapSampler = nullptr;
 
         RefPtr<GraphicsPipelineState> compositePipeline = nullptr;
         RefPtr<Sampler> compositeSampler = nullptr;
+
+        // Resources
+        {
+            SamplerDesc shadowMapSamplerDesc {};
+            shadowMapSamplerDesc.MinFilter = FilterType::Linear;
+            shadowMapSamplerDesc.MagFilter = FilterType::Linear;
+            shadowMapSamplerDesc.MipFilter = FilterType::Nearest;
+            shadowMapSamplerDesc.AddressU = TextureAddressMode::ClampToBorder;
+            shadowMapSamplerDesc.AddressV = TextureAddressMode::ClampToBorder;
+            shadowMapSamplerDesc.Border = BorderColor::FloatOpaqueWhite;
+            shadowMapSamplerDesc.Compare = CompareOp::LessEqual;
+            device->CreateSampler(shadowMapSampler.GetAddress(), shadowMapSamplerDesc);
+
+            SamplerDesc sceneDepthSamplerDesc {};
+            sceneDepthSamplerDesc.MinFilter = FilterType::Nearest;
+            sceneDepthSamplerDesc.MagFilter = FilterType::Nearest;
+            sceneDepthSamplerDesc.MipFilter = FilterType::Nearest;
+            sceneDepthSamplerDesc.AddressU = TextureAddressMode::ClampToEdge;
+            sceneDepthSamplerDesc.AddressV = TextureAddressMode::ClampToEdge;
+            device->CreateSampler(sceneDepthSampler.GetAddress(), sceneDepthSamplerDesc);
+
+            BufferDesc transformConstantBufferDesc {};
+            transformConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            transformConstantBufferDesc.Size = sizeof(Transform);
+            transformConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(transformConstantBuffer.GetAddress(), transformConstantBufferDesc);
+
+            BufferDesc sceneConstantBufferDesc {};
+            sceneConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            sceneConstantBufferDesc.Size = sizeof(Scene);
+            sceneConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(sceneConstantBuffer.GetAddress(), sceneConstantBufferDesc);
+
+            BufferDesc lightConstantBufferDesc {};
+            lightConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+            lightConstantBufferDesc.Size = sizeof(Light);
+            lightConstantBufferDesc.Usage = ResourceUsage::Dynamic;
+            device->CreateBuffer(lightConstantBuffer.GetAddress(), lightConstantBufferDesc);
+        }
 
         // Shadow map pass
         {
@@ -87,12 +135,6 @@ int main()
             shadowMapDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
             shadowMapDesc.Format = TextureFormat::D32_Float;
             device->CreateTexture(shadowMapTexture.GetAddress(), shadowMapDesc);
-
-            BufferDesc shadowMapConstantBufferDesc {};
-            shadowMapConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-            shadowMapConstantBufferDesc.Size = sizeof(Transform);
-            shadowMapConstantBufferDesc.Usage = ResourceUsage::Dynamic;
-            device->CreateBuffer(shadowMapConstantBuffer.GetAddress(), shadowMapConstantBufferDesc);
         }
 
         // Color pass
@@ -136,12 +178,6 @@ int main()
             depthTextureDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
             depthTextureDesc.Format = TextureFormat::D32_Float;
             device->CreateTexture(depthTexture.GetAddress(), depthTextureDesc);
-
-            BufferDesc colorConstantBufferDesc {};
-            colorConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-            colorConstantBufferDesc.Size = sizeof(Transform);
-            colorConstantBufferDesc.Usage = ResourceUsage::Dynamic;
-            device->CreateBuffer(colorConstantBuffer.GetAddress(), colorConstantBufferDesc);
         }
 
         // Godray pass
@@ -177,30 +213,6 @@ int main()
             godrayTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
             godrayTextureDesc.Format = TextureFormat::RGBA16_Float;
             device->CreateTexture(godrayTexture.GetAddress(), godrayTextureDesc);
-
-            SamplerDesc godraySceneDepthSamplerDesc {};
-            godraySceneDepthSamplerDesc.MinFilter = FilterType::Nearest;
-            godraySceneDepthSamplerDesc.MagFilter = FilterType::Nearest;
-            godraySceneDepthSamplerDesc.MipFilter = FilterType::Nearest;
-            godraySceneDepthSamplerDesc.AddressU = TextureAddressMode::ClampToEdge;
-            godraySceneDepthSamplerDesc.AddressV = TextureAddressMode::ClampToEdge;
-            device->CreateSampler(godraySceneDepthSampler.GetAddress(), godraySceneDepthSamplerDesc);
-
-            SamplerDesc godrayShadowMapSamplerDesc {};
-            godrayShadowMapSamplerDesc.MinFilter = FilterType::Linear;
-            godrayShadowMapSamplerDesc.MagFilter = FilterType::Linear;
-            godrayShadowMapSamplerDesc.MipFilter = FilterType::Nearest;
-            godrayShadowMapSamplerDesc.AddressU = TextureAddressMode::ClampToBorder;
-            godrayShadowMapSamplerDesc.AddressV = TextureAddressMode::ClampToBorder;
-            godrayShadowMapSamplerDesc.Border = BorderColor::FloatOpaqueWhite;
-            godrayShadowMapSamplerDesc.Compare = CompareOp::LessEqual;
-            device->CreateSampler(godrayShadowMapSampler.GetAddress(), godrayShadowMapSamplerDesc);
-            
-            BufferDesc godrayConstantBufferDesc {};
-            godrayConstantBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-            godrayConstantBufferDesc.Size = sizeof(Scene);
-            godrayConstantBufferDesc.Usage = ResourceUsage::Dynamic;
-            device->CreateBuffer(godrayConstantBuffer.GetAddress(), godrayConstantBufferDesc);
         }
 
         // Composite pass
@@ -349,10 +361,10 @@ int main()
                 transform.View = lightView;
                 transform.Proj = lightProj;
 
-                void* data = shadowMapConstantBuffer->Map();
+                void* data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
@@ -363,24 +375,24 @@ int main()
                 transform.View = lightView;
                 transform.Proj = lightProj;
 
-                data = shadowMapConstantBuffer->Map();
+                data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetColumnVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetColumnIndexBuffer());
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
                 transform.View = lightView;
                 transform.Proj = lightProj;
 
-                data = shadowMapConstantBuffer->Map();
+                data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", shadowMapConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
@@ -399,15 +411,26 @@ int main()
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
+                Light light;
+                light.LightDir = lightDir;
+                light.LightViewProj = lightProj * lightView;
+
+                void* lightData = lightConstantBuffer->Map();
+                memcpy(lightData, &light, sizeof(Light));
+
+                commandQueue->SetTexture("ShadowMap", shadowMapTexture->GetDefaultDSV().Get());
+                commandQueue->SetSampler("ShadowSamp", shadowMapSampler.Get());
+                commandQueue->SetUniformBuffer("uLight", lightConstantBuffer.Get());
+
                 Transform transform;
                 transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
                 transform.View = camera.GetView();
                 transform.Proj = camera.GetProjection();
 
-                void* data = colorConstantBuffer->Map();
+                void* data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
@@ -418,24 +441,24 @@ int main()
                 transform.View = camera.GetView();
                 transform.Proj = camera.GetProjection();
 
-                data = colorConstantBuffer->Map();
+                data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetColumnVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetColumnIndexBuffer());
+                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1.5f, 0.0f));
                 transform.View = camera.GetView();
                 transform.Proj = camera.GetProjection();
 
-                data = colorConstantBuffer->Map();
+                data = transformConstantBuffer->Map();
                 memcpy(data, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uTransform", colorConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uTransform", transformConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
@@ -453,8 +476,8 @@ int main()
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetFullScreenQuadVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetFullScreenQuadIndexBuffer());
 
-                commandQueue->SetSampler("PointClamp", godraySceneDepthSampler.Get());
-                commandQueue->SetSampler("ShadowSamp", godrayShadowMapSampler.Get());
+                commandQueue->SetSampler("PointClamp", sceneDepthSampler.Get());
+                commandQueue->SetSampler("ShadowSamp", shadowMapSampler.Get());
                 commandQueue->SetTexture("SceneDepth", depthTexture->GetDefaultSRV().Get());
                 commandQueue->SetTexture("ShadowMap", shadowMapTexture->GetDefaultSRV().Get());
 
@@ -464,10 +487,10 @@ int main()
                 scene.LightViewProj = lightProj * lightView;
                 scene.InvViewProj = glm::inverse(camera.GetProjection() * camera.GetView());
 
-                void* data = godrayConstantBuffer->Map();
+                void* data = sceneConstantBuffer->Map();
                 memcpy(data, &scene, sizeof(Scene));
 
-                commandQueue->SetUniformBuffer("uScene", godrayConstantBuffer.Get());
+                commandQueue->SetUniformBuffer("uScene", sceneConstantBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 

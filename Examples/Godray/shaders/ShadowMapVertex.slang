@@ -1,12 +1,14 @@
 struct Input
 {
     float3 pos : POSITION;
+    float3 normal : NORMAL;
     float2 uv : TEXCOORD;
 }
 
 struct Output
 {
     float4 sv_position : SV_Position;
+    float3 normal : NORMAL;
     float2 uv : TEXCOORD;
 }
 
@@ -26,6 +28,7 @@ Output main(Input input)
     float4 viewPos = mul(uTransform.view, worldPos);
     Output output;
     output.sv_position = mul(uTransform.proj, viewPos);
+    output.normal = input.normal;
     output.uv = input.uv;
     return output;
 }

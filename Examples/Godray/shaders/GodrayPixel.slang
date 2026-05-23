@@ -1,10 +1,10 @@
 static const float  PI = 3.14159265;
-static const float  SCATTERING = 0.05;
-static const float  EXTINCTION = 0.05;
-static const float  ANISOTROPY = 0.7;
+static const float  SCATTERING = 0.15;
+static const float  EXTINCTION = 0.12;
+static const float  ANISOTROPY = 0.5;
 static const float  MAX_DIST = 100.0;
 static const uint   NUM_STEPS = 48;
-static const float3 LIGHT_COLOR = float3(5.0, 4.5, 4.0);
+static const float3 LIGHT_COLOR = float3(1.0, 0.5, 0.1);
 
 struct Scene
 {
@@ -36,11 +36,9 @@ float3 WorldFromDepth(float2 uv, float depth)
     return wp.xyz / wp.w;
 }
 
-float Hash12(float2 p) 
+float IGN(float2 pos)
 {
-    p = frac(p * float2(443.897, 441.423));
-    p += dot(p, p + 19.19);
-    return frac((p.x + p.y) * p.x);
+    return frac(52.9829189 * frac(0.06711056 * pos.x + 0.00583715 * pos.y));
 }
 
 [shader("fragment")]
@@ -56,7 +54,7 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
     float stepSize = rLen / float(NUM_STEPS);
     float3 stepVec = rDir * stepSize;
 
-    float jitter = Hash12(pos.xy);
+    float jitter = IGN(pos.xy);
     float3 marchPos = uScene.CameraPos + stepVec * jitter;
 
     float cosT = dot(rDir, -uScene.LightDir);
@@ -73,7 +71,7 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
         float2 shUV  = sc.xy * float2(0.5, -0.5) + 0.5;
         float shRef = sc.z;
 
-        float visible = ShadowMap.SampleCmpLevelZero(ShadowSamp, shUV, shRef);
+        float visible = ShadowMap.SampleCmpLevelZero(ShadowSamp, shUV, shRef - 0.002);
 
         float3 sIn = LIGHT_COLOR * phase * SCATTERING * visible;
         float stepT = exp(-EXTINCTION * stepSize);
