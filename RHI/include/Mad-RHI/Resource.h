@@ -86,7 +86,7 @@ struct TextureDesc
     TextureFormat Format = TextureFormat::RGBA8_UNorm;
     uint32_t MipLevels = 1;
     uint32_t SampleCount = 1;
-    ResourceBind BindFlags = RESOURCE_BIND_NONE;
+    uint8_t BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
 };
 
@@ -101,7 +101,7 @@ enum class BufferMode
 struct BufferDesc 
 {
     uint64_t Size = 0;
-    ResourceBind BindFlags = RESOURCE_BIND_NONE;
+    uint8_t BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
     BufferMode Mode = BufferMode::Undefined;
     uint32_t ElementByteStride = 0;
@@ -124,21 +124,17 @@ enum class ResourceState
 
 enum class FilterType
 {
-    Point,
-    Linear,
-    Anisotropic,
-
-    ComparisonPoint,
-    ComparisonLinear,
-    ComparisonAnisotropic,
+    Nearest,
+    Linear
 };
 
 enum class TextureAddressMode
 {
-    Wrap,
-    Mirror,
-    Clamp,
-    MirrorOnce,
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder,
+    MirrorClampToEdge
 };
 
 enum class CompareOp
@@ -153,11 +149,14 @@ enum class CompareOp
     Always,
 };
 
-enum SamplerCreateFlags : uint8_t
+enum class BorderColor
 {
-    SAMPLER_CREATE_NONE = 0,
-    SAMPLER_CREATE_SUBSAMPLED = 1 << 0,
-    SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCT = 1 << 1,
+    FloatTransparentBlack,
+    IntTransparentBlack,
+    FloatOpaqueBlack,
+    IntOpaqueBlack,
+    FloatOpaqueWhite,
+    IntOpaqueWhite
 };
 
 struct SamplerDesc
@@ -165,15 +164,15 @@ struct SamplerDesc
     FilterType MinFilter = FilterType::Linear;
     FilterType MagFilter = FilterType::Linear;
     FilterType MipFilter = FilterType::Linear;
-    TextureAddressMode AddressU = TextureAddressMode::Clamp;
-    TextureAddressMode AddressV = TextureAddressMode::Clamp;
-    TextureAddressMode AddressW = TextureAddressMode::Clamp;
-    SamplerCreateFlags Flags = SAMPLER_CREATE_NONE;
+    TextureAddressMode AddressU = TextureAddressMode::ClampToEdge;
+    TextureAddressMode AddressV = TextureAddressMode::ClampToEdge;
+    TextureAddressMode AddressW = TextureAddressMode::ClampToEdge;
     float MipLodBias = 0.0f;
     uint32_t MaxAnisotropy = 0;
     CompareOp Compare = CompareOp::Never;
     float MinLod = 0.0f;
     float MaxLod = 3.402823466e+38f;
+    BorderColor Border = BorderColor::FloatTransparentBlack;
 };
 
 enum class TextureViewType 

@@ -100,6 +100,7 @@ void DescriptorWriter::Clear()
 
 void DescriptorState::Init(const std::vector<VkDescriptorSetLayout>& setLayouts)
 {
+    m_Sets.clear();
     m_Sets.resize(setLayouts.size());
     for (uint32_t i = 0; i < (uint32_t)setLayouts.size(); ++i)
     {

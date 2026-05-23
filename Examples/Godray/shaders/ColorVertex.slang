@@ -8,9 +8,9 @@ struct Input
 struct Output
 {
     float4 sv_position : SV_Position;
+    float3 worldPos : WORLDPOS;
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
-    float depth : TEXCOORD1;
 }
 
 struct Transform
@@ -20,7 +20,8 @@ struct Transform
     column_major float4x4 proj;
 }
 
-ParameterBlock<Transform> uTransform;
+[vk::binding(0, 0)]
+ConstantBuffer<Transform> uTransform;
 
 [shader("vertex")]
 Output main(Input input)
@@ -29,8 +30,8 @@ Output main(Input input)
     float4 viewPos = mul(uTransform.view, worldPos);
     Output output;
     output.sv_position = mul(uTransform.proj, viewPos);
-    output.normal = input.normal;
+    output.worldPos = worldPos.xyz;
+    output.normal = normalize(mul((float3x3)uTransform.model, input.normal));
     output.uv = input.uv;
-    output.depth = length(viewPos.xyz);
     return output;
 }

@@ -1,6 +1,7 @@
 struct Input
 {
     float4 sv_position : SV_Position;
+    float3 normal : NORMAL;
     float2 uv : TEXCOORD;
     float depth : TEXCOORD1;
 }

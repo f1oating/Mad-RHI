@@ -18,10 +18,22 @@ void BootStrap::Init(const char* appName)
     CreateSwapchain();
     CreateCubeBuffers();
     CreateFullScreenQuadBuffers();
+    CreateSquareBuffers();
+    m_Queue->Flush();
 }
 
 void BootStrap::Shutdown()
 {
+    if (m_SquareVertexBuffer)
+    {
+        m_SquareVertexBuffer->Release();
+    }
+
+    if (m_SquareIndexBuffer)
+    {
+        m_SquareIndexBuffer->Release();
+    }
+
     if (m_FullScreenQuadVertexBuffer)
     {
         m_FullScreenQuadVertexBuffer->Release();
@@ -105,35 +117,35 @@ void BootStrap::CreateCubeBuffers()
 {
     float cubeVertices[] =
     {
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
 
-        0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
 
-        0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
     };
 
     uint32_t cubeIndices[] =
@@ -170,8 +182,6 @@ void BootStrap::CreateCubeBuffers()
         { m_CubeVertexBuffer, rhi::ResourceState::VertexBuffer },
         { m_CubeIndexBuffer, rhi::ResourceState::IndexBuffer }
     });
-    
-    m_Queue->Flush();
 }
 
 void BootStrap::CreateFullScreenQuadBuffers()
@@ -214,8 +224,48 @@ void BootStrap::CreateFullScreenQuadBuffers()
         { m_FullScreenQuadVertexBuffer, rhi::ResourceState::VertexBuffer },
         { m_FullScreenQuadIndexBuffer, rhi::ResourceState::IndexBuffer }
     });
+}
 
-    m_Queue->Flush();
+void BootStrap::CreateSquareBuffers()
+{
+    float squareVertices[] =
+    {
+        -0.5f, 0.0f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+        0.5f, 0.0f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+        0.5f, 0.0f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+        -0.5f, 0.0f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+    };
+
+    uint32_t squareIndices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    rhi::BufferDesc vbd{};
+    vbd.Usage = rhi::ResourceUsage::Default;
+    vbd.Size = sizeof(squareVertices);
+    vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
+    m_Device->CreateBuffer(&m_SquareVertexBuffer, vbd);
+
+    rhi::BufferDesc ibd{};
+    ibd.Usage = rhi::ResourceUsage::Default;
+    ibd.Size = sizeof(squareIndices);
+    ibd.BindFlags = rhi::RESOURCE_BIND_INDEX_BUFFER;
+    m_Device->CreateBuffer(&m_SquareIndexBuffer, ibd);
+
+    m_Queue->ResourceBarrier({}, {
+        { m_SquareVertexBuffer, rhi::ResourceState::CopyDst },
+        { m_SquareIndexBuffer, rhi::ResourceState::CopyDst }
+    });
+
+    m_Queue->UpdateBuffer(m_SquareVertexBuffer, squareVertices, sizeof(squareVertices));
+    m_Queue->UpdateBuffer(m_SquareIndexBuffer, squareIndices, sizeof(squareIndices));
+
+    m_Queue->ResourceBarrier({}, {
+        { m_SquareVertexBuffer, rhi::ResourceState::VertexBuffer },
+        { m_SquareIndexBuffer, rhi::ResourceState::IndexBuffer }
+    });
 }
 
 }

@@ -23,6 +23,11 @@ void Camera::UpdateVectors()
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 }
 
+glm::vec3 Camera::GetPosition() const
+{
+    return m_Position;
+}
+
 glm::mat4 Camera::GetView() const 
 {
     return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
@@ -61,6 +66,11 @@ void Camera::Rotate(float dx, float dy, float sensitivity)
     m_Pitch = glm::clamp(m_Pitch, -89.0f, 89.0f);
 
     UpdateVectors();
+}
+
+void Camera::SetAspectRatio(float aspect)
+{
+    m_Aspect = aspect;
 }
 
 }

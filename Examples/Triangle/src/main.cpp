@@ -7,6 +7,7 @@
 #include <cmath>
 
 using namespace mad;
+using namespace rhi;
 
 int main()
 {
@@ -15,42 +16,42 @@ int main()
 
     {
         common::Window* window = bootStrap.GetWindow();
-        rhi::Device* device = bootStrap.GetDevice();
-        rhi::CommandQueue* commandQueue = bootStrap.GetQueue();
-        rhi::Swapchain* swapchain = bootStrap.GetSwapchain();
+        Device* device = bootStrap.GetDevice();
+        CommandQueue* commandQueue = bootStrap.GetQueue();
+        Swapchain* swapchain = bootStrap.GetSwapchain();
 
         std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
         std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
 
-        rhi::RefPtr<rhi::Shader> vertexShader = nullptr;
-        rhi::RefPtr<rhi::Shader> fragmentShader = nullptr; 
+        RefPtr<Shader> vertexShader = nullptr;
+        RefPtr<Shader> fragmentShader = nullptr; 
 
         device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
         device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
 
-        rhi::GraphicsPipelineDesc pipelineDesc{};
+        GraphicsPipelineDesc pipelineDesc{};
         pipelineDesc.VertexShader = vertexShader;
         pipelineDesc.FragmentShader = fragmentShader;
-        pipelineDesc.Topology = rhi::PrimitiveTopology::TriangleList;
-        pipelineDesc.Rasterization.Polygon = rhi::PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = rhi::CullMode::Back;
-        pipelineDesc.Rasterization.Face = rhi::FrontFace::CW;
+        pipelineDesc.Topology = PrimitiveTopology::TriangleList;
+        pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+        pipelineDesc.Rasterization.Cull = CullMode::Back;
+        pipelineDesc.Rasterization.Face = FrontFace::CW;
         pipelineDesc.DepthStencil.DepthTestEnable = false;
         pipelineDesc.DepthStencil.DepthWriteEnable = false;
-        rhi::ColorAttachmentBlend colorBlend{};
+        ColorAttachmentBlend colorBlend{};
         colorBlend.BlendEnable = false;
         pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(rhi::TextureFormat::BGRA8_UNorm_SRGB);
+        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
         pipelineDesc.Rendering.SampleCount = 1;
-        rhi::RefPtr<rhi::GraphicsPipelineState> pipeline = nullptr;
+        RefPtr<GraphicsPipelineState> pipeline = nullptr;
         device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
 
-        rhi::BufferDesc cbd{};
-        cbd.Usage = rhi::ResourceUsage::Dynamic;
+        BufferDesc cbd{};
+        cbd.Usage = ResourceUsage::Dynamic;
         cbd.Size = 64;
-        cbd.BindFlags = rhi::RESOURCE_BIND_UNIFORM_BUFFER;
+        cbd.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
 
-        rhi::RefPtr<rhi::Buffer> cb = nullptr;
+        RefPtr<Buffer> cb = nullptr;
         device->CreateBuffer(cb.GetAddress(), cbd);
         
         float vertices[] = 
@@ -60,16 +61,16 @@ int main()
             -0.5f, -0.5f,  0.0f, 0.0f, 1.0f
         };
 
-        rhi::BufferDesc vbd{};
-        vbd.Usage = rhi::ResourceUsage::Default;
+        BufferDesc vbd{};
+        vbd.Usage = ResourceUsage::Default;
         vbd.Size = sizeof(vertices);
-        vbd.BindFlags = rhi::RESOURCE_BIND_VERTEX_BUFFER;
-        rhi::RefPtr<rhi::Buffer> vb = nullptr;
+        vbd.BindFlags = RESOURCE_BIND_VERTEX_BUFFER;
+        RefPtr<Buffer> vb = nullptr;
         device->CreateBuffer(vb.GetAddress(), vbd);
 
-        commandQueue->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::CopyDst} });
+        commandQueue->ResourceBarrier({}, { {vb.Get(), ResourceState::CopyDst} });
         commandQueue->UpdateBuffer(vb.Get(), vertices, sizeof(vertices));
-        commandQueue->ResourceBarrier({}, { {vb.Get(), rhi::ResourceState::VertexBuffer} });
+        commandQueue->ResourceBarrier({}, { {vb.Get(), ResourceState::VertexBuffer} });
         commandQueue->Flush();
 
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -87,9 +88,9 @@ int main()
             mapped[2] = (std::sin(t * 2.0f) * 0.5f + 0.5f);
             mapped[3] = 1.0f;
 
-            rhi::Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::RenderTarget} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
 
             commandQueue->SetGraphicsPipeline(pipeline.Get());
             commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
@@ -101,7 +102,7 @@ int main()
             commandQueue->SetUniformBuffer("uColor", cb.Get());
             commandQueue->Draw(3);
 
-            commandQueue->ResourceBarrier({ {backBuffer, rhi::ResourceState::Present} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 
             commandQueue->Flush();
 

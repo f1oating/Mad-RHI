@@ -9,6 +9,7 @@ class Camera
 public:
     Camera(glm::vec3 pos, float fov, float aspect, float near, float far);
 
+    glm::vec3 GetPosition() const;
     glm::mat4 GetView() const;
     glm::mat4 GetProjection() const;
 
@@ -17,6 +18,8 @@ public:
     void MoveRight(float dt);
     void MoveLeft(float dt);
     void Rotate(float dx, float dy, float sensitivity = 0.1f);
+
+    void SetAspectRatio(float aspect);
 
 private:
     glm::vec3 m_Position;

@@ -26,6 +26,9 @@ public:
     Buffer* GetFullScreenQuadVertexBuffer() { return m_FullScreenQuadVertexBuffer; }
     Buffer* GetFullScreenQuadIndexBuffer() { return m_FullScreenQuadIndexBuffer; }
 
+    Buffer* GetSquareVertexBuffer() { return m_SquareVertexBuffer; }
+    Buffer* GetSquareIndexBuffer() { return m_SquareIndexBuffer; }
+
 private:
     Window* m_Window = nullptr;
 
@@ -40,11 +43,15 @@ private:
     Buffer* m_FullScreenQuadVertexBuffer = nullptr;
     Buffer* m_FullScreenQuadIndexBuffer = nullptr;
 
+    Buffer* m_SquareVertexBuffer = nullptr;
+    Buffer* m_SquareIndexBuffer = nullptr;
+
 private:
     void CreateDeviceAndQueue();
     void CreateSwapchain();
     void CreateCubeBuffers();
     void CreateFullScreenQuadBuffers();
+    void CreateSquareBuffers();
 
 };
 

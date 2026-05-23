@@ -205,7 +205,7 @@ void* VulkanBuffer::Map()
 {
     if (m_Desc.Usage == ResourceUsage::Dynamic)
     {
-        vk::Allocation allocation = m_Context->GetRingBuffer()->Allocate(m_Desc.Size, 16);
+        vk::Allocation allocation = m_Context->GetRingBuffer()->Allocate(m_Desc.Size, 256);
 
         m_Offset = allocation.Offset;
 
@@ -258,11 +258,11 @@ VulkanSampler::VulkanSampler(const SamplerDesc& desc, VulkanDevice* context)
     sci.mipLodBias = desc.MipLodBias;
     sci.anisotropyEnable = (desc.MaxAnisotropy > 1) ? VK_TRUE : VK_FALSE;
     sci.maxAnisotropy = static_cast<float>(desc.MaxAnisotropy);
-    sci.compareEnable = IsComparisonFilter(desc.MinFilter) ? VK_TRUE : VK_FALSE;
+    sci.compareEnable = desc.Compare == CompareOp::Never ? VK_FALSE : VK_TRUE;
     sci.compareOp = ToVkCompareOp(desc.Compare);
     sci.minLod = desc.MinLod;
     sci.maxLod = desc.MaxLod;
-    sci.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    sci.borderColor = ToVkBorderColor(desc.Border);
     sci.unnormalizedCoordinates = VK_FALSE;
 
     vkCreateSampler(m_Context->GetDevice(), &sci, nullptr, &m_Sampler);
@@ -331,7 +331,7 @@ VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureVie
         else
             ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     }
-    else if (m_Desc.ViewType == TextureViewType::SRV && IsDepthStencilFormat(m_Desc.Format))
+    else if (m_Desc.ViewType == TextureViewType::SRV && (IsDepthStencilFormat(m_Desc.Format) || IsDepthOnlyFormat(m_Desc.Format)))
     {
         ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     }

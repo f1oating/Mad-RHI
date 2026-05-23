@@ -10,7 +10,6 @@ struct Output
     float4 sv_position : SV_Position;
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
-    float depth : TEXCOORD1;
 }
 
 struct Transform
@@ -31,6 +30,5 @@ Output main(Input input)
     output.sv_position = mul(uTransform.proj, viewPos);
     output.normal = input.normal;
     output.uv = input.uv;
-    output.depth = length(viewPos.xyz);
     return output;
 }
