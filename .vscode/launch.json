@@ -42,13 +42,33 @@
       ]
     },
     {
-      "name": "Run Godray (Linux)",
+      "name": "Run GodRays (Linux)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/Examples/Godray/Godray",
+      "program": "${workspaceFolder}/build/Examples/GodRays/GodRays",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/Godray",
+      "cwd": "${workspaceFolder}/Examples/GodRays",
+      "environment": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "Build (Linux)",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "Run Shadows (Linux)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/Shadows/Shadows",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/Examples/Shadows",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",

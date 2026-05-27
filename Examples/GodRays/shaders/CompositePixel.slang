@@ -1,5 +1,5 @@
 Texture2D SceneColor;
-Texture2D Godray;
+Texture2D GodRays;
 SamplerState LinearClamp;
 
 float3 Tonemap(float3 c) 
@@ -11,7 +11,7 @@ float3 Tonemap(float3 c)
 float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target 
 {
     float3 scene = SceneColor.SampleLevel(LinearClamp, uv, 0).rgb;
-    float4 gr = Godray.SampleLevel(LinearClamp, uv, 0);
+    float4 gr = GodRays.SampleLevel(LinearClamp, uv, 0);
 
     float3 result = scene * (1.0 - gr.a) + gr.rgb;
 

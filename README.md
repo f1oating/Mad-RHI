@@ -25,7 +25,7 @@ Demonstrates depth-based exponential fog applied to a scene of cubes.
 <details>
 <summary>God Rays</summary>
 
-![Godray](docs/screenshots/godray.jpg)
+![GodRays](docs/screenshots/godrays.jpg)
 
 Volumetric light scattering via ray marching through a shadow-mapped scene using the Henyey-Greenstein phase function. Rendered at half resolution and composited over the color pass.
 
