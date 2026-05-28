@@ -12,17 +12,17 @@
 using namespace mad;
 using namespace rhi;
 
-struct Light
+struct Transform
 {
-    glm::mat4 lightView;
-    glm::mat4 lightProj;
+    glm::mat4 World;
+    glm::mat4 View;
+    glm::mat4 Proj;
 };
 
-struct Scene
+struct Light
 {
-    glm::mat4 world;
-    glm::mat4 cameraView;
-    glm::mat4 cameraProj;
+    glm::vec3 Dir;
+    float __pad1;
 };
 
 int main()
@@ -42,8 +42,8 @@ int main()
         RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
         RefPtr<Texture> colorDepth = nullptr;
 
+        RefPtr<Buffer> transformBuffer = nullptr;
         RefPtr<Buffer> lightBuffer = nullptr;
-        RefPtr<Buffer> sceneBuffer = nullptr;
         RefPtr<Sampler> shadowSampler = nullptr;
 
         // Shadow pass
@@ -58,13 +58,11 @@ int main()
             shadowPipelineDesc.VertexShader = vertexShader;
             shadowPipelineDesc.Topology = PrimitiveTopology::TriangleList;
             shadowPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            shadowPipelineDesc.Rasterization.Cull = CullMode::Back;
-            shadowPipelineDesc.Rasterization.Face = FrontFace::CW;
+            shadowPipelineDesc.Rasterization.Cull = CullMode::Front;
+            shadowPipelineDesc.Rasterization.Face = FrontFace::CCW;
             shadowPipelineDesc.DepthStencil.DepthTestEnable = true;
             shadowPipelineDesc.DepthStencil.DepthWriteEnable = true;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            shadowPipelineDesc.BlendAttachments.push_back(colorBlend);
+            shadowPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
             shadowPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
             shadowPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(shadowPipeline.GetAddress(), shadowPipelineDesc);
@@ -93,8 +91,8 @@ int main()
             colorPipelineDesc.FragmentShader = pixelShader;
             colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
             colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            colorPipelineDesc.Rasterization.Cull = CullMode::Front;
-            colorPipelineDesc.Rasterization.Face = FrontFace::CW;
+            colorPipelineDesc.Rasterization.Cull = CullMode::Back;
+            colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
             colorPipelineDesc.DepthStencil.DepthTestEnable = true;
             colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
             ColorAttachmentBlend colorBlend{};
@@ -115,17 +113,17 @@ int main()
 
         // Resources
         {
+            BufferDesc transformBufferDesc {};
+            transformBufferDesc.Usage = ResourceUsage::Dynamic;
+            transformBufferDesc.Size = sizeof(Transform);
+            transformBufferDesc.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
+            device->CreateBuffer(transformBuffer.GetAddress(), transformBufferDesc);
+
             BufferDesc lightBufferDesc {};
             lightBufferDesc.Usage = ResourceUsage::Dynamic;
             lightBufferDesc.Size = sizeof(Light);
             lightBufferDesc.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
             device->CreateBuffer(lightBuffer.GetAddress(), lightBufferDesc);
-
-            BufferDesc sceneBufferDesc {};
-            sceneBufferDesc.Usage = ResourceUsage::Dynamic;
-            sceneBufferDesc.Size = sizeof(Scene);
-            sceneBufferDesc.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
-            device->CreateBuffer(sceneBuffer.GetAddress(), sceneBufferDesc);
 
             SamplerDesc shadowSamplerDesc {};
             shadowSamplerDesc.MinFilter = FilterType::Linear;
@@ -154,13 +152,12 @@ int main()
 
         common::EventBus::Subscribe<common::WindowResizeEvent>([&colorDepth,
             &device, &swapchain, &camera](const common::WindowResizeEvent& event){
-            camera.SetAspectRatio(event.Width / event.Height);
-            
             swapchain->Resize();
 
             colorDepth.Reset();
 
             auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
+            camera.SetAspectRatio(static_cast<float>(backbufferDesc.Width) / static_cast<float>(backbufferDesc.Height));
 
             TextureDesc colorDepthDesc {};
             colorDepthDesc.Width = backbufferDesc.Width;
@@ -220,43 +217,37 @@ int main()
                 commandQueue->SetGraphicsPipeline(shadowPipeline.Get());
                 commandQueue->SetRenderTargets({}, shadowMap->GetDefaultDSV().Get());
 
-                commandQueue->ClearDepthStencil(backBuffer->GetDefaultRTV().Get(), 1.0f, 0);
+                commandQueue->ClearDepthStencil(colorDepth->GetDefaultDSV().Get(), 1.0f, 0);
                 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
-                void* lightData = lightBuffer->Map();
-                Light light {};
-                light.lightView = lightView;
-                light.lightProj = lightProj;
-                memcpy(lightData, &light, sizeof(Light));
+                void* transformData = transformBuffer->Map();
+                Transform transform {};
+                transform.View = lightView;
+                transform.Proj = lightProj;
+                memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uLight", lightBuffer.Get());
+                commandQueue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
 
-                void* sceneData = sceneBuffer->Map();
-                Scene scene {};
-                scene.world = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-                scene.cameraView = camera.GetView();
-                scene.cameraProj = camera.GetProjection();
-                memcpy(sceneData, &scene, sizeof(Scene));
+                transformData = transformBuffer->Map();
+                transform.World = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+                memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uScene", sceneBuffer.Get());
+                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
                 commandQueue->DrawIndexed(36, IndexType::Uint32);
 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
 
-                commandQueue->DrawIndexed(6, IndexType::Uint32);
+                transformData = transformBuffer->Map();
+                transform.World = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
+                memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
-
-                sceneData = sceneBuffer->Map();
-                scene.world = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
-                memcpy(sceneData, &scene, sizeof(Scene));
-
-                commandQueue->SetUniformBuffer("uScene", sceneBuffer.Get());
+                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
 
@@ -270,27 +261,33 @@ int main()
 
                 float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
                 commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-                commandQueue->ClearDepthStencil(backBuffer->GetDefaultRTV().Get(), 1.0f, 0);
+                commandQueue->ClearDepthStencil(colorDepth->GetDefaultDSV().Get(), 1.0f, 0);
                 
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 void* lightData = lightBuffer->Map();
                 Light light {};
-                light.lightView = lightView;
-                light.lightProj = lightProj;
+                light.Dir = lightDir;
                 memcpy(lightData, &light, sizeof(Light));
 
                 commandQueue->SetUniformBuffer("uLight", lightBuffer.Get());
 
-                void* sceneData = sceneBuffer->Map();
-                Scene scene {};
-                scene.world = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-                scene.cameraView = camera.GetView();
-                scene.cameraProj = camera.GetProjection();
-                memcpy(sceneData, &scene, sizeof(Scene));
+                void* transformData = transformBuffer->Map();
+                Transform transform {};
+                transform.View = lightView;
+                transform.Proj = lightProj;
+                memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uScene", sceneBuffer.Get());
+                commandQueue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
+
+                transformData = transformBuffer->Map();
+                transform.World = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+                transform.View = camera.GetView();
+                transform.Proj = camera.GetProjection();
+                memcpy(transformData, &transform, sizeof(Transform));
+
+                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
                 commandQueue->SetTexture("ShadowMap", shadowMap->GetDefaultSRV().Get());
                 commandQueue->SetSampler("ShadowSampler", shadowSampler.Get());
 
@@ -299,11 +296,11 @@ int main()
                 commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
                 commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
 
-                sceneData = sceneBuffer->Map();
-                scene.world = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
-                memcpy(sceneData, &scene, sizeof(Scene));
+                transformData = transformBuffer->Map();
+                transform.World = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
+                memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uScene", sceneBuffer.Get());
+                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
                 commandQueue->DrawIndexed(6, IndexType::Uint32);
             }

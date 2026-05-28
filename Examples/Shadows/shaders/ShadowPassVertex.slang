@@ -12,33 +12,27 @@ struct Output
     float2 uv : TEXCOORD;
 }
 
-struct Light
-{
-    column_major float4x4 lightView;
-    column_major float4x4 lightProj;
-}
-
-struct Object
+struct Transform
 {
     column_major float4x4 world;
-    column_major float4x4 cameraView;
-    column_major float4x4 cameraProj;
+    column_major float4x4 view;
+    column_major float4x4 proj;
 }
 
 [vk::binding(0, 0)]
-ConstantBuffer<Light> uLight;
+ConstantBuffer<Transform> uLightTransform;
 
 [vk::binding(0, 1)]
-ConstantBuffer<Object> uScene;
+ConstantBuffer<Transform> uObjectTransform;
 
 [shader("vertex")]
 Output main(Input input)
 {
-    float4 worldPos = mul(uScene.world, float4(input.position, 1.0f));
-    float4 viewPos = mul(uLight.lightView, worldPos);
+    float4 worldPos = mul(uObjectTransform.world, float4(input.position, 1.0f));
+    float4 viewPos = mul(uLightTransform.view, worldPos);
 
     Output output;
-    output.sv_position = mul(uLight.lightProj, viewPos);
+    output.sv_position = mul(uLightTransform.proj, viewPos);
     output.normal = input.normal;
     output.uv = input.uv;
     return output;

@@ -13,26 +13,26 @@ struct Output
     float2 uv : TEXCOORD;
 }
 
-struct Object
+struct Transform
 {
     column_major float4x4 world;
-    column_major float4x4 cameraView;
-    column_major float4x4 cameraProj;
+    column_major float4x4 view;
+    column_major float4x4 proj;
 }
 
 [vk::binding(0, 0)]
-ConstantBuffer<Object> uScene;
+ConstantBuffer<Transform> uObjectTransform;
 
 [shader("vertex")]
 Output main(Input input)
 {
-    float4 worldPos = mul(uScene.world, float4(input.position, 1.0f));
-    float4 viewPos = mul(uScene.cameraView, worldPos);
+    float4 worldPos = mul(uObjectTransform.world, float4(input.position, 1.0f));
+    float4 viewPos = mul(uObjectTransform.view, worldPos);
 
     Output output;
-    output.sv_position = mul(uScene.cameraProj, viewPos);
+    output.sv_position = mul(uObjectTransform.proj, viewPos);
     output.worldPos = worldPos;
-    output.normal = input.normal;
+    output.normal = mul(float3x3(uObjectTransform.world), input.normal);
     output.uv = input.uv;
     return output;
 }

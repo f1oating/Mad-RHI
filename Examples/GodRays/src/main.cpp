@@ -117,14 +117,11 @@ int main()
             shadowMapPipelineDesc.VertexShader = vertexShader;
             shadowMapPipelineDesc.Topology = PrimitiveTopology::TriangleList;
             shadowMapPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            shadowMapPipelineDesc.Rasterization.Cull = CullMode::Back;
+            shadowMapPipelineDesc.Rasterization.Cull = CullMode::Front;
             shadowMapPipelineDesc.Rasterization.Face = FrontFace::CCW;
             shadowMapPipelineDesc.DepthStencil.DepthTestEnable = true;
             shadowMapPipelineDesc.DepthStencil.DepthWriteEnable = true;
             shadowMapPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            shadowMapPipelineDesc.BlendAttachments.push_back(colorBlend);
             shadowMapPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
             shadowMapPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(shadowMapPipeline.GetAddress(), shadowMapPipelineDesc);

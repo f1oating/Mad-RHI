@@ -6,10 +6,16 @@ struct Input
     float2 uv : TEXCOORD;
 }
 
+struct Transform
+{
+    column_major float4x4 world;
+    column_major float4x4 view;
+    column_major float4x4 proj;
+}
+
 struct Light
 {
-    column_major float4x4 lightView;
-    column_major float4x4 lightProj;
+    float3 dir;
 }
 
 [vk::binding(0, 1)]
@@ -19,12 +25,19 @@ Texture2D ShadowMap;
 SamplerComparisonState ShadowSampler;
 
 [vk::binding(0, 3)]
+ConstantBuffer<Transform> uLightTransform;
+
+[vk::binding(0, 4)]
 ConstantBuffer<Light> uLight;
+
+static const float3 SURFACE_COLOR = float3(0.75, 0.72, 0.68);
+static const float3 LIGHT_COLOR = float3(1.0, 0.5, 0.1);
+static const float AMBIENT = 0.12;
 
 float calcShadow(float4 pos)
 {
-    float4 viewPos = mul(uLight.lightView, pos);
-    float4 projPos = mul(uLight.lightProj, viewPos);
+    float4 viewPos = mul(uLightTransform.view, pos);
+    float4 projPos = mul(uLightTransform.proj, viewPos);
 
     projPos.xyz = projPos.xyz / projPos.w;
 
@@ -38,13 +51,11 @@ float calcShadow(float4 pos)
 [shader("fragment")]
 float4 main(Input input) : SV_Target
 {
-    float4 color = float4(0.75, 0.72, 0.68, 1.0f);
-
     float shadowFactor = calcShadow(input.worldPos);
 
-    color.x *= shadowFactor;
-    color.y *= shadowFactor;
-    color.z *= shadowFactor;
+    float lighted = max(dot(normalize(input.normal), -uLight.dir), 0.0);
 
-    return color;
+    float3 color = SURFACE_COLOR * (AMBIENT + lighted * shadowFactor * LIGHT_COLOR);
+
+    return float4(color, 1.0);
 }
