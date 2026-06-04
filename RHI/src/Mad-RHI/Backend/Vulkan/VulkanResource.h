@@ -208,8 +208,6 @@ inline VkImageViewType ToVkImageViewType(TextureDimension dimension)
     case TextureDimension::Texture1DArray:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
     case TextureDimension::Texture2D:           return VK_IMAGE_VIEW_TYPE_2D;
     case TextureDimension::Texture2DArray:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-    case TextureDimension::Texture2DMS:         return VK_IMAGE_VIEW_TYPE_2D;
-    case TextureDimension::Texture2DMSArray:    return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     case TextureDimension::Texture3D:           return VK_IMAGE_VIEW_TYPE_3D;
     case TextureDimension::TextureCube:         return VK_IMAGE_VIEW_TYPE_CUBE;
     case TextureDimension::TextureCubeArray:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
@@ -217,7 +215,7 @@ inline VkImageViewType ToVkImageViewType(TextureDimension dimension)
     default:                                    return VK_IMAGE_VIEW_TYPE_2D;
     }
 }
-
+// TODO: remove unnesessary
 inline VkFormat ToVkFormat(TextureFormat format)
 {
     switch (format)
@@ -315,6 +313,7 @@ inline TextureDimension FromVkImageViewType(VkImageViewType type)
     }
 }
 
+// TODO: remove unnesessary
 inline TextureFormat FromVkFormat(VkFormat format)
 {
     switch (format)

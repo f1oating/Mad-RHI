@@ -33,8 +33,6 @@ enum class TextureDimension
     Texture1DArray,
     Texture2D,
     Texture2DArray,
-    Texture2DMS,
-    Texture2DMSArray,
     Texture3D,
     TextureCube,
     TextureCubeArray,

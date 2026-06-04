@@ -2,7 +2,7 @@
 
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include <chrono>
 #include <cmath>
 
@@ -20,38 +20,48 @@ int main()
         CommandQueue* commandQueue = bootStrap.GetQueue();
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
-        std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
-        std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
-
-        RefPtr<Shader> vertexShader = nullptr;
-        RefPtr<Shader> fragmentShader = nullptr; 
-
-        device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-        device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
-
-        GraphicsPipelineDesc pipelineDesc{};
-        pipelineDesc.VertexShader = vertexShader;
-        pipelineDesc.FragmentShader = fragmentShader;
-        pipelineDesc.Topology = PrimitiveTopology::TriangleList;
-        pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = CullMode::Back;
-        pipelineDesc.Rasterization.Face = FrontFace::CW;
-        pipelineDesc.DepthStencil.DepthTestEnable = false;
-        pipelineDesc.DepthStencil.DepthWriteEnable = false;
-        ColorAttachmentBlend colorBlend{};
-        colorBlend.BlendEnable = false;
-        pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
-        pipelineDesc.Rendering.SampleCount = 1;
         RefPtr<GraphicsPipelineState> pipeline = nullptr;
-        device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        RefPtr<Buffer> cb = nullptr;
+        RefPtr<Buffer> vb = nullptr;
+
+        std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
+            pipeline.Reset();
+
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> fragmentShader = nullptr; 
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
+
+            GraphicsPipelineDesc pipelineDesc{};
+            pipelineDesc.VertexShader = vertexShader;
+            pipelineDesc.FragmentShader = fragmentShader;
+            pipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            pipelineDesc.Rasterization.Cull = CullMode::Back;
+            pipelineDesc.Rasterization.Face = FrontFace::CW;
+            pipelineDesc.DepthStencil.DepthTestEnable = false;
+            pipelineDesc.DepthStencil.DepthWriteEnable = false;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            pipelineDesc.BlendAttachments.push_back(colorBlend);
+            pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+            pipelineDesc.Rendering.SampleCount = 1;
+            
+            device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        };
+
+        pipelineCreateCallback();
+        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
 
         BufferDesc cbd{};
         cbd.Usage = ResourceUsage::Dynamic;
         cbd.Size = 64;
         cbd.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
 
-        RefPtr<Buffer> cb = nullptr;
         device->CreateBuffer(cb.GetAddress(), cbd);
         
         float vertices[] = 
@@ -65,7 +75,7 @@ int main()
         vbd.Usage = ResourceUsage::Default;
         vbd.Size = sizeof(vertices);
         vbd.BindFlags = RESOURCE_BIND_VERTEX_BUFFER;
-        RefPtr<Buffer> vb = nullptr;
+        
         device->CreateBuffer(vb.GetAddress(), vbd);
 
         commandQueue->ResourceBarrier({}, { {vb.Get(), ResourceState::CopyDst} });
@@ -81,6 +91,7 @@ int main()
             float t = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
+            common::ShaderSystem::Poll();
 
             float* mapped = static_cast<float*>(cb->Map());
             mapped[0] = (std::sin(t * 1.0f) * 0.5f + 0.5f);

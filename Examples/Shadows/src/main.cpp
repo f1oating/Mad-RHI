@@ -3,7 +3,7 @@
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
 #include "Common/Camera.h"
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include <chrono>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
@@ -48,7 +48,7 @@ int main()
 
         // Shadow pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ShadowPassVertex.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowPassVertex.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
 
@@ -77,8 +77,8 @@ int main()
 
         // Color pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ColorPassVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/ColorPassPixel.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorPassVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPassPixel.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> pixelShader = nullptr;

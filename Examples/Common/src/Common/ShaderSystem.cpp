@@ -1,11 +1,33 @@
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include <iostream>
 
 namespace mad::common {
 
-Slang::ComPtr<slang::IGlobalSession> ShaderCompiler::s_GlobalSession = nullptr;
+Slang::ComPtr<slang::IGlobalSession> ShaderSystem::s_GlobalSession = nullptr;
+std::vector<std::pair<ShaderSystem::WatchedFile, std::function<void()>>> ShaderSystem::s_WatchedShaders;
 
-std::vector<uint32_t> ShaderCompiler::Compile(ShaderSource source)
+void ShaderSystem::WatchShader(std::vector<const char*> shaders, std::function<void()> callback)
+{
+    for (auto& shader : shaders)
+    {
+        s_WatchedShaders.push_back({ { shader, {} }, callback });
+    }
+};
+
+void ShaderSystem::Poll()
+{
+    for (auto& f : s_WatchedShaders)
+    {
+        auto ltw = std::filesystem::last_write_time(f.first.FilePath);
+        if (ltw != f.first.LastWrite)
+        {
+            f.first.LastWrite = ltw;
+            f.second();
+        }
+    }
+};
+
+std::vector<uint32_t> ShaderSystem::Compile(const char* pPath)
 {
     if (!s_GlobalSession)
     {
@@ -34,12 +56,12 @@ std::vector<uint32_t> ShaderCompiler::Compile(ShaderSource source)
 
     Slang::ComPtr<slang::IBlob> diagnostics;
 
-    slang::IModule* module = session->loadModule(source.pPath, diagnostics.writeRef());
+    slang::IModule* module = session->loadModule(pPath, diagnostics.writeRef());
     printDiagnostics(diagnostics, "loadModule");
 
     if (!module)
     {
-        std::cerr << "[Slang] Failed to load module: " << source.pPath << std::endl;
+        std::cerr << "[Slang] Failed to load module: " << pPath << std::endl;
         return {};
     }
 
@@ -48,7 +70,7 @@ std::vector<uint32_t> ShaderCompiler::Compile(ShaderSource source)
 
     if (!entryPoint)
     {
-        std::cerr << "[Slang] Entry point 'main' not found in: " << source.pPath << std::endl;
+        std::cerr << "[Slang] Entry point 'main' not found in: " << pPath << std::endl;
         return {};
     }
 
@@ -67,7 +89,7 @@ std::vector<uint32_t> ShaderCompiler::Compile(ShaderSource source)
 
     if (SLANG_FAILED(res) || !spirvBlob)
     {
-        std::cerr << "[Slang] Compilation failed for: " << source.pPath << std::endl;
+        std::cerr << "[Slang] Compilation failed for: " << pPath << std::endl;
         return {};
     }
 

@@ -2,7 +2,7 @@
 
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include "Common/Camera.h"
 #include <chrono>
 #include <cmath>
@@ -23,8 +23,8 @@ int main()
         CommandQueue* commandQueue = bootStrap.GetQueue();
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
-        std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
-        std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
+        std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
+        std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
 
         RefPtr<Shader> vertexShader = nullptr;
         RefPtr<Shader> fragmentShader = nullptr;

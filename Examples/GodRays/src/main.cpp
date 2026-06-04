@@ -2,7 +2,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include "Common/Camera.h"
 #include <chrono>
 #include <cmath>
@@ -108,7 +108,7 @@ int main()
 
         // Shadow map pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ShadowMapVertex.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowMapVertex.slang" });
             RefPtr<Shader> vertexShader = nullptr;
 
             device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
@@ -136,8 +136,8 @@ int main()
 
         // Color pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/ColorVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/ColorPixel.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPixel.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> pixelShader = nullptr;
@@ -179,8 +179,8 @@ int main()
 
         // GodRays pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/GodRaysVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/GodRaysPixel.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/GodRaysVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/GodRaysPixel.slang" });
             
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> pixelShader = nullptr;
@@ -214,8 +214,8 @@ int main()
 
         // Composite pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/CompositeVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderCompiler::Compile({ "shaders/CompositePixel.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/CompositeVertex.slang" });
+            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/CompositePixel.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> pixelShader = nullptr;
