@@ -122,7 +122,7 @@ int main()
             shadowMapPipelineDesc.DepthStencil.DepthTestEnable = true;
             shadowMapPipelineDesc.DepthStencil.DepthWriteEnable = true;
             shadowMapPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
-            shadowMapPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
+            shadowMapPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
             shadowMapPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(shadowMapPipeline.GetAddress(), shadowMapPipelineDesc);
 
@@ -130,7 +130,7 @@ int main()
             shadowMapDesc.Width = 2048;
             shadowMapDesc.Height = 2048;
             shadowMapDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
-            shadowMapDesc.Format = TextureFormat::D32_Float;
+            shadowMapDesc.Format = TextureFormat::D32_SFloat;
             device->CreateTexture(shadowMapTexture.GetAddress(), shadowMapDesc);
         }
 
@@ -157,8 +157,8 @@ int main()
             ColorAttachmentBlend colorBlend{};
             colorBlend.BlendEnable = false;
             colorPipelineDesc.BlendAttachments.push_back(colorBlend);
-            colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
-            colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
+            colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+            colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
             colorPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
             
@@ -166,14 +166,14 @@ int main()
             colorTextureDesc.Width = 800;
             colorTextureDesc.Height = 600;
             colorTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
-            colorTextureDesc.Format = TextureFormat::BGRA8_UNorm_SRGB;
+            colorTextureDesc.Format = TextureFormat::B8G8R8A8_SRGB_UNorm;
             device->CreateTexture(colorTexture.GetAddress(), colorTextureDesc);
 
             TextureDesc depthTextureDesc {};
             depthTextureDesc.Width = 800;
             depthTextureDesc.Height = 600;
             depthTextureDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
-            depthTextureDesc.Format = TextureFormat::D32_Float;
+            depthTextureDesc.Format = TextureFormat::D32_SFloat;
             device->CreateTexture(depthTexture.GetAddress(), depthTextureDesc);
         }
 
@@ -200,7 +200,7 @@ int main()
             ColorAttachmentBlend colorBlend{};
             colorBlend.BlendEnable = false;
             godRaysPipelineDesc.BlendAttachments.push_back(colorBlend);
-            godRaysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::RGBA16_Float);
+            godRaysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::R16G16B16A16_SFloat);
             godRaysPipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(godRaysPipeline.GetAddress(), godRaysPipelineDesc);
 
@@ -208,7 +208,7 @@ int main()
             godRaysTextureDesc.Width = 400;
             godRaysTextureDesc.Height = 300;
             godRaysTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
-            godRaysTextureDesc.Format = TextureFormat::RGBA16_Float;
+            godRaysTextureDesc.Format = TextureFormat::R16G16B16A16_SFloat;
             device->CreateTexture(godRaysTexture.GetAddress(), godRaysTextureDesc);
         }
 
@@ -235,7 +235,7 @@ int main()
             ColorAttachmentBlend colorBlend{};
             colorBlend.BlendEnable = false;
             compositePipelineDesc.BlendAttachments.push_back(colorBlend);
-            compositePipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+            compositePipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
             compositePipelineDesc.Rendering.SampleCount = 1;
             device->CreateGraphicsPipeline(compositePipeline.GetAddress(), compositePipelineDesc);
 
@@ -272,21 +272,21 @@ int main()
             colorTextureDesc.Width = backBufferDesc.Width;
             colorTextureDesc.Height = backBufferDesc.Height;
             colorTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
-            colorTextureDesc.Format = TextureFormat::BGRA8_UNorm_SRGB;
+            colorTextureDesc.Format = TextureFormat::B8G8R8A8_SRGB_UNorm;
             device->CreateTexture(colorTexture.GetAddress(), colorTextureDesc);
 
             TextureDesc depthTextureDesc {};
             depthTextureDesc.Width = backBufferDesc.Width;
             depthTextureDesc.Height = backBufferDesc.Height;
             depthTextureDesc.BindFlags = RESOURCE_BIND_DEPTH_STENCIL | RESOURCE_BIND_SHADER_RESOURSE;
-            depthTextureDesc.Format = TextureFormat::D32_Float;
+            depthTextureDesc.Format = TextureFormat::D32_SFloat;
             device->CreateTexture(depthTexture.GetAddress(), depthTextureDesc);
 
             TextureDesc godRaysTextureDesc {};
             godRaysTextureDesc.Width = backBufferDesc.Width / 2;
             godRaysTextureDesc.Height = backBufferDesc.Height / 2;
             godRaysTextureDesc.BindFlags = RESOURCE_BIND_RENDER_TARGET | RESOURCE_BIND_SHADER_RESOURSE;
-            godRaysTextureDesc.Format = TextureFormat::RGBA16_Float;
+            godRaysTextureDesc.Format = TextureFormat::R16G16B16A16_SFloat;
             device->CreateTexture(godRaysTexture.GetAddress(), godRaysTextureDesc);
 
             camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));

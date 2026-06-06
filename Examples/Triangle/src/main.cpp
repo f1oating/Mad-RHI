@@ -48,7 +48,7 @@ int main()
             ColorAttachmentBlend colorBlend{};
             colorBlend.BlendEnable = false;
             pipelineDesc.BlendAttachments.push_back(colorBlend);
-            pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
+            pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
             pipelineDesc.Rendering.SampleCount = 1;
             
             device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);

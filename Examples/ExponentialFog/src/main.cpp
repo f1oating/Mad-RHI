@@ -44,8 +44,8 @@ int main()
         ColorAttachmentBlend colorBlend{};
         colorBlend.BlendEnable = false;
         pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
-        pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
+        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+        pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
         pipelineDesc.Rendering.SampleCount = 1;
         RefPtr<GraphicsPipelineState> pipeline = nullptr;
         device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
@@ -69,7 +69,7 @@ int main()
         depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
         depthBufferDesc.Width = 800;
         depthBufferDesc.Height = 600;
-        depthBufferDesc.Format = TextureFormat::D32_Float;
+        depthBufferDesc.Format = TextureFormat::D32_SFloat;
         device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
@@ -86,7 +86,7 @@ int main()
             depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
             depthBufferDesc.Width = backBufferDesc.Width;
             depthBufferDesc.Height = backBufferDesc.Height;
-            depthBufferDesc.Format = TextureFormat::D32_Float;
+            depthBufferDesc.Format = TextureFormat::D32_SFloat;
             device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
 
             camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));
