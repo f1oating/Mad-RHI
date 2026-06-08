@@ -108,23 +108,31 @@ int main()
 
         // Shadow map pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowMapVertex.slang" });
-            RefPtr<Shader> vertexShader = nullptr;
+            std::function<void()> pipelineCreateCallback = [&device, &shadowMapPipeline](){
+                shadowMapPipeline.Reset();
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowMapVertex.slang" });
+                RefPtr<Shader> vertexShader = nullptr;
 
-            GraphicsPipelineDesc shadowMapPipelineDesc {};
-            shadowMapPipelineDesc.VertexShader = vertexShader;
-            shadowMapPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            shadowMapPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            shadowMapPipelineDesc.Rasterization.Cull = CullMode::Front;
-            shadowMapPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            shadowMapPipelineDesc.DepthStencil.DepthTestEnable = true;
-            shadowMapPipelineDesc.DepthStencil.DepthWriteEnable = true;
-            shadowMapPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
-            shadowMapPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
-            shadowMapPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(shadowMapPipeline.GetAddress(), shadowMapPipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+
+                GraphicsPipelineDesc shadowMapPipelineDesc {};
+                shadowMapPipelineDesc.VertexShader = vertexShader;
+                shadowMapPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                shadowMapPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                shadowMapPipelineDesc.Rasterization.Cull = CullMode::Front;
+                shadowMapPipelineDesc.Rasterization.Face = FrontFace::CCW;
+                shadowMapPipelineDesc.DepthStencil.DepthTestEnable = true;
+                shadowMapPipelineDesc.DepthStencil.DepthWriteEnable = true;
+                shadowMapPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
+                shadowMapPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+                shadowMapPipelineDesc.Rendering.SampleCount = 1;
+                
+                device->CreateGraphicsPipeline(shadowMapPipeline.GetAddress(), shadowMapPipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/ShadowMapVertex.slang" }, pipelineCreateCallback);
 
             TextureDesc shadowMapDesc {};
             shadowMapDesc.Width = 2048;
@@ -136,31 +144,39 @@ int main()
 
         // Color pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPixel.slang" });
+            std::function<void()> pipelineCreateCallback = [&device, &colorPipeline](){
+                colorPipeline.Reset();
 
-            RefPtr<Shader> vertexShader = nullptr;
-            RefPtr<Shader> pixelShader = nullptr;
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPixel.slang" });
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+                RefPtr<Shader> vertexShader = nullptr;
+                RefPtr<Shader> pixelShader = nullptr;
 
-            GraphicsPipelineDesc colorPipelineDesc {};
-            colorPipelineDesc.VertexShader = vertexShader;
-            colorPipelineDesc.FragmentShader = pixelShader;
-            colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            colorPipelineDesc.Rasterization.Cull = CullMode::Back;
-            colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            colorPipelineDesc.DepthStencil.DepthTestEnable = true;
-            colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            colorPipelineDesc.BlendAttachments.push_back(colorBlend);
-            colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
-            colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
-            colorPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+                GraphicsPipelineDesc colorPipelineDesc {};
+                colorPipelineDesc.VertexShader = vertexShader;
+                colorPipelineDesc.FragmentShader = pixelShader;
+                colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                colorPipelineDesc.Rasterization.Cull = CullMode::Back;
+                colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
+                colorPipelineDesc.DepthStencil.DepthTestEnable = true;
+                colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
+                ColorAttachmentBlend colorBlend{};
+                colorBlend.BlendEnable = false;
+                colorPipelineDesc.BlendAttachments.push_back(colorBlend);
+                colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+                colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+                colorPipelineDesc.Rendering.SampleCount = 1;
+                
+                device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/ColorVertex.slang", "shaders/ColorPixel.slang" }, pipelineCreateCallback);
             
             TextureDesc colorTextureDesc {};
             colorTextureDesc.Width = 800;
@@ -179,30 +195,38 @@ int main()
 
         // GodRays pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/GodRaysVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/GodRaysPixel.slang" });
-            
-            RefPtr<Shader> vertexShader = nullptr;
-            RefPtr<Shader> pixelShader = nullptr;
+            std::function<void()> pipelineCreateCallback = [&device, &godRaysPipeline](){
+                godRaysPipeline.Reset();
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/GodRaysVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/GodRaysPixel.slang" });
+                
+                RefPtr<Shader> vertexShader = nullptr;
+                RefPtr<Shader> pixelShader = nullptr;
 
-            GraphicsPipelineDesc godRaysPipelineDesc {};
-            godRaysPipelineDesc.VertexShader = vertexShader;
-            godRaysPipelineDesc.FragmentShader = pixelShader;
-            godRaysPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            godRaysPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            godRaysPipelineDesc.Rasterization.Cull = CullMode::None;
-            godRaysPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            godRaysPipelineDesc.DepthStencil.DepthTestEnable = false;
-            godRaysPipelineDesc.DepthStencil.DepthWriteEnable = false;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            godRaysPipelineDesc.BlendAttachments.push_back(colorBlend);
-            godRaysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::R16G16B16A16_SFloat);
-            godRaysPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(godRaysPipeline.GetAddress(), godRaysPipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+                GraphicsPipelineDesc godRaysPipelineDesc {};
+                godRaysPipelineDesc.VertexShader = vertexShader;
+                godRaysPipelineDesc.FragmentShader = pixelShader;
+                godRaysPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                godRaysPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                godRaysPipelineDesc.Rasterization.Cull = CullMode::None;
+                godRaysPipelineDesc.Rasterization.Face = FrontFace::CCW;
+                godRaysPipelineDesc.DepthStencil.DepthTestEnable = false;
+                godRaysPipelineDesc.DepthStencil.DepthWriteEnable = false;
+                ColorAttachmentBlend colorBlend{};
+                colorBlend.BlendEnable = false;
+                godRaysPipelineDesc.BlendAttachments.push_back(colorBlend);
+                godRaysPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::R16G16B16A16_SFloat);
+                godRaysPipelineDesc.Rendering.SampleCount = 1;
+                
+                device->CreateGraphicsPipeline(godRaysPipeline.GetAddress(), godRaysPipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/GodRaysVertex.slang", "shaders/GodRaysPixel.slang" }, pipelineCreateCallback);
 
             TextureDesc godRaysTextureDesc {};
             godRaysTextureDesc.Width = 400;
@@ -214,30 +238,38 @@ int main()
 
         // Composite pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/CompositeVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/CompositePixel.slang" });
+            std::function<void()> pipelineCreateCallback = [&device, &compositePipeline](){
+                compositePipeline.Reset();
 
-            RefPtr<Shader> vertexShader = nullptr;
-            RefPtr<Shader> pixelShader = nullptr;
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/CompositeVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/CompositePixel.slang" });
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+                RefPtr<Shader> vertexShader = nullptr;
+                RefPtr<Shader> pixelShader = nullptr;
 
-            GraphicsPipelineDesc compositePipelineDesc {};
-            compositePipelineDesc.VertexShader = vertexShader;
-            compositePipelineDesc.FragmentShader = pixelShader;
-            compositePipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            compositePipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            compositePipelineDesc.Rasterization.Cull = CullMode::None;
-            compositePipelineDesc.Rasterization.Face = FrontFace::CCW;
-            compositePipelineDesc.DepthStencil.DepthTestEnable = false;
-            compositePipelineDesc.DepthStencil.DepthWriteEnable = false;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            compositePipelineDesc.BlendAttachments.push_back(colorBlend);
-            compositePipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
-            compositePipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(compositePipeline.GetAddress(), compositePipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+                GraphicsPipelineDesc compositePipelineDesc {};
+                compositePipelineDesc.VertexShader = vertexShader;
+                compositePipelineDesc.FragmentShader = pixelShader;
+                compositePipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                compositePipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                compositePipelineDesc.Rasterization.Cull = CullMode::None;
+                compositePipelineDesc.Rasterization.Face = FrontFace::CCW;
+                compositePipelineDesc.DepthStencil.DepthTestEnable = false;
+                compositePipelineDesc.DepthStencil.DepthWriteEnable = false;
+                ColorAttachmentBlend colorBlend{};
+                colorBlend.BlendEnable = false;
+                compositePipelineDesc.BlendAttachments.push_back(colorBlend);
+                compositePipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+                compositePipelineDesc.Rendering.SampleCount = 1;
+                
+                device->CreateGraphicsPipeline(compositePipeline.GetAddress(), compositePipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/CompositeVertex.slang", "shaders/CompositePixel.slang" }, pipelineCreateCallback);
 
             SamplerDesc compositeSamplerDesc {};
             device->CreateSampler(compositeSampler.GetAddress(), compositeSamplerDesc);
@@ -300,6 +332,7 @@ int main()
             float t = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
+            common::ShaderSystem::Poll();
 
             // Camera move
             {
