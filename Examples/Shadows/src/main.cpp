@@ -48,24 +48,32 @@ int main()
 
         // Shadow pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowPassVertex.slang" });
+            std::function<void()> pipelineCreateCallback = [&device, &shadowPipeline](){
+                shadowPipeline.Reset();
 
-            RefPtr<Shader> vertexShader = nullptr;
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowPassVertex.slang" });
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                RefPtr<Shader> vertexShader = nullptr;
 
-            GraphicsPipelineDesc shadowPipelineDesc{};
-            shadowPipelineDesc.VertexShader = vertexShader;
-            shadowPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            shadowPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            shadowPipelineDesc.Rasterization.Cull = CullMode::Front;
-            shadowPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            shadowPipelineDesc.DepthStencil.DepthTestEnable = true;
-            shadowPipelineDesc.DepthStencil.DepthWriteEnable = true;
-            shadowPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
-            shadowPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
-            shadowPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(shadowPipeline.GetAddress(), shadowPipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+
+                GraphicsPipelineDesc shadowPipelineDesc{};
+                shadowPipelineDesc.VertexShader = vertexShader;
+                shadowPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                shadowPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                shadowPipelineDesc.Rasterization.Cull = CullMode::Front;
+                shadowPipelineDesc.Rasterization.Face = FrontFace::CCW;
+                shadowPipelineDesc.DepthStencil.DepthTestEnable = true;
+                shadowPipelineDesc.DepthStencil.DepthWriteEnable = true;
+                shadowPipelineDesc.DepthStencil.DepthCompareOp = CompareOp::Less;
+                shadowPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+                shadowPipelineDesc.Rendering.SampleCount = 1;
+
+                device->CreateGraphicsPipeline(shadowPipeline.GetAddress(), shadowPipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/ShadowPassVertex.slang" }, pipelineCreateCallback);
 
             TextureDesc shadowMapDesc {};
             shadowMapDesc.Width = 2048;
@@ -77,31 +85,39 @@ int main()
 
         // Color pass
         {
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorPassVertex.slang" });
-            std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPassPixel.slang" });
+            std::function<void()> pipelineCreateCallback = [&device, &colorPipeline](){
+                colorPipeline.Reset();
 
-            RefPtr<Shader> vertexShader = nullptr;
-            RefPtr<Shader> pixelShader = nullptr;
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorPassVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPassPixel.slang" });
 
-            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-            device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+                RefPtr<Shader> vertexShader = nullptr;
+                RefPtr<Shader> pixelShader = nullptr;
 
-            GraphicsPipelineDesc colorPipelineDesc{};
-            colorPipelineDesc.VertexShader = vertexShader;
-            colorPipelineDesc.FragmentShader = pixelShader;
-            colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
-            colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-            colorPipelineDesc.Rasterization.Cull = CullMode::Back;
-            colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
-            colorPipelineDesc.DepthStencil.DepthTestEnable = true;
-            colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
-            ColorAttachmentBlend colorBlend{};
-            colorBlend.BlendEnable = false;
-            colorPipelineDesc.BlendAttachments.push_back(colorBlend);
-            colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
-            colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
-            colorPipelineDesc.Rendering.SampleCount = 1;
-            device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
+                device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+                device->CreateShader(pixelShader.GetAddress(), spirvPixel.data(), spirvPixel.size());
+
+                GraphicsPipelineDesc colorPipelineDesc{};
+                colorPipelineDesc.VertexShader = vertexShader;
+                colorPipelineDesc.FragmentShader = pixelShader;
+                colorPipelineDesc.Topology = PrimitiveTopology::TriangleList;
+                colorPipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+                colorPipelineDesc.Rasterization.Cull = CullMode::Back;
+                colorPipelineDesc.Rasterization.Face = FrontFace::CCW;
+                colorPipelineDesc.DepthStencil.DepthTestEnable = true;
+                colorPipelineDesc.DepthStencil.DepthWriteEnable = true;
+                ColorAttachmentBlend colorBlend{};
+                colorBlend.BlendEnable = false;
+                colorPipelineDesc.BlendAttachments.push_back(colorBlend);
+                colorPipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+                colorPipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+                colorPipelineDesc.Rendering.SampleCount = 1;
+                
+                device->CreateGraphicsPipeline(colorPipeline.GetAddress(), colorPipelineDesc);
+            };
+
+            pipelineCreateCallback();
+            common::ShaderSystem::WatchShader({ "shaders/ColorPassVertex.slang", "shaders/ColorPassPixel.slang" }, pipelineCreateCallback);
 
             TextureDesc colorDepthDesc {};
             colorDepthDesc.Width = 800;
@@ -175,6 +191,7 @@ int main()
             float t = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
+            common::ShaderSystem::Poll();
 
             // Camera move
             {

@@ -23,32 +23,43 @@ int main()
         CommandQueue* commandQueue = bootStrap.GetQueue();
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
-        std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
-        std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
-
-        RefPtr<Shader> vertexShader = nullptr;
-        RefPtr<Shader> fragmentShader = nullptr;
-
-        device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-        device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
-
-        GraphicsPipelineDesc pipelineDesc{};
-        pipelineDesc.VertexShader = vertexShader;
-        pipelineDesc.FragmentShader = fragmentShader;
-        pipelineDesc.Topology = PrimitiveTopology::TriangleList;
-        pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = CullMode::Back;
-        pipelineDesc.Rasterization.Face = FrontFace::CCW;
-        pipelineDesc.DepthStencil.DepthTestEnable = true;
-        pipelineDesc.DepthStencil.DepthWriteEnable = true;
-        ColorAttachmentBlend colorBlend{};
-        colorBlend.BlendEnable = false;
-        pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
-        pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
-        pipelineDesc.Rendering.SampleCount = 1;
         RefPtr<GraphicsPipelineState> pipeline = nullptr;
-        device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        RefPtr<Texture> depthBuffer = nullptr;
+        RefPtr<Buffer> cb = nullptr;
+
+        std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
+            pipeline.Reset();
+
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> fragmentShader = nullptr;
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
+
+            GraphicsPipelineDesc pipelineDesc{};
+            pipelineDesc.VertexShader = vertexShader;
+            pipelineDesc.FragmentShader = fragmentShader;
+            pipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            pipelineDesc.Rasterization.Cull = CullMode::Back;
+            pipelineDesc.Rasterization.Face = FrontFace::CCW;
+            pipelineDesc.DepthStencil.DepthTestEnable = true;
+            pipelineDesc.DepthStencil.DepthWriteEnable = true;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            pipelineDesc.BlendAttachments.push_back(colorBlend);
+            pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+            pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+            pipelineDesc.Rendering.SampleCount = 1;
+            
+            device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        };
+
+        pipelineCreateCallback();
+        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
 
         struct Transform
         {
@@ -57,20 +68,18 @@ int main()
             glm::mat4 Proj;
         };
 
-        RefPtr<Buffer> cb = nullptr;
-        BufferDesc cbd{};
-        cbd.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
-        cbd.Size = sizeof(Transform);
-        cbd.Usage = ResourceUsage::Dynamic;
-        device->CreateBuffer(cb.GetAddress(), cbd);
-
-        RefPtr<Texture> depthBuffer = nullptr;
         TextureDesc depthBufferDesc {};
         depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
         depthBufferDesc.Width = 800;
         depthBufferDesc.Height = 600;
         depthBufferDesc.Format = TextureFormat::D32_SFloat;
         device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
+
+        BufferDesc cbd{};
+        cbd.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
+        cbd.Size = sizeof(Transform);
+        cbd.Usage = ResourceUsage::Dynamic;
+        device->CreateBuffer(cb.GetAddress(), cbd);
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
@@ -100,6 +109,7 @@ int main()
             float t = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
+            common::ShaderSystem::Poll();
 
             const bool* keys = SDL_GetKeyboardState(nullptr);
             float dx, dy;
