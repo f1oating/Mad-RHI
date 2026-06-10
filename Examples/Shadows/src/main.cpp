@@ -8,6 +8,7 @@
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL3/SDL.h>
+#include "Common/RenderGraph.h"
 
 using namespace mad;
 using namespace rhi;
@@ -37,10 +38,8 @@ int main()
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
         RefPtr<GraphicsPipelineState> shadowPipeline = nullptr;
-        RefPtr<Texture> shadowMap = nullptr;
 
         RefPtr<GraphicsPipelineState> colorPipeline = nullptr;
-        RefPtr<Texture> colorDepth = nullptr;
 
         RefPtr<Buffer> transformBuffer = nullptr;
         RefPtr<Buffer> lightBuffer = nullptr;
@@ -74,13 +73,6 @@ int main()
 
             pipelineCreateCallback();
             common::ShaderSystem::WatchShader({ "shaders/ShadowPassVertex.slang" }, pipelineCreateCallback);
-
-            TextureDesc shadowMapDesc {};
-            shadowMapDesc.Width = 2048;
-            shadowMapDesc.Height = 2048;
-            shadowMapDesc.Format = TextureFormat::D32_SFloat;
-            shadowMapDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | ResourceBind::RESOURCE_BIND_SHADER_RESOURSE;
-            device->CreateTexture(shadowMap.GetAddress(), shadowMapDesc);
         }
 
         // Color pass
@@ -118,13 +110,6 @@ int main()
 
             pipelineCreateCallback();
             common::ShaderSystem::WatchShader({ "shaders/ColorPassVertex.slang", "shaders/ColorPassPixel.slang" }, pipelineCreateCallback);
-
-            TextureDesc colorDepthDesc {};
-            colorDepthDesc.Width = 800;
-            colorDepthDesc.Height = 600;
-            colorDepthDesc.Format = TextureFormat::D32_SFloat;
-            colorDepthDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-            device->CreateTexture(colorDepth.GetAddress(), colorDepthDesc);
         }
 
         // Resources
@@ -166,21 +151,12 @@ int main()
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
-        common::EventBus::Subscribe<common::WindowResizeEvent>([&colorDepth,
-            &device, &swapchain, &camera](const common::WindowResizeEvent& event){
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&device, &swapchain, &camera]
+            (const common::WindowResizeEvent& event){
             swapchain->Resize();
-
-            colorDepth.Reset();
 
             auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
             camera.SetAspectRatio(static_cast<float>(backbufferDesc.Width) / static_cast<float>(backbufferDesc.Height));
-
-            TextureDesc colorDepthDesc {};
-            colorDepthDesc.Width = backbufferDesc.Width;
-            colorDepthDesc.Height = backbufferDesc.Height;
-            colorDepthDesc.Format = TextureFormat::D32_SFloat;
-            colorDepthDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-            device->CreateTexture(colorDepth.GetAddress(), colorDepthDesc);
         });
 
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -226,18 +202,25 @@ int main()
             }
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {shadowMap.Get(), ResourceState::DepthWrite} }, {});
+            common::RenderGraph renderGraph(device);
 
-            // Shadow pass
-            {
-                commandQueue->SetGraphicsPipeline(shadowPipeline.Get());
-                commandQueue->SetRenderTargets({}, shadowMap->GetDefaultDSV().Get());
+            renderGraph.AddResource("ShadowMap", TextureFormat::D32_SFloat, 2048, 2048, 
+                ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | ResourceBind::RESOURCE_BIND_SHADER_RESOURSE,
+                ResourceState::DepthWrite, ResourceState::ShaderResource);
 
-                commandQueue->ClearDepthStencil(colorDepth->GetDefaultDSV().Get(), 1.0f, 0);
+            renderGraph.AddPass("Shadow", {}, { "ShadowMap" }, [&t, &lightView, &lightProj, &camera, &renderGraph,
+                &transformBuffer, &bootStrap, &shadowPipeline, &backBuffer](CommandQueue* queue){
+                rhi::Texture* shadowMap = renderGraph.GetResource("ShadowMap")->Texture;
+
+                queue->SetGraphicsPipeline(shadowPipeline.Get());
+                queue->SetRenderTargets({}, shadowMap->GetDefaultDSV().Get());
+
+                queue->ClearDepthStencil(shadowMap->GetDefaultDSV().Get(), 1.0f, 0);
                 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+                queue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 void* transformData = transformBuffer->Map();
                 Transform transform {};
@@ -245,7 +228,7 @@ int main()
                 transform.Proj = lightProj;
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
+                queue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
 
                 transformData = transformBuffer->Map();
                 transform.World = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
@@ -253,42 +236,46 @@ int main()
                 transform.Proj = camera.GetProjection();
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
+                queue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
+                queue->DrawIndexed(36, IndexType::Uint32);
 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
+                queue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
 
                 transformData = transformBuffer->Map();
                 transform.World = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
+                queue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
-                commandQueue->DrawIndexed(6, IndexType::Uint32);
+                queue->DrawIndexed(6, IndexType::Uint32);
+            });
 
-                commandQueue->ResourceBarrier({ {shadowMap.Get(), ResourceState::ShaderResource} }, {});
-            }
+            renderGraph.AddResource("ColorDepth", TextureFormat::D32_SFloat, backbufferDesc.Width, backbufferDesc.Height, 
+                ResourceBind::RESOURCE_BIND_DEPTH_STENCIL, ResourceState::DepthWrite, ResourceState::DepthWrite);
 
-            // Color pass
-            {
-                commandQueue->SetGraphicsPipeline(colorPipeline.Get());
-                commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, colorDepth->GetDefaultDSV().Get());
+            renderGraph.AddPass("Color", {}, { "ColorDepth" }, [&t, &lightDir, &lightView, &lightProj, &camera, &renderGraph,
+                &transformBuffer, &lightBuffer, &bootStrap, &colorPipeline, &backBuffer, &shadowSampler](CommandQueue* queue){
+                rhi::Texture* shadowMap = renderGraph.GetResource("ShadowMap")->Texture;
+                rhi::Texture* colorDepth = renderGraph.GetResource("ColorDepth")->Texture;
+
+                queue->SetGraphicsPipeline(colorPipeline.Get());
+                queue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, colorDepth->GetDefaultDSV().Get());
 
                 float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-                commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-                commandQueue->ClearDepthStencil(colorDepth->GetDefaultDSV().Get(), 1.0f, 0);
+                queue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+                queue->ClearDepthStencil(colorDepth->GetDefaultDSV().Get(), 1.0f, 0);
                 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+                queue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
 
                 void* lightData = lightBuffer->Map();
                 Light light {};
                 light.Dir = lightDir;
                 memcpy(lightData, &light, sizeof(Light));
 
-                commandQueue->SetUniformBuffer("uLight", lightBuffer.Get());
+                queue->SetUniformBuffer("uLight", lightBuffer.Get());
 
                 void* transformData = transformBuffer->Map();
                 Transform transform {};
@@ -296,7 +283,7 @@ int main()
                 transform.Proj = lightProj;
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
+                queue->SetUniformBuffer("uLightTransform", transformBuffer.Get());
 
                 transformData = transformBuffer->Map();
                 transform.World = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
@@ -304,23 +291,26 @@ int main()
                 transform.Proj = camera.GetProjection();
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
-                commandQueue->SetTexture("ShadowMap", shadowMap->GetDefaultSRV().Get());
-                commandQueue->SetSampler("ShadowSampler", shadowSampler.Get());
+                queue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
+                queue->SetTexture("ShadowMap", shadowMap->GetDefaultSRV().Get());
+                queue->SetSampler("ShadowSampler", shadowSampler.Get());
 
-                commandQueue->DrawIndexed(36, IndexType::Uint32);
+                queue->DrawIndexed(36, IndexType::Uint32);
 
-                commandQueue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
-                commandQueue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
+                queue->SetVertexBuffers(0, { bootStrap.GetSquareVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetSquareIndexBuffer());
 
                 transformData = transformBuffer->Map();
                 transform.World = glm::scale(glm::mat4(1.0f), glm::vec3(40.0f, 1.0f, 40.0f));
                 memcpy(transformData, &transform, sizeof(Transform));
 
-                commandQueue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
+                queue->SetUniformBuffer("uObjectTransform", transformBuffer.Get());
 
-                commandQueue->DrawIndexed(6, IndexType::Uint32);
-            }
+                queue->DrawIndexed(6, IndexType::Uint32);
+            });
+
+            renderGraph.Compile();
+            renderGraph.Execute(commandQueue);
 
             commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 

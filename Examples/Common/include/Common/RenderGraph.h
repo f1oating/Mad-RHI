@@ -35,7 +35,8 @@ struct Pass
 };
 
 public:
-    RenderGraph(rhi::Device* device) : m_Device(device) {}; 
+    RenderGraph(rhi::Device* device) : m_Device(device) {};
+    ~RenderGraph() { for (auto pair : m_Resources) { pair.second.Texture->Release(); } }; 
 
     void AddResource(std::string name, rhi::TextureFormat format, uint32_t width, uint32_t height,
         uint8_t bindFlags, rhi::ResourceState initalState, rhi::ResourceState finalState);
