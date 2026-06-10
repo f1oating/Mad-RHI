@@ -8,6 +8,7 @@
 #include <cmath>
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Common/RenderGraph.h"
 
 using namespace mad;
 using namespace rhi;
@@ -24,7 +25,6 @@ int main()
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
         RefPtr<GraphicsPipelineState> pipeline = nullptr;
-        RefPtr<Texture> depthBuffer = nullptr;
         RefPtr<Buffer> cb = nullptr;
 
         std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
@@ -68,13 +68,6 @@ int main()
             glm::mat4 Proj;
         };
 
-        TextureDesc depthBufferDesc {};
-        depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-        depthBufferDesc.Width = 800;
-        depthBufferDesc.Height = 600;
-        depthBufferDesc.Format = TextureFormat::D32_SFloat;
-        device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
-
         BufferDesc cbd{};
         cbd.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
         cbd.Size = sizeof(Transform);
@@ -83,20 +76,11 @@ int main()
 
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
-        common::EventBus::Subscribe<common::WindowResizeEvent>([&depthBuffer, &device, &swapchain, &camera](const common::WindowResizeEvent& event){
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&device, &swapchain, &camera](const common::WindowResizeEvent& event){
             swapchain->Resize();
-
-            depthBuffer.Reset();
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
             const TextureDesc& backBufferDesc = backBuffer->GetDesc();
-
-            TextureDesc depthBufferDesc {};
-            depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-            depthBufferDesc.Width = backBufferDesc.Width;
-            depthBufferDesc.Height = backBufferDesc.Height;
-            depthBufferDesc.Format = TextureFormat::D32_SFloat;
-            device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
 
             camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));
         });
@@ -141,36 +125,50 @@ int main()
             }
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {depthBuffer.Get(), ResourceState::DepthWrite} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
 
-            commandQueue->SetGraphicsPipeline(pipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthBuffer->GetDefaultDSV().Get());
+            common::RenderGraph renderGraph(device);
 
-            float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-            commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-            commandQueue->ClearDepthStencil(depthBuffer->GetDefaultDSV().Get(), 1.0f, 0);
+            renderGraph.AddResource("Depth", TextureFormat::D32_SFloat, backbufferDesc.Width, backbufferDesc.Height,
+                RESOURCE_BIND_DEPTH_STENCIL, ResourceState::DepthWrite, ResourceState::DepthWrite);
 
-            commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-            commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+            renderGraph.AddPass("Color", {}, { "Depth" }, [&cb, &camera, &pipeline, &bootStrap, 
+                &backBuffer, &renderGraph](CommandQueue* queue){
+                Texture* depth = renderGraph.GetResource("Depth")->Texture;
 
-            for (int col = 0; col < 3; col++)
-            {
-                for (int row = 0; row < 3; row++)
+                queue->SetGraphicsPipeline(pipeline.Get());
+                queue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depth->GetDefaultDSV().Get());
+
+                float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+                queue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+                queue->ClearDepthStencil(depth->GetDefaultDSV().Get(), 1.0f, 0);
+
+                queue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+
+                for (int col = 0; col < 3; col++)
                 {
-                    Transform transform;
-                    transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(col * 2.5f, 0.0f, row * 2.5f));
-                    transform.View = camera.GetView();
-                    transform.Proj = camera.GetProjection();
+                    for (int row = 0; row < 3; row++)
+                    {
+                        Transform transform;
+                        transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(col * 2.5f, 0.0f, row * 2.5f));
+                        transform.View = camera.GetView();
+                        transform.Proj = camera.GetProjection();
 
-                    void* data = cb->Map();
-                    memcpy(data, &transform, sizeof(Transform));
+                        void* data = cb->Map();
+                        memcpy(data, &transform, sizeof(Transform));
 
-                    commandQueue->SetUniformBuffer("uTransform", cb.Get());
+                        queue->SetUniformBuffer("uTransform", cb.Get());
 
-                    commandQueue->DrawIndexed(36, IndexType::Uint32);
+                        queue->DrawIndexed(36, IndexType::Uint32);
+                    }
                 }
-            }
+            });
+
+            renderGraph.Compile();
+            renderGraph.Execute(commandQueue);
 
             commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 

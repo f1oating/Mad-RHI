@@ -97,6 +97,8 @@ int main()
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
+
             common::RenderGraph renderGraph(device);
 
             renderGraph.AddPass("Color", {}, {}, [&t, &cb, &vb, &pipeline, &backBuffer](CommandQueue* queue){
@@ -105,8 +107,6 @@ int main()
                 mapped[1] = (std::sin(t * 1.5f) * 0.5f + 0.5f);
                 mapped[2] = (std::sin(t * 2.0f) * 0.5f + 0.5f);
                 mapped[3] = 1.0f;
-
-                queue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
 
                 queue->SetGraphicsPipeline(pipeline.Get());
                 queue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
@@ -118,11 +118,13 @@ int main()
                 queue->SetUniformBuffer("uColor", cb.Get());
                 queue->Draw(3);
 
-                queue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
+                
             });
 
             renderGraph.Compile();
             renderGraph.Execute(commandQueue);
+
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 
             commandQueue->Flush();
 
