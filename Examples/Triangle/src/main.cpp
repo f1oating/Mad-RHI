@@ -95,18 +95,11 @@ int main()
             window->Update();
             common::ShaderSystem::Poll();
 
-            
-
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
             common::RenderGraph renderGraph(device);
-            RGTextureHandle renderTargetHandle = renderGraph.ImportTexture(backBuffer);
 
-            renderGraph.AddPass("Color", [](RGPassBuilder& builder){
-                // Empty
-            }, [&t, &cb, &vb, &pipeline, &renderTargetHandle](RenderGraph& renderGraph, CommandQueue* queue){
-                Texture* backBuffer = renderGraph.GetTexture(renderTargetHandle);
-
+            renderGraph.AddPass("Color", {}, {}, [&t, &cb, &vb, &pipeline, &backBuffer](CommandQueue* queue){
                 float* mapped = static_cast<float*>(cb->Map());
                 mapped[0] = (std::sin(t * 1.0f) * 0.5f + 0.5f);
                 mapped[1] = (std::sin(t * 1.5f) * 0.5f + 0.5f);

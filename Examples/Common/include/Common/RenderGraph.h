@@ -5,69 +5,55 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace mad::common {
 
-using RGTextureHandle = uint16_t;
-
-struct RGTextureEntry
-{
-    rhi::TextureDesc Desc;
-    rhi::Texture* PhysicalTexture;
-
-    bool IsImported = false;
-};
-
-class RenderGraph;
-
-struct RGPass
-{
-    std::string Name;
-    std::function<void(RenderGraph&, rhi::CommandQueue*)> Execute;
-    std::vector<RGTextureEntry> Reads;
-    std::vector<RGTextureEntry> Writes;
-};
-
-class RGPassBuilder;
-
 class RenderGraph
 {
-friend class RGPassBuilder;
+struct Resource
+{
+    std::string Name;
+
+    rhi::TextureFormat Format;
+    uint32_t Width;
+    uint32_t Height;
+    uint8_t BindFlags;
+
+    rhi::ResourceState InitalState;
+    rhi::ResourceState FinalState;
+
+    rhi::Texture* Texture;
+};
+
+struct Pass
+{
+    std::string Name;
+    std::vector<std::string> Inputs;
+    std::vector<std::string> Outputs;
+    std::function<void(rhi::CommandQueue*)> ExecuteFn;
+};
 
 public:
-    RenderGraph(rhi::Device* device);
+    RenderGraph(rhi::Device* device) : m_Device(device) {}; 
 
-    void AddPass(std::string name, std::function<void(RGPassBuilder&)> setup,
-        std::function<void(RenderGraph&, rhi::CommandQueue*)> execute);
+    void AddResource(std::string name, rhi::TextureFormat format, uint32_t width, uint32_t height,
+        uint8_t bindFlags, rhi::ResourceState initalState, rhi::ResourceState finalState);
+
+    void AddPass(std::string name, std::vector<std::string> inputs,
+        std::vector<std::string> outputs, std::function<void(rhi::CommandQueue*)> executeFn);
 
     void Compile();
     void Execute(rhi::CommandQueue* queue);
 
-    RGTextureHandle ImportTexture(rhi::Texture* texture);
-
-    RGTextureHandle CreateTexture(const rhi::TextureDesc& desc);
-
-    rhi::Texture* GetTexture(RGTextureHandle handle) { return m_Textures[handle].PhysicalTexture; }
+    Resource* GetResource(std::string name);
 
 private:
-    rhi::Device* m_Device = nullptr;
+    rhi::Device* m_Device;
 
-    std::vector<RGTextureEntry> m_Textures;
-    std::vector<RGPass> m_Passes;
-
-};
-
-class RGPassBuilder
-{
-public:
-    RGPassBuilder(RenderGraph& rg, RGPass& pass);
-
-    rhi::Texture* ReadTexture(RGTextureHandle handle);
-    rhi::Texture* WriteTexture(RGTextureHandle handle);
-
-private:
-    RenderGraph& m_RG;
-    RGPass& m_Pass;
+    std::unordered_map<std::string, Resource> m_Resources;
+    std::vector<Pass> m_Passes;
+    std::vector<size_t> m_ExecutionOrder;
 
 };
 

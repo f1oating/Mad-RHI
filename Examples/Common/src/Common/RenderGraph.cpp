@@ -2,80 +2,141 @@
 
 namespace mad::common {
 
-RGPassBuilder::RGPassBuilder(RenderGraph& rg, RGPass& pass)
-    : m_RG(rg), m_Pass(pass)
+void RenderGraph::AddResource(std::string name, rhi::TextureFormat format, uint32_t width, uint32_t height,
+    uint8_t bindFlags, rhi::ResourceState initalState, rhi::ResourceState finalState)
 {
+    Resource resource;
+    resource.Name = name;
+    resource.Format = format;
+    resource.Width = width;
+    resource.Height = height;
+    resource.BindFlags = bindFlags;
+    resource.InitalState = initalState;
+    resource.FinalState = finalState;
 
+    m_Resources[name] = resource;
 }
 
-rhi::Texture* RGPassBuilder::ReadTexture(RGTextureHandle handle)
+void RenderGraph::AddPass(std::string name, std::vector<std::string> inputs,
+    std::vector<std::string> outputs, std::function<void(rhi::CommandQueue*)> executeFn)
 {
-    RGTextureEntry entry = m_RG.m_Textures[handle];
-
-    m_Pass.Reads.push_back(entry);
-
-    return entry.PhysicalTexture;
-}
-
-rhi::Texture* RGPassBuilder::WriteTexture(RGTextureHandle handle)
-{
-    RGTextureEntry entry = m_RG.m_Textures[handle];
-
-    m_Pass.Writes.push_back(entry);
-
-    return entry.PhysicalTexture;
-}
-
-RenderGraph::RenderGraph(rhi::Device* device) : m_Device(device)
-{
-
-}
-
-void RenderGraph::AddPass(std::string name, std::function<void(RGPassBuilder&)> setup,
-    std::function<void(RenderGraph&, rhi::CommandQueue*)> execute)
-{
-    RGPass pass;
+    Pass pass;
     pass.Name = name;
-    pass.Execute = execute;
-    
-    RGPassBuilder builder(*this, pass);
-    setup(builder);
+    pass.Inputs = inputs;
+    pass.Outputs = outputs;
+    pass.ExecuteFn = executeFn;
 
     m_Passes.push_back(pass);
 }
 
 void RenderGraph::Compile()
 {
-    for (RGTextureEntry entry : m_Textures)
+    std::vector<std::vector<size_t>> dependencies(m_Passes.size());
+    std::vector<std::vector<size_t>> dependents(m_Passes.size());
+
+    std::unordered_map<std::string, size_t> resourceWriters;
+
+    for (size_t i = 0; i < m_Passes.size(); ++i)
     {
-        if (!entry.IsImported) m_Device->CreateTexture(&entry.PhysicalTexture, entry.Desc);
+        const auto& pass = m_Passes[i];
+
+        for (const auto& input : pass.Inputs) 
+        {
+            auto it = resourceWriters.find(input);
+            if (it != resourceWriters.end()) 
+            {
+                dependencies[i].push_back(it->second);
+                dependents[it->second].push_back(i);
+            }
+        }
+
+        for (const auto& output : pass.Outputs) 
+        {
+            resourceWriters[output] = i;
+        }
+    }
+
+    std::vector<bool> visited(m_Passes.size(), false);
+    std::vector<bool> inStack(m_Passes.size(), false);
+
+    std::function<void(size_t)> visit = [&](size_t node) 
+    {
+        if (inStack[node]) 
+        {
+            // Cycled dependency
+        }
+
+        if (visited[node]) 
+        {
+            return;
+        }
+
+        inStack[node] = true;
+
+        for (auto dependent : dependents[node]) 
+        {
+            visit(dependent);
+        }
+
+        inStack[node] = false;
+        visited[node] = true;
+        m_ExecutionOrder.push_back(node);
+    };
+
+    for (size_t i = 0; i < m_Passes.size(); ++i) 
+    {
+        if (!visited[i]) 
+        {
+            visit(i);
+        }
+    }
+
+    for (auto& [name, resource] : m_Resources) 
+    {
+        rhi::TextureDesc desc;
+        desc.Format = resource.Format;
+        desc.Width = resource.Width;
+        desc.Height = resource.Height;
+        desc.BindFlags = resource.BindFlags;
+
+        m_Device->CreateTexture(&resource.Texture, desc);
     }
 }
 
 void RenderGraph::Execute(rhi::CommandQueue* queue)
 {
-    for (RGPass pass : m_Passes)
+    for (auto passIdx : m_ExecutionOrder) 
     {
-        pass.Execute(*this, queue);
+        const auto& pass = m_Passes[passIdx];
+
+        for (const auto& input : pass.Inputs) 
+        {
+            auto& resource = m_Resources[input];
+
+            queue->ResourceBarrier({ {resource.Texture, rhi::ResourceState::ShaderResource} }, {});
+        }
+
+        for (const auto& output : pass.Outputs) 
+        {
+            auto& resource = m_Resources[output];
+
+            queue->ResourceBarrier({ {resource.Texture, resource.InitalState} }, {});
+        }
+
+        pass.ExecuteFn(queue);
+
+        for (const auto& output : pass.Outputs) 
+        {
+            auto& resource = m_Resources[output];
+
+            queue->ResourceBarrier({ {resource.Texture, resource.FinalState} }, {});
+        }
     }
 }
 
-RGTextureHandle RenderGraph::ImportTexture(rhi::Texture* texture)
+RenderGraph::Resource* RenderGraph::GetResource(std::string name)
 {
-    RGTextureHandle handle = m_Textures.size();
-
-    m_Textures.push_back({ .Desc = texture->GetDesc(), .PhysicalTexture = texture, .IsImported = true });
-
-    return handle;
-}
-
-RGTextureHandle RenderGraph::CreateTexture(const rhi::TextureDesc& desc)
-{
-    RGTextureHandle handle = m_Textures.size();
-
-    m_Textures.push_back({ .Desc = desc });
-
-    return handle;
+    return &m_Resources[name];
 }
 
 }
