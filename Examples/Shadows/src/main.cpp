@@ -255,7 +255,7 @@ int main()
             renderGraph.AddResource("ColorDepth", TextureFormat::D32_SFloat, backbufferDesc.Width, backbufferDesc.Height, 
                 ResourceBind::RESOURCE_BIND_DEPTH_STENCIL, ResourceState::DepthWrite, ResourceState::DepthWrite);
 
-            renderGraph.AddPass("Color", {}, { "ColorDepth" }, [&t, &lightDir, &lightView, &lightProj, &camera, &renderGraph,
+            renderGraph.AddPass("Color", { "ShadowMap" }, { "ColorDepth" }, [&t, &lightDir, &lightView, &lightProj, &camera, &renderGraph,
                 &transformBuffer, &lightBuffer, &bootStrap, &colorPipeline, &backBuffer, &shadowSampler](CommandQueue* queue){
                 rhi::Texture* shadowMap = renderGraph.GetResource("ShadowMap")->Texture;
                 rhi::Texture* colorDepth = renderGraph.GetResource("ColorDepth")->Texture;

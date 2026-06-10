@@ -73,9 +73,9 @@ void RenderGraph::Compile()
 
         inStack[node] = true;
 
-        for (auto dependent : dependents[node]) 
+        for (auto dependence : dependencies[node]) 
         {
-            visit(dependent);
+            visit(dependence);
         }
 
         inStack[node] = false;
