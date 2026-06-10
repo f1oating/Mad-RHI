@@ -5,9 +5,11 @@
 #include "Common/ShaderSystem.h"
 #include <chrono>
 #include <cmath>
+#include "Common/RenderGraph.h"
 
 using namespace mad;
 using namespace rhi;
+using namespace common;
 
 int main()
 {
@@ -93,27 +95,41 @@ int main()
             window->Update();
             common::ShaderSystem::Poll();
 
-            float* mapped = static_cast<float*>(cb->Map());
-            mapped[0] = (std::sin(t * 1.0f) * 0.5f + 0.5f);
-            mapped[1] = (std::sin(t * 1.5f) * 0.5f + 0.5f);
-            mapped[2] = (std::sin(t * 2.0f) * 0.5f + 0.5f);
-            mapped[3] = 1.0f;
+            
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
+            common::RenderGraph renderGraph(device);
+            RGTextureHandle renderTargetHandle = renderGraph.ImportTexture(backBuffer);
 
-            commandQueue->SetGraphicsPipeline(pipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+            renderGraph.AddPass("Color", [](RGPassBuilder& builder){
+                // Empty
+            }, [&t, &cb, &vb, &pipeline, &renderTargetHandle](RenderGraph& renderGraph, CommandQueue* queue){
+                Texture* backBuffer = renderGraph.GetTexture(renderTargetHandle);
 
-            float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-            commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-            
-            commandQueue->SetVertexBuffers(0, { vb.Get() }, { 0 });
-            commandQueue->SetUniformBuffer("uColor", cb.Get());
-            commandQueue->Draw(3);
+                float* mapped = static_cast<float*>(cb->Map());
+                mapped[0] = (std::sin(t * 1.0f) * 0.5f + 0.5f);
+                mapped[1] = (std::sin(t * 1.5f) * 0.5f + 0.5f);
+                mapped[2] = (std::sin(t * 2.0f) * 0.5f + 0.5f);
+                mapped[3] = 1.0f;
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
+                queue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
+
+                queue->SetGraphicsPipeline(pipeline.Get());
+                queue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, nullptr);
+
+                float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+                queue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+                
+                queue->SetVertexBuffers(0, { vb.Get() }, { 0 });
+                queue->SetUniformBuffer("uColor", cb.Get());
+                queue->Draw(3);
+
+                queue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
+            });
+
+            renderGraph.Compile();
+            renderGraph.Execute(commandQueue);
 
             commandQueue->Flush();
 

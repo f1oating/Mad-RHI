@@ -8,38 +8,31 @@ RGPassBuilder::RGPassBuilder(RenderGraph& rg, RGPass& pass)
 
 }
 
-rhi::TextureView* RGPassBuilder::GetTextureSRV(RGTextureHandle handle)
+rhi::Texture* RGPassBuilder::ReadTexture(RGTextureHandle handle)
 {
     RGTextureEntry entry = m_RG.m_Textures[handle];
 
-    entry.ComputedBindFlags |= rhi::RESOURCE_BIND_SHADER_RESOURSE;
     m_Pass.Reads.push_back(entry);
 
-    return entry.PhysicalTexture->GetDefaultSRV().Get();
+    return entry.PhysicalTexture;
 }
 
-rhi::TextureView* RGPassBuilder::GetTextureRTV(RGTextureHandle handle)
+rhi::Texture* RGPassBuilder::WriteTexture(RGTextureHandle handle)
 {
     RGTextureEntry entry = m_RG.m_Textures[handle];
 
-    entry.ComputedBindFlags |= rhi::RESOURCE_BIND_RENDER_TARGET;
     m_Pass.Writes.push_back(entry);
 
-    return entry.PhysicalTexture->GetDefaultRTV().Get();
+    return entry.PhysicalTexture;
 }
 
-rhi::TextureView* RGPassBuilder::GetTextureDSV(RGTextureHandle handle)
+RenderGraph::RenderGraph(rhi::Device* device) : m_Device(device)
 {
-    RGTextureEntry entry = m_RG.m_Textures[handle];
 
-    entry.ComputedBindFlags |= rhi::RESOURCE_BIND_DEPTH_STENCIL;
-    m_Pass.Writes.push_back(entry);
-
-    return entry.PhysicalTexture->GetDefaultDSV().Get();
 }
 
-void RenderGraph::AddPass(std::string name, std::function<void(rhi::CommandQueue*)> execute,
-    std::function<void(RGPassBuilder&)> setup)
+void RenderGraph::AddPass(std::string name, std::function<void(RGPassBuilder&)> setup,
+    std::function<void(RenderGraph&, rhi::CommandQueue*)> execute)
 {
     RGPass pass;
     pass.Name = name;
@@ -55,18 +48,7 @@ void RenderGraph::Compile()
 {
     for (RGTextureEntry entry : m_Textures)
     {
-        rhi::TextureDesc desc;
-        desc.Dimension = entry.Desc.Dimension;
-        desc.Width = entry.Desc.Width;
-        desc.Height = entry.Desc.Height;
-        desc.ArraySize = entry.Desc.ArraySize;
-        desc.Depth = entry.Desc.Depth;
-        desc.Format = entry.Desc.Format;
-        desc.MipLevels = entry.Desc.MipLevels;
-        desc.SampleCount = entry.Desc.SampleCount;
-        desc.BindFlags = entry.ComputedBindFlags;
-
-        m_Device->CreateTexture(entry.PhysicalTexture.GetAddress(), desc);
+        if (!entry.IsImported) m_Device->CreateTexture(&entry.PhysicalTexture, entry.Desc);
     }
 }
 
@@ -74,11 +56,20 @@ void RenderGraph::Execute(rhi::CommandQueue* queue)
 {
     for (RGPass pass : m_Passes)
     {
-        pass.Execute(queue);
+        pass.Execute(*this, queue);
     }
 }
 
-RGTextureHandle RenderGraph::CreateTexture(RGTextureDesc desc)
+RGTextureHandle RenderGraph::ImportTexture(rhi::Texture* texture)
+{
+    RGTextureHandle handle = m_Textures.size();
+
+    m_Textures.push_back({ .Desc = texture->GetDesc(), .PhysicalTexture = texture, .IsImported = true });
+
+    return handle;
+}
+
+RGTextureHandle RenderGraph::CreateTexture(const rhi::TextureDesc& desc)
 {
     RGTextureHandle handle = m_Textures.size();
 
