@@ -160,11 +160,13 @@ int main()
         });
 
         auto startTime = std::chrono::high_resolution_clock::now();
+        auto prevTime = startTime;
 
         while (window->IsRunning())
         {
             auto now = std::chrono::high_resolution_clock::now();
-            float t = std::chrono::duration<float>(now - startTime).count();
+            float dt = std::chrono::duration<float>(now - prevTime).count();
+            prevTime = now;
 
             window->Update();
             common::ShaderSystem::Poll();
@@ -179,19 +181,19 @@ int main()
 
                 if (keys[SDL_SCANCODE_W])
                 {
-                    camera.MoveForward(t);
+                    camera.MoveForward(dt);
                 }
                 if (keys[SDL_SCANCODE_S])
                 {
-                    camera.MoveBack(t);
+                    camera.MoveBack(dt);
                 }
                 if (keys[SDL_SCANCODE_A])
                 {
-                    camera.MoveLeft(t);
+                    camera.MoveLeft(dt);
                 }
                 if (keys[SDL_SCANCODE_D])
                 {
-                    camera.MoveRight(t);
+                    camera.MoveRight(dt);
                 }
                 if (keys[SDL_SCANCODE_ESCAPE])
                 {
@@ -210,7 +212,7 @@ int main()
                 ResourceBind::RESOURCE_BIND_DEPTH_STENCIL | ResourceBind::RESOURCE_BIND_SHADER_RESOURSE,
                 ResourceState::DepthWrite, ResourceState::ShaderResource);
 
-            renderGraph.AddPass("Shadow", {}, { "ShadowMap" }, [&t, &lightView, &lightProj, &camera, &renderGraph,
+            renderGraph.AddPass("Shadow", {}, { "ShadowMap" }, [&lightView, &lightProj, &camera, &renderGraph,
                 &transformBuffer, &bootStrap, &shadowPipeline, &backBuffer](CommandQueue* queue){
                 rhi::Texture* shadowMap = renderGraph.GetResource("ShadowMap")->Texture;
 
@@ -255,7 +257,7 @@ int main()
             renderGraph.AddResource("ColorDepth", TextureFormat::D32_SFloat, backbufferDesc.Width, backbufferDesc.Height, 
                 ResourceBind::RESOURCE_BIND_DEPTH_STENCIL, ResourceState::DepthWrite, ResourceState::DepthWrite);
 
-            renderGraph.AddPass("Color", { "ShadowMap" }, { "ColorDepth" }, [&t, &lightDir, &lightView, &lightProj, &camera, &renderGraph,
+            renderGraph.AddPass("Color", { "ShadowMap" }, { "ColorDepth" }, [&lightDir, &lightView, &lightProj, &camera, &renderGraph,
                 &transformBuffer, &lightBuffer, &bootStrap, &colorPipeline, &backBuffer, &shadowSampler](CommandQueue* queue){
                 rhi::Texture* shadowMap = renderGraph.GetResource("ShadowMap")->Texture;
                 rhi::Texture* colorDepth = renderGraph.GetResource("ColorDepth")->Texture;

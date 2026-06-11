@@ -13,7 +13,7 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
     float3 scene = SceneColor.SampleLevel(LinearClamp, uv, 0).rgb;
     float4 gr = GodRays.SampleLevel(LinearClamp, uv, 0);
 
-    float3 result = scene * (1.0 - gr.a) + gr.rgb;
+    float3 result = scene + gr.rgb;
 
     result = Tonemap(result);
 

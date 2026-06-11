@@ -86,11 +86,13 @@ int main()
         });
 
         auto startTime = std::chrono::high_resolution_clock::now();
+        auto prevTime = startTime;
 
         while (window->IsRunning())
         {
             auto now = std::chrono::high_resolution_clock::now();
-            float t = std::chrono::duration<float>(now - startTime).count();
+            float dt = std::chrono::duration<float>(now - prevTime).count();
+            prevTime = now;
 
             window->Update();
             common::ShaderSystem::Poll();
@@ -103,19 +105,19 @@ int main()
 
             if (keys[SDL_SCANCODE_W])
             {
-                camera.MoveForward(t);
+                camera.MoveForward(dt);
             }
             if (keys[SDL_SCANCODE_S])
             {
-                camera.MoveBack(t);
+                camera.MoveBack(dt);
             }
             if (keys[SDL_SCANCODE_A])
             {
-                camera.MoveLeft(t);
+                camera.MoveLeft(dt);
             }
             if (keys[SDL_SCANCODE_D])
             {
-                camera.MoveRight(t);
+                camera.MoveRight(dt);
             }
             if (keys[SDL_SCANCODE_ESCAPE])
             {
