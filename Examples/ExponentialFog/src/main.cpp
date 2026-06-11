@@ -2,12 +2,13 @@
 
 #include "Common/BootStrap.h"
 #include "Common/Event.h"
-#include "Common/ShaderCompiler.h"
+#include "Common/ShaderSystem.h"
 #include "Common/Camera.h"
 #include <chrono>
 #include <cmath>
 #include <SDL3/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Common/RenderGraph.h"
 
 using namespace mad;
 using namespace rhi;
@@ -23,32 +24,42 @@ int main()
         CommandQueue* commandQueue = bootStrap.GetQueue();
         Swapchain* swapchain = bootStrap.GetSwapchain();
 
-        std::vector<uint32_t> spirvVertex = common::ShaderCompiler::Compile({ "shaders/Vertex.slang" });
-        std::vector<uint32_t> spirvFragment = common::ShaderCompiler::Compile({ "shaders/Fragment.slang" });
-
-        RefPtr<Shader> vertexShader = nullptr;
-        RefPtr<Shader> fragmentShader = nullptr;
-
-        device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
-        device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
-
-        GraphicsPipelineDesc pipelineDesc{};
-        pipelineDesc.VertexShader = vertexShader;
-        pipelineDesc.FragmentShader = fragmentShader;
-        pipelineDesc.Topology = PrimitiveTopology::TriangleList;
-        pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
-        pipelineDesc.Rasterization.Cull = CullMode::Back;
-        pipelineDesc.Rasterization.Face = FrontFace::CCW;
-        pipelineDesc.DepthStencil.DepthTestEnable = true;
-        pipelineDesc.DepthStencil.DepthWriteEnable = true;
-        ColorAttachmentBlend colorBlend{};
-        colorBlend.BlendEnable = false;
-        pipelineDesc.BlendAttachments.push_back(colorBlend);
-        pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::BGRA8_UNorm_SRGB);
-        pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_Float;
-        pipelineDesc.Rendering.SampleCount = 1;
         RefPtr<GraphicsPipelineState> pipeline = nullptr;
-        device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        RefPtr<Buffer> cb = nullptr;
+
+        std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
+            pipeline.Reset();
+
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+
+            RefPtr<Shader> vertexShader = nullptr;
+            RefPtr<Shader> fragmentShader = nullptr;
+
+            device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
+            device->CreateShader(fragmentShader.GetAddress(), spirvFragment.data(), spirvFragment.size());
+
+            GraphicsPipelineDesc pipelineDesc{};
+            pipelineDesc.VertexShader = vertexShader;
+            pipelineDesc.FragmentShader = fragmentShader;
+            pipelineDesc.Topology = PrimitiveTopology::TriangleList;
+            pipelineDesc.Rasterization.Polygon = PolygonMode::Fill;
+            pipelineDesc.Rasterization.Cull = CullMode::Back;
+            pipelineDesc.Rasterization.Face = FrontFace::CCW;
+            pipelineDesc.DepthStencil.DepthTestEnable = true;
+            pipelineDesc.DepthStencil.DepthWriteEnable = true;
+            ColorAttachmentBlend colorBlend{};
+            colorBlend.BlendEnable = false;
+            pipelineDesc.BlendAttachments.push_back(colorBlend);
+            pipelineDesc.Rendering.ColorFormats.push_back(TextureFormat::B8G8R8A8_SRGB_UNorm);
+            pipelineDesc.Rendering.DepthFormat = TextureFormat::D32_SFloat;
+            pipelineDesc.Rendering.SampleCount = 1;
+            
+            device->CreateGraphicsPipeline(pipeline.GetAddress(), pipelineDesc);
+        };
+
+        pipelineCreateCallback();
+        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
 
         struct Transform
         {
@@ -57,49 +68,34 @@ int main()
             glm::mat4 Proj;
         };
 
-        RefPtr<Buffer> cb = nullptr;
         BufferDesc cbd{};
         cbd.BindFlags = ResourceBind::RESOURCE_BIND_UNIFORM_BUFFER;
         cbd.Size = sizeof(Transform);
         cbd.Usage = ResourceUsage::Dynamic;
         device->CreateBuffer(cb.GetAddress(), cbd);
 
-        RefPtr<Texture> depthBuffer = nullptr;
-        TextureDesc depthBufferDesc {};
-        depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-        depthBufferDesc.Width = 800;
-        depthBufferDesc.Height = 600;
-        depthBufferDesc.Format = TextureFormat::D32_Float;
-        device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
-
         common::Camera camera { { 0.0f, 1.0f, 3.0f }, 90.0f, 800.0f / 600.0f, 0.1f, 100.0f };
 
-        common::EventBus::Subscribe<common::WindowResizeEvent>([&depthBuffer, &device, &swapchain, &camera](const common::WindowResizeEvent& event){
+        common::EventBus::Subscribe<common::WindowResizeEvent>([&device, &swapchain, &camera](const common::WindowResizeEvent& event){
             swapchain->Resize();
-
-            depthBuffer.Reset();
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
             const TextureDesc& backBufferDesc = backBuffer->GetDesc();
-
-            TextureDesc depthBufferDesc {};
-            depthBufferDesc.BindFlags = ResourceBind::RESOURCE_BIND_DEPTH_STENCIL;
-            depthBufferDesc.Width = backBufferDesc.Width;
-            depthBufferDesc.Height = backBufferDesc.Height;
-            depthBufferDesc.Format = TextureFormat::D32_Float;
-            device->CreateTexture(depthBuffer.GetAddress(), depthBufferDesc);
 
             camera.SetAspectRatio(static_cast<float>(backBufferDesc.Width) / static_cast<float>(backBufferDesc.Height));
         });
 
         auto startTime = std::chrono::high_resolution_clock::now();
+        auto prevTime = startTime;
 
         while (window->IsRunning())
         {
             auto now = std::chrono::high_resolution_clock::now();
-            float t = std::chrono::duration<float>(now - startTime).count();
+            float dt = std::chrono::duration<float>(now - prevTime).count();
+            prevTime = now;
 
             window->Update();
+            common::ShaderSystem::Poll();
 
             const bool* keys = SDL_GetKeyboardState(nullptr);
             float dx, dy;
@@ -109,19 +105,19 @@ int main()
 
             if (keys[SDL_SCANCODE_W])
             {
-                camera.MoveForward(t);
+                camera.MoveForward(dt);
             }
             if (keys[SDL_SCANCODE_S])
             {
-                camera.MoveBack(t);
+                camera.MoveBack(dt);
             }
             if (keys[SDL_SCANCODE_A])
             {
-                camera.MoveLeft(t);
+                camera.MoveLeft(dt);
             }
             if (keys[SDL_SCANCODE_D])
             {
-                camera.MoveRight(t);
+                camera.MoveRight(dt);
             }
             if (keys[SDL_SCANCODE_ESCAPE])
             {
@@ -131,36 +127,50 @@ int main()
             }
 
             Texture* backBuffer = swapchain->GetCurrentBackBuffer();
+            auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
 
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget}, {depthBuffer.Get(), ResourceState::DepthWrite} }, {});
+            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::RenderTarget} }, {});
 
-            commandQueue->SetGraphicsPipeline(pipeline.Get());
-            commandQueue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depthBuffer->GetDefaultDSV().Get());
+            common::RenderGraph renderGraph(device);
 
-            float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
-            commandQueue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
-            commandQueue->ClearDepthStencil(depthBuffer->GetDefaultDSV().Get(), 1.0f, 0);
+            renderGraph.AddResource("Depth", TextureFormat::D32_SFloat, backbufferDesc.Width, backbufferDesc.Height,
+                RESOURCE_BIND_DEPTH_STENCIL, ResourceState::DepthWrite, ResourceState::DepthWrite);
 
-            commandQueue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
-            commandQueue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+            renderGraph.AddPass("Color", {}, { "Depth" }, [&cb, &camera, &pipeline, &bootStrap, 
+                &backBuffer, &renderGraph](CommandQueue* queue){
+                Texture* depth = renderGraph.GetResource("Depth")->Texture;
 
-            for (int col = 0; col < 3; col++)
-            {
-                for (int row = 0; row < 3; row++)
+                queue->SetGraphicsPipeline(pipeline.Get());
+                queue->SetRenderTargets({ backBuffer->GetDefaultRTV().Get() }, depth->GetDefaultDSV().Get());
+
+                float clearColor[] = { 0.1f, 0.1f, 0.15f, 1.0f };
+                queue->ClearRenderTarget(backBuffer->GetDefaultRTV().Get(), clearColor);
+                queue->ClearDepthStencil(depth->GetDefaultDSV().Get(), 1.0f, 0);
+
+                queue->SetVertexBuffers(0, { bootStrap.GetCubeVertexBuffer() }, { 0 });
+                queue->SetIndexBuffer(bootStrap.GetCubeIndexBuffer());
+
+                for (int col = 0; col < 3; col++)
                 {
-                    Transform transform;
-                    transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(col * 2.5f, 0.0f, row * 2.5f));
-                    transform.View = camera.GetView();
-                    transform.Proj = camera.GetProjection();
+                    for (int row = 0; row < 3; row++)
+                    {
+                        Transform transform;
+                        transform.Model = glm::translate(glm::mat4(1.0f), glm::vec3(col * 2.5f, 0.0f, row * 2.5f));
+                        transform.View = camera.GetView();
+                        transform.Proj = camera.GetProjection();
 
-                    void* data = cb->Map();
-                    memcpy(data, &transform, sizeof(Transform));
+                        void* data = cb->Map();
+                        memcpy(data, &transform, sizeof(Transform));
 
-                    commandQueue->SetUniformBuffer("uTransform", cb.Get());
+                        queue->SetUniformBuffer("uTransform", cb.Get());
 
-                    commandQueue->DrawIndexed(36, IndexType::Uint32);
+                        queue->DrawIndexed(36, IndexType::Uint32);
+                    }
                 }
-            }
+            });
+
+            renderGraph.Compile();
+            renderGraph.Execute(commandQueue);
 
             commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
 

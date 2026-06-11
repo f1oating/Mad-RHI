@@ -3,7 +3,7 @@ static const float  SCATTERING = 0.15;
 static const float  EXTINCTION = 0.12;
 static const float  ANISOTROPY = 0.5;
 static const float  MAX_DIST = 100.0;
-static const uint   NUM_STEPS = 48;
+static const uint   NUM_STEPS = 100;
 static const float3 LIGHT_COLOR = float3(1.0, 0.5, 0.1);
 
 struct Scene
