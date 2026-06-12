@@ -59,7 +59,7 @@ int main()
         };
 
         pipelineCreateCallback();
-        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
+        common::ShaderSystem::WatchShader({ "ExponentialFog/Vertex.slang", "ExponentialFog/Fragment.slang" }, pipelineCreateCallback);
 
         struct Transform
         {

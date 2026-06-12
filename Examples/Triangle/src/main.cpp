@@ -29,8 +29,8 @@ int main()
         std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
             pipeline.Reset();
 
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
-            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "Triangle/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "Triangle/Fragment.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> fragmentShader = nullptr; 
@@ -57,7 +57,7 @@ int main()
         };
 
         pipelineCreateCallback();
-        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
+        common::ShaderSystem::WatchShader({ "Triangle/Vertex.slang", "Triangle/Fragment.slang" }, pipelineCreateCallback);
 
         BufferDesc cbd{};
         cbd.Usage = ResourceUsage::Dynamic;

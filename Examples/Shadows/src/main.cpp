@@ -50,7 +50,7 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &shadowPipeline](){
                 shadowPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowPassVertex.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "Shadows/ShadowPassVertex.slang" });
 
                 RefPtr<Shader> vertexShader = nullptr;
 
@@ -72,7 +72,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/ShadowPassVertex.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "Shadows/ShadowPassVertex.slang" }, pipelineCreateCallback);
         }
 
         // Color pass
@@ -80,8 +80,8 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &colorPipeline](){
                 colorPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorPassVertex.slang" });
-                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPassPixel.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "Shadows/ColorPassVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "Shadows/ColorPassPixel.slang" });
 
                 RefPtr<Shader> vertexShader = nullptr;
                 RefPtr<Shader> pixelShader = nullptr;
@@ -109,7 +109,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/ColorPassVertex.slang", "shaders/ColorPassPixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "Shadows/ColorPassVertex.slang", "Shadows/ColorPassPixel.slang" }, pipelineCreateCallback);
         }
 
         // Resources
