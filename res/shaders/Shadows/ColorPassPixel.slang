@@ -1,16 +1,12 @@
+import "Constants";
+import "DataStructures";
+
 struct Input
 {
     float4 sv_position : SV_Position;
     float4 worldPos : WORLDPOS;
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
-}
-
-struct Transform
-{
-    column_major float4x4 world;
-    column_major float4x4 view;
-    column_major float4x4 proj;
 }
 
 struct Light
@@ -29,10 +25,6 @@ ConstantBuffer<Transform> uLightTransform;
 
 [vk::binding(0, 4)]
 ConstantBuffer<Light> uLight;
-
-static const float3 SURFACE_COLOR = float3(0.75, 0.72, 0.68);
-static const float3 LIGHT_COLOR = float3(1.0, 0.5, 0.1);
-static const float AMBIENT = 0.12;
 
 float calcShadow(float4 pos)
 {

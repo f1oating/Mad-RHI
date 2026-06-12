@@ -174,7 +174,7 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &godRaysPipeline](){
                 godRaysPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "GodRays/GodRaysVertex.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "FullScreenQuadVertex.slang" });
                 std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "GodRays/GodRaysPixel.slang" });
                 
                 RefPtr<Shader> vertexShader = nullptr;
@@ -202,7 +202,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "GodRays/GodRaysVertex.slang", "GodRays/GodRaysPixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "FullScreenQuadVertex.slang", "GodRays/GodRaysPixel.slang" }, pipelineCreateCallback);
         }
 
         // Composite pass
@@ -210,7 +210,7 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &compositePipeline](){
                 compositePipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "GodRays/CompositeVertex.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "FullScreenQuadVertex.slang" });
                 std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "GodRays/CompositePixel.slang" });
 
                 RefPtr<Shader> vertexShader = nullptr;
@@ -238,7 +238,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "GodRays/CompositeVertex.slang", "GodRays/CompositePixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "FullScreenQuadVertex.slang", "GodRays/CompositePixel.slang" }, pipelineCreateCallback);
 
             SamplerDesc compositeSamplerDesc {};
             device->CreateSampler(compositeSampler.GetAddress(), compositeSamplerDesc);

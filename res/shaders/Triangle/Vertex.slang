@@ -14,7 +14,7 @@ struct Output
 Output main(Input input)
 {
     Output output;
-    output.sv_position = float4(input.position, 0.0f, 1.0f);
+    output.sv_position = float4(input.position, 0.0, 1.0);
     output.color = input.color;
     return output;
 }

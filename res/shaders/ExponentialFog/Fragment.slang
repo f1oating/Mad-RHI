@@ -1,3 +1,8 @@
+import "Constants";
+
+static const float3 FOG_COLOR = float3(0.1, 0.1, 0.15);
+static const float DENSITY = 0.5;
+
 struct Input
 {
     float4 sv_position : SV_Position;
@@ -9,14 +14,10 @@ struct Input
 [shader("fragment")]
 float4 main(Input input) : SV_Target
 {
-    float3 objectColor = float3(0.2f, 1.0f, 0.1f);
-    float3 fogColor = float3(0.1f, 0.1f, 0.15f);
-    float density = 0.5f;
+    float fogFactor = exp(-DENSITY * input.depth);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-    float fogFactor = exp(-density * input.depth);
-    fogFactor = clamp(fogFactor, 0.0f, 1.0f);
+    float3 finalColor = lerp(FOG_COLOR, SURFACE_COLOR, fogFactor);
 
-    float3 finalColor = lerp(fogColor, objectColor, fogFactor);
-
-    return float4(finalColor, 1.0f);
+    return float4(finalColor, 1.0);
 }
