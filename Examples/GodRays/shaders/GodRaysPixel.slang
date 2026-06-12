@@ -84,5 +84,5 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
         if (transmittance < 0.01) break;
     }
 
-    return float4(scattered, 1.0 - transmittance);
+    return float4(scattered, 1.0);
 };
