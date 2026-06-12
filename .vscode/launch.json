@@ -80,6 +80,26 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "Run PBR (Linux)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/PBR/PBR",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "Build (Linux)",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
   ]
 }
