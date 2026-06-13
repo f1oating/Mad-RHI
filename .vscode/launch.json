@@ -113,5 +113,53 @@
       "console": "integratedTerminal",
       "preLaunchTask": "Build (Linux)"
     },
+    {
+      "name": "Run Exponential Fog (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/ExponentialFog/ExponentialFog.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run GodRays (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/GodRays/GodRays.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run Shadows (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/Shadows/Shadows.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run PBR (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/PBR/PBR.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
   ]
 }
