@@ -4,7 +4,7 @@
 #ifdef _WIN32
     #include <windows.h>
 #else
-    #include <xcb/xcb.h>
+    #include <X11/Xlib-xcb.h>
 #endif
 
 namespace mad::common {

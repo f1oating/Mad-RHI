@@ -16,7 +16,7 @@ A minimal hello-world example. Renders colored triangle using a hardcoded vertex
 <details>
 <summary>Exponential Fog</summary>
 
-![Exponential Fog](docs/screenshots/fog_comparison.png)
+![Exponential Fog](docs/screenshots/exponentialfog.png)
 
 Demonstrates depth-based exponential fog applied to a scene of cubes.
 
@@ -28,5 +28,14 @@ Demonstrates depth-based exponential fog applied to a scene of cubes.
 ![GodRays](docs/screenshots/godrays.png)
 
 Volumetric light scattering via ray marching through a shadow-mapped scene using the Henyey-Greenstein phase function. Rendered at half resolution and composited over the color pass.
+
+</details>
+
+<details>
+<summary>Shadows</summary>
+
+![Shadows](docs/screenshots/shadows.png)
+
+Simple shadows via Shadow Map for Directional Light.
 
 </details>
