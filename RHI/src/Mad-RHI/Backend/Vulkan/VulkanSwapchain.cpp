@@ -73,15 +73,27 @@ void VulkanSwapchain::CreateSurface(const WindowHandle& wh)
 {
     switch (wh.platform)
     {
-        case WindowHandle::Platform::XCB:
-        {
-            VkXcbSurfaceCreateInfoKHR info{};
-            info.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-            info.connection = static_cast<xcb_connection_t*>(wh.xcb.connection);
-            info.window     = static_cast<xcb_window_t>(wh.xcb.window);
+        #ifdef _WIN32
+            case WindowHandle::Platform::WIN:
+            {
+                VkWin32SurfaceCreateInfoKHR info{};
+                info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+                info.hwnd = static_cast<HWND>(wh.win32.hwnd);
+                info.hinstance = static_cast<HINSTANCE>(wh.win32.hinstance);
 
-            vkCreateXcbSurfaceKHR(m_Instance, &info, nullptr, &m_Surface);
-        }
+                vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &m_Surface);
+            }
+        #else
+            case WindowHandle::Platform::XCB:
+            {
+                VkXcbSurfaceCreateInfoKHR info{};
+                info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+                info.connection = static_cast<xcb_connection_t*>(wh.xcb.connection);
+                info.window = static_cast<xcb_window_t>(wh.xcb.window);
+
+                vkCreateXcbSurfaceKHR(m_Instance, &info, nullptr, &m_Surface);
+            }
+        #endif
     }
 }
 

@@ -3,7 +3,7 @@
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/Factory.h"
 #include "Mad-RHI/Backend/Vulkan/VulkanResource.h"
-#include <volk/volk.h>
+#include <volk.h>
 #include <vector>
 #include <atomic>
 #include "Mad-RHI/Backend/Vulkan/VulkanCommandQueue.h"

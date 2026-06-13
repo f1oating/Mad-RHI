@@ -14,6 +14,7 @@ target_link_libraries(ExamplesCommon
         Mad-RHI
         SDL3::SDL3
         slang
-        X11-xcb
         glm::glm
+
+        $<$<PLATFORM_ID:Linux>:X11-xcb>
 )

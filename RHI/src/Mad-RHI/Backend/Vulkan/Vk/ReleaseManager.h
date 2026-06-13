@@ -2,7 +2,7 @@
 
 #include <atomic>
 #include <deque>
-#include <volk/volk.h>
+#include <volk.h>
 #include <vk_mem_alloc.h>
 
 namespace mad::rhi::vk {

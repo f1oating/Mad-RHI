@@ -3,6 +3,16 @@
 #include <atomic>
 #include <assert.h>
 
+#ifdef _WIN32
+    #ifdef MAD_RHI_BUILD_DLL
+        #define MAD_RHI_API __declspec(dllexport)
+    #else
+        #define MAD_RHI_API __declspec(dllimport)
+    #endif
+#else
+    #define MAD_RHI_API
+#endif
+
 namespace mad::rhi {
 
 class Object;
