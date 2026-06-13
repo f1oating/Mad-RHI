@@ -19,7 +19,11 @@ VulkanFactory::VulkanFactory(const FactoryInitInfo& info)
 
     const char* extensions[] = {
         VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#ifdef _WIN32
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#else
+        VK_KHR_XCB_SURFACE_EXTENSION_NAME,
+#endif
     };
 
     const char* layers[] = {

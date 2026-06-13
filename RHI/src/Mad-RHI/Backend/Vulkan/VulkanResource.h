@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Resource.h"
-#include <volk/volk.h>
+#include <volk.h>
 #include <vk_mem_alloc.h>
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 #include "Mad-RHI/Backend/Vulkan/Vk/RingAllocator.h"

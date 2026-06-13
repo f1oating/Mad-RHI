@@ -29,8 +29,8 @@ int main()
         std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
             pipeline.Reset();
 
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
-            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "Triangle/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "Triangle/Fragment.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> fragmentShader = nullptr; 
@@ -57,7 +57,7 @@ int main()
         };
 
         pipelineCreateCallback();
-        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
+        common::ShaderSystem::WatchShader({ "Triangle/Vertex.slang", "Triangle/Fragment.slang" }, pipelineCreateCallback);
 
         BufferDesc cbd{};
         cbd.Usage = ResourceUsage::Dynamic;
@@ -86,13 +86,11 @@ int main()
         commandQueue->Flush();
 
         auto startTime = std::chrono::high_resolution_clock::now();
-        auto prevTime = startTime;
 
         while (window->IsRunning())
         {
             auto now = std::chrono::high_resolution_clock::now();
-            float dt = std::chrono::duration<float>(now - prevTime).count();
-            prevTime = now;
+            float totalTime = std::chrono::duration<float>(now - startTime).count();
 
             window->Update();
             common::ShaderSystem::Poll();
@@ -103,11 +101,11 @@ int main()
 
             common::RenderGraph renderGraph(device);
 
-            renderGraph.AddPass("Color", {}, {}, [&dt, &cb, &vb, &pipeline, &backBuffer](CommandQueue* queue){
+            renderGraph.AddPass("Color", {}, {}, [&totalTime, &cb, &vb, &pipeline, &backBuffer](CommandQueue* queue){
                 float* mapped = static_cast<float*>(cb->Map());
-                mapped[0] = (std::sin(dt * 1.0f) * 0.5f + 0.5f);
-                mapped[1] = (std::sin(dt * 1.5f) * 0.5f + 0.5f);
-                mapped[2] = (std::sin(dt * 2.0f) * 0.5f + 0.5f);
+                mapped[0] = (std::sin(totalTime * 1.0f) * 0.5f + 0.5f);
+                mapped[1] = (std::sin(totalTime * 1.5f) * 0.5f + 0.5f);
+                mapped[2] = (std::sin(totalTime * 2.0f) * 0.5f + 0.5f);
                 mapped[3] = 1.0f;
 
                 queue->SetGraphicsPipeline(pipeline.Get());
@@ -119,8 +117,6 @@ int main()
                 queue->SetVertexBuffers(0, { vb.Get() }, { 0 });
                 queue->SetUniformBuffer("uColor", cb.Get());
                 queue->Draw(3);
-
-                
             });
 
             renderGraph.Compile();

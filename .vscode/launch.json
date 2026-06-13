@@ -8,7 +8,7 @@
       "program": "${workspaceFolder}/build/Examples/Triangle/Triangle",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/Triangle",
+      "cwd": "${workspaceFolder}/res",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
@@ -28,7 +28,7 @@
       "program": "${workspaceFolder}/build/Examples/ExponentialFog/ExponentialFog",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/ExponentialFog",
+      "cwd": "${workspaceFolder}/res",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
@@ -48,7 +48,7 @@
       "program": "${workspaceFolder}/build/Examples/GodRays/GodRays",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/GodRays",
+      "cwd": "${workspaceFolder}/res",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
@@ -68,7 +68,7 @@
       "program": "${workspaceFolder}/build/Examples/Shadows/Shadows",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/Examples/Shadows",
+      "cwd": "${workspaceFolder}/res",
       "environment": [],
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
@@ -80,6 +80,86 @@
           "ignoreFailures": true
         }
       ]
-    }
+    },
+    {
+      "name": "Run PBR (Linux)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/PBR/PBR",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "Build (Linux)",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "Run Triangle (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/Triangle/Triangle.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run Exponential Fog (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/ExponentialFog/ExponentialFog.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run GodRays (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/GodRays/GodRays.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run Shadows (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/Shadows/Shadows.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
+    {
+      "name": "Run PBR (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/PBR/PBR.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
   ]
 }

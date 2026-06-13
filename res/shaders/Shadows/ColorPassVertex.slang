@@ -1,9 +1,5 @@
-struct Input
-{
-    float3 position : POSITION;
-    float3 normal : NORMAL;
-    float2 uv : TEXCOORD;
-}
+import "Geometry";
+import "DataStructures";
 
 struct Output
 {
@@ -13,20 +9,13 @@ struct Output
     float2 uv : TEXCOORD;
 }
 
-struct Transform
-{
-    column_major float4x4 world;
-    column_major float4x4 view;
-    column_major float4x4 proj;
-}
-
 [vk::binding(0, 0)]
 ConstantBuffer<Transform> uObjectTransform;
 
 [shader("vertex")]
-Output main(Input input)
+Output main(MeshVertexInput input)
 {
-    float4 worldPos = mul(uObjectTransform.world, float4(input.position, 1.0f));
+    float4 worldPos = mul(uObjectTransform.world, float4(input.position, 1.0));
     float4 viewPos = mul(uObjectTransform.view, worldPos);
 
     Output output;

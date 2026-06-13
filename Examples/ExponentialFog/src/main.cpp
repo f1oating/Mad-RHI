@@ -30,8 +30,8 @@ int main()
         std::function<void()> pipelineCreateCallback = [&device, &pipeline](){
             pipeline.Reset();
 
-            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/Vertex.slang" });
-            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "shaders/Fragment.slang" });
+            std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "ExponentialFog/Vertex.slang" });
+            std::vector<uint32_t> spirvFragment = common::ShaderSystem::Compile({ "ExponentialFog/Fragment.slang" });
 
             RefPtr<Shader> vertexShader = nullptr;
             RefPtr<Shader> fragmentShader = nullptr;
@@ -59,7 +59,7 @@ int main()
         };
 
         pipelineCreateCallback();
-        common::ShaderSystem::WatchShader({ "shaders/Vertex.slang", "shaders/Fragment.slang" }, pipelineCreateCallback);
+        common::ShaderSystem::WatchShader({ "ExponentialFog/Vertex.slang", "ExponentialFog/Fragment.slang" }, pipelineCreateCallback);
 
         struct Transform
         {

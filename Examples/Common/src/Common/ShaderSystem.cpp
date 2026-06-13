@@ -10,7 +10,7 @@ void ShaderSystem::WatchShader(std::vector<const char*> shaders, std::function<v
 {
     for (auto& shader : shaders)
     {
-        s_WatchedShaders.push_back({ { shader, {} }, callback });
+        s_WatchedShaders.push_back({ { "shaders/" + std::string(shader), {} }, callback });
     }
 };
 
@@ -34,10 +34,13 @@ std::vector<uint32_t> ShaderSystem::Compile(const char* pPath)
         slang::createGlobalSession(s_GlobalSession.writeRef());
     }
 
+    const char* searchPaths[] = { "shaders/" };
     slang::SessionDesc sessionDesc{};
     slang::TargetDesc targetDesc{};
     targetDesc.format = SLANG_SPIRV;
     targetDesc.profile = s_GlobalSession->findProfile("spirv_1_5");
+    sessionDesc.searchPaths = searchPaths;
+    sessionDesc.searchPathCount = 1;
     sessionDesc.targets = &targetDesc;
     sessionDesc.targetCount = 1;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Factory.h"
-#include <volk/volk.h>
+#include <volk.h>
 #include <vector>
 
 namespace mad::rhi {

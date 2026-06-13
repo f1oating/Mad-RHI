@@ -108,7 +108,7 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &shadowMapPipeline](){
                 shadowMapPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ShadowMapVertex.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "GodRays/ShadowMapVertex.slang" });
                 RefPtr<Shader> vertexShader = nullptr;
 
                 device->CreateShader(vertexShader.GetAddress(), spirvVertex.data(), spirvVertex.size());
@@ -129,7 +129,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/ShadowMapVertex.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "GodRays/ShadowMapVertex.slang" }, pipelineCreateCallback);
         }
 
         // Color pass
@@ -137,8 +137,8 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &colorPipeline](){
                 colorPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/ColorVertex.slang" });
-                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/ColorPixel.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "GodRays/ColorVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "GodRays/ColorPixel.slang" });
 
                 RefPtr<Shader> vertexShader = nullptr;
                 RefPtr<Shader> pixelShader = nullptr;
@@ -166,7 +166,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/ColorVertex.slang", "shaders/ColorPixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "GodRays/ColorVertex.slang", "GodRays/ColorPixel.slang" }, pipelineCreateCallback);
         }
 
         // GodRays pass
@@ -174,8 +174,8 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &godRaysPipeline](){
                 godRaysPipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/GodRaysVertex.slang" });
-                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/GodRaysPixel.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "FullScreenQuadVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "GodRays/GodRaysPixel.slang" });
                 
                 RefPtr<Shader> vertexShader = nullptr;
                 RefPtr<Shader> pixelShader = nullptr;
@@ -202,7 +202,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/GodRaysVertex.slang", "shaders/GodRaysPixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "FullScreenQuadVertex.slang", "GodRays/GodRaysPixel.slang" }, pipelineCreateCallback);
         }
 
         // Composite pass
@@ -210,8 +210,8 @@ int main()
             std::function<void()> pipelineCreateCallback = [&device, &compositePipeline](){
                 compositePipeline.Reset();
 
-                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "shaders/CompositeVertex.slang" });
-                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "shaders/CompositePixel.slang" });
+                std::vector<uint32_t> spirvVertex = common::ShaderSystem::Compile({ "FullScreenQuadVertex.slang" });
+                std::vector<uint32_t> spirvPixel = common::ShaderSystem::Compile({ "GodRays/CompositePixel.slang" });
 
                 RefPtr<Shader> vertexShader = nullptr;
                 RefPtr<Shader> pixelShader = nullptr;
@@ -238,7 +238,7 @@ int main()
             };
 
             pipelineCreateCallback();
-            common::ShaderSystem::WatchShader({ "shaders/CompositeVertex.slang", "shaders/CompositePixel.slang" }, pipelineCreateCallback);
+            common::ShaderSystem::WatchShader({ "FullScreenQuadVertex.slang", "GodRays/CompositePixel.slang" }, pipelineCreateCallback);
 
             SamplerDesc compositeSamplerDesc {};
             device->CreateSampler(compositeSampler.GetAddress(), compositeSamplerDesc);
