@@ -103,14 +103,7 @@ void BootStrap::CreateDeviceAndQueue()
 
 void BootStrap::CreateSwapchain()
 {
-    WindowInfo winInfo = m_Window->GetWindowInfo();
-
-    WindowHandle wh{};
-    wh.platform = WindowHandle::Platform::XCB;
-    wh.xcb.connection = winInfo.Connection;
-    wh.xcb.window = winInfo.Window;
-
-    m_Device->CreateSwapchain(&m_Swapchain, wh, m_Queue);
+    m_Device->CreateSwapchain(&m_Swapchain, m_Window->GetWindowInfo(), m_Queue);
 }
 
 void BootStrap::CreateCubeBuffers()

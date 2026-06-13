@@ -100,6 +100,18 @@
           "ignoreFailures": true
         }
       ]
-    }
+    },
+    {
+      "name": "Run Triangle (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Examples/Triangle/Triangle.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/res",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build (Linux)"
+    },
   ]
 }

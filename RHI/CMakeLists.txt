@@ -23,6 +23,7 @@ target_link_libraries(Mad-RHI
 
 target_compile_definitions(Mad-RHI
     PRIVATE
-        VK_USE_PLATFORM_XCB_KHR
         VK_NO_PROTOTYPES
+        MAD_RHI_BUILD_DLL
+        $<$<PLATFORM_ID:Windows>:NOMINMAX>
 )

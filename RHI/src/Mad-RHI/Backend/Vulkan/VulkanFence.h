@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Fence.h"
-#include <volk/volk.h>
+#include <volk.h>
 #include "Mad-RHI/Backend/Vulkan/Vk/ReleaseManager.h"
 
 namespace mad::rhi {

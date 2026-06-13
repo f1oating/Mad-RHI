@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <volk/volk.h>
+#include <volk.h>
 #include <deque>
 #include <vk_mem_alloc.h>
 

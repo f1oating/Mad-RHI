@@ -25,7 +25,7 @@ struct AdapterInfo
     uint32_t NumFamilies;
 };
 
-class Factory
+class MAD_RHI_API Factory
 {
 protected:
     static Factory* s_Factory;
