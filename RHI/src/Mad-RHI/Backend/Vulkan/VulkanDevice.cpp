@@ -113,10 +113,30 @@ void VulkanDevice::SafeReleaseResource(vk::StaleResourceBase* resource)
 
 void VulkanDevice::CreateLogicalDevice(const DeviceDesc& desc)
 {
+    uint32_t familyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(m_Factory->GetPhysicalDevice(desc.AdapterId), &familyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> families(familyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_Factory->GetPhysicalDevice(desc.AdapterId), &familyCount, families.data());
+
     std::vector<uint32_t> queueFamilies(desc.NumCommandQueues);
     for (int i = 0; i < desc.NumCommandQueues; i++)
     {
-        queueFamilies[i] = desc.pCommandQueues[i].Index;
+        for (uint32_t f = 0; f < familyCount; f++)
+        {
+            auto flags = families[f].queueFlags;
+            uint8_t typeFlags;
+
+            if (flags & VK_QUEUE_GRAPHICS_BIT) typeFlags |= COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+            else if (flags & VK_QUEUE_COMPUTE_BIT) typeFlags |= COMMAND_QUEUE_TYPE_COMPUTE_BIT;
+            else if (flags & VK_QUEUE_TRANSFER_BIT) typeFlags |= COMMAND_QUEUE_TYPE_TRANSFER_BIT;
+            else continue;
+
+            if (desc.pCommandQueues[i].Flags == typeFlags)
+            {
+                queueFamilies[i] = f;
+                break;
+            }
+        }
     }
 
     std::vector<VkDeviceQueueCreateInfo> queueInfos;

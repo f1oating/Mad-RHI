@@ -73,28 +73,6 @@ void VulkanFactory::EnumerateAdapters(uint32_t& numAdapters, AdapterInfo* adapte
         strncpy(out.Description, props.deviceName, sizeof(out.Description) - 1);
         out.VendorId = props.vendorID;
         out.DeviceId = props.deviceID;
-
-        uint32_t familyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(pd, &familyCount, nullptr);
-        std::vector<VkQueueFamilyProperties> families(familyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(pd, &familyCount, families.data());
-
-        out.NumFamilies = 0;
-        for (uint32_t f = 0; f < familyCount; f++)
-        {
-            auto flags = families[f].queueFlags;
-            uint8_t typeFlags;
-
-            if (flags & VK_QUEUE_GRAPHICS_BIT) typeFlags |= COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
-            else if (flags & VK_QUEUE_COMPUTE_BIT) typeFlags |= COMMAND_QUEUE_TYPE_COMPUTE_BIT;
-            else if (flags & VK_QUEUE_TRANSFER_BIT) typeFlags |= COMMAND_QUEUE_TYPE_TRANSFER_BIT;
-            else continue;
-
-            QueueFamilyInfo& fi = out.Families[out.NumFamilies++];
-            fi.Flags = static_cast<CommandQueueTypeFlags>(typeFlags);
-            fi.Index = f;
-            fi.MaxQueues = families[f].queueCount;
-        }
     }
 }
 

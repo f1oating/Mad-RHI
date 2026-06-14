@@ -16,16 +16,8 @@ enum CommandQueueTypeFlags : uint8_t
     COMMAND_QUEUE_TYPE_TRANSFER_BIT = 1 << 2,
 };
 
-struct QueueFamilyInfo
-{
-    uint32_t Index;
-    CommandQueueTypeFlags Flags;
-    uint32_t MaxQueues;
-};
-
 struct CommandQueueDesc
 {
-    uint32_t Index;
     CommandQueueTypeFlags Flags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 };
 

@@ -15,14 +15,12 @@ using namespace rhi;
 
 int main()
 {
-    common::BootStrap bootStrap;
-    bootStrap.Init("PBR");
+    Factory::Init({ FactoryBackend::DX12, "PBR", "Mad-RHI" });
+
+    Factory* factory = Factory::Get();
 
     {
-        common::Window* window = bootStrap.GetWindow();
-        Device* device = bootStrap.GetDevice();
-        CommandQueue* commandQueue = bootStrap.GetQueue();
-        Swapchain* swapchain = bootStrap.GetSwapchain();
+        common::Window* window = new common::Window("PBR", 800, 600);
 
         auto startTime = std::chrono::high_resolution_clock::now();
         auto prevTime = startTime;
@@ -35,21 +33,12 @@ int main()
 
             window->Update();
             common::ShaderSystem::Poll();
-
-            Texture* backBuffer = swapchain->GetCurrentBackBuffer();
-            auto backbufferDesc = swapchain->GetCurrentBackBuffer()->GetDesc();
-
-            commandQueue->ResourceBarrier({ {backBuffer, ResourceState::Present} }, {});
-
-            commandQueue->Flush();
-
-            device->EndFrame();
-            swapchain->Present();
         }
     }
 
     common::EventBus::Clear();
-    bootStrap.Shutdown();
+
+    Factory::Shutdown();
 
     return 0;
 }

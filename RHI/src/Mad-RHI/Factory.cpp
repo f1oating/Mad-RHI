@@ -1,6 +1,7 @@
 #include "Mad-RHI/Factory.h"
 
 #include "Mad-RHI/Backend/Vulkan/VulkanFactory.h"
+#include "Mad-RHI/Backend/DX12/DX12Factory.h"
 
 namespace mad::rhi {
 
@@ -15,6 +16,10 @@ void Factory::Init(const FactoryInitInfo& info)
     {
     case FactoryBackend::Vulkan:
         s_Factory = new VulkanFactory(info);
+        break;
+
+    case FactoryBackend::DX12:
+        s_Factory = new DX12Factory(info);
         break;
     
     default:

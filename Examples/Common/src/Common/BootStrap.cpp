@@ -70,26 +70,7 @@ void BootStrap::Shutdown()
 
 void BootStrap::CreateDeviceAndQueue()
 {
-    uint32_t numAdapters = 0;
-    m_Factory->EnumerateAdapters(numAdapters, nullptr);
-
-    std::vector<rhi::AdapterInfo> adapters(numAdapters);
-    m_Factory->EnumerateAdapters(numAdapters, adapters.data());
-
-    const rhi::AdapterInfo& adapter = adapters[0];
-    uint32_t graphicsFamilyIndex = UINT32_MAX;
-
-    for (uint32_t i = 0; i < adapter.NumFamilies; i++)
-    {
-        if (adapter.Families[i].Flags & rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT)
-        {
-            graphicsFamilyIndex = adapter.Families[i].Index;
-            break;
-        }
-    }
-
     rhi::CommandQueueDesc queueDesc{};
-    queueDesc.Index = graphicsFamilyIndex;
     queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
 
     rhi::DeviceDesc deviceDesc{};
