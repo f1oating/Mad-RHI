@@ -19,6 +19,10 @@ target_link_libraries(Mad-RHI
         volk
         spirv-reflect-static
         Vulkan::Headers
+        $<$<PLATFORM_ID:Windows>:d3d12>
+        $<$<PLATFORM_ID:Windows>:dxgi>
+        $<$<PLATFORM_ID:Windows>:dxguid>
+        $<$<PLATFORM_ID:Windows>:D3D12AgilitySDK>
 )
 
 target_compile_definitions(Mad-RHI
