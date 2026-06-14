@@ -20,7 +20,7 @@ VulkanDevice::VulkanDevice(const DeviceDesc& desc, VulkanFactory* factory)
     CreateAllocator();
     m_RingBuffer.Init(m_Allocator);
 
-    std::cout << "Device created" << std::endl;
+    std::cout << "VulkanDevice Created" << std::endl;
 }
 
 VulkanDevice::~VulkanDevice()
@@ -40,7 +40,7 @@ VulkanDevice::~VulkanDevice()
     if (m_Allocator) vmaDestroyAllocator(m_Allocator);
     if (m_Device) vkDestroyDevice(m_Device, nullptr);
 
-    std::cout << "Device destroyed" << std::endl;
+    std::cout << "Device Destroyed" << std::endl;
 }
 
 void VulkanDevice::EndFrame()

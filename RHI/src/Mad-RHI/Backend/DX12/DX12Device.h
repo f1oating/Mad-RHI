@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Mad-RHI/Device.h"
+#include "Mad-RHI/Backend/DX12/DX12Factory.h"
+#include <d3dx12/d3dx12.h>
 
 namespace mad::rhi {
 
@@ -10,7 +12,7 @@ protected:
     ~DX12Device();
 
 public:
-    DX12Device(const DeviceDesc& desc);
+    DX12Device(const DeviceDesc& desc, DX12Factory* factory);
 
     virtual void EndFrame() override;
 
@@ -25,6 +27,8 @@ public:
     virtual void CreateFence(Fence** ppFence) override;
 
 private:
+    DX12Factory* m_Factory = nullptr;
+    ID3D12Device* m_Device = nullptr;
 
 };
 

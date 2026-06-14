@@ -21,7 +21,7 @@ VulkanCommandQueue::VulkanCommandQueue(VkQueue queue, uint32_t queueFamilyIndex,
 
     AcquireCommandBuffer();
 
-    std::cout << "VulkanImmidiateCommandList created" << std::endl;
+    std::cout << "VulkanCommandQueue created" << std::endl;
 }
 
 VulkanCommandQueue::~VulkanCommandQueue()
@@ -30,7 +30,7 @@ VulkanCommandQueue::~VulkanCommandQueue()
     m_CommandListPool.Shutdown();
     DestroyQueueSync();
 
-    std::cout << "VulkanImmidiateCommandList destroyed" << std::endl;
+    std::cout << "VulkanCommandQueue destroyed" << std::endl;
 }
 
 void VulkanCommandQueue::ResourceBarrier(

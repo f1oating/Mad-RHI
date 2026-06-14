@@ -46,7 +46,7 @@ VulkanFactory::VulkanFactory(const FactoryInitInfo& info)
     m_PhysicalDevices.resize(physicalDeviceCount);
     vkEnumeratePhysicalDevices(m_Instance, &physicalDeviceCount, m_PhysicalDevices.data());
 
-    std::cout << "Factory Created" << std::endl;
+    std::cout << "VulkanFactory Created" << std::endl;
 }
 
 VulkanFactory::~VulkanFactory()
@@ -55,7 +55,7 @@ VulkanFactory::~VulkanFactory()
     {
         vkDestroyInstance(m_Instance, nullptr);
     }
-    std::cout << "Factory Destroyed" << std::endl;
+    std::cout << "VulkanFactory Destroyed" << std::endl;
 }
 
 void VulkanFactory::EnumerateAdapters(uint32_t& numAdapters, AdapterInfo* adapters)

@@ -1,15 +1,16 @@
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
+#include <iostream>
 
 namespace mad::rhi {
 
 DX12CommandQueue::DX12CommandQueue()
 {
-
+    std::cout << "DX12CommandQueue Created" << std::endl;
 }
 
 DX12CommandQueue::~DX12CommandQueue()
 {
-
+    std::cout << "DX12CommandQueue Destroyed" << std::endl;
 }
 
 void DX12CommandQueue::ResourceBarrier(

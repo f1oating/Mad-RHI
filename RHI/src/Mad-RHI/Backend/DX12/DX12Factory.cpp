@@ -1,14 +1,21 @@
 #include "Mad-RHI/Backend/DX12/DX12Factory.h"
 #include <cstdint>
+#include "Mad-RHI/Backend/DX12/DX12Device.h"
+#include <iostream>
 
 namespace mad::rhi {
 
 DX12Factory::DX12Factory(const FactoryInitInfo& info)
 {
-    D3D12GetDebugInterface(__uuidof(ID3D12Debug), (void**)&m_DebugController);
-    m_DebugController->EnableDebugLayer();
+    CreateDXGIFactory(IID_PPV_ARGS(&m_Factory));
 
-    CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&m_Factory);
+    IDXGIAdapter* dxAdapter = nullptr;
+    for (uint32_t i = 0; SUCCEEDED(m_Factory->EnumAdapters(i, &dxAdapter)); i++)
+    {
+        m_Adapters.push_back(dxAdapter);   
+    }
+
+    std::cout << "DX12Factory Created" << std::endl;
 }
 
 DX12Factory::~DX12Factory()
@@ -21,34 +28,31 @@ DX12Factory::~DX12Factory()
     {
         m_DebugController->Release();
     }
+
+    std::cout << "DX12Factory Destroyed" << std::endl;
 }
 
 void DX12Factory::EnumerateAdapters(uint32_t& numAdapters, AdapterInfo* adapters)
 {
-    IDXGIAdapter* dxAdapter = nullptr;
-    numAdapters = 0;
+    numAdapters = m_Adapters.size();
+    if (!adapters) return;
     
-    for (uint32_t i = 0; SUCCEEDED(m_Factory->EnumAdapters(i, &dxAdapter)); i++)
+    for (int i = 0; i < numAdapters; i++)
     {
-        numAdapters++;
+        DXGI_ADAPTER_DESC dxAdapterDesc {};
+        m_Adapters[i]->GetDesc(&dxAdapterDesc);
 
-        if (adapters)
-        {
-            DXGI_ADAPTER_DESC dxAdapterDesc {};
-            dxAdapter->GetDesc(&dxAdapterDesc);
+        AdapterInfo adapterInfo {};
+        adapterInfo.DeviceId = dxAdapterDesc.DeviceId;
+        adapterInfo.VendorId = dxAdapterDesc.VendorId;
 
-            AdapterInfo adapterInfo {};
-            adapterInfo.DeviceId = dxAdapterDesc.DeviceId;
-            adapterInfo.VendorId = dxAdapterDesc.VendorId;
-
-            adapters[i] = adapterInfo;
-        }
+        adapters[i] = adapterInfo;
     }
 }
 
 void DX12Factory::CreateDevice(Device** ppDevice, const DeviceDesc& desc)
 {
-    
+    *ppDevice = new DX12Device(desc, this);
 }
 
 }

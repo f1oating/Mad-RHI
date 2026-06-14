@@ -1,15 +1,25 @@
 #include "Mad-RHI/Backend/DX12/DX12Device.h"
+#include <iostream>
 
 namespace mad::rhi {
 
-DX12Device::DX12Device(const DeviceDesc& desc)
+DX12Device::DX12Device(const DeviceDesc& desc, DX12Factory* factory)
 {
+    m_Factory = factory;
 
+    D3D12CreateDevice(m_Factory->GetAdapter(desc.AdapterId), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
+
+    std::cout << "DX12Device Created" << std::endl;
 }
 
 DX12Device::~DX12Device()
 {
+    if (m_Device)
+    {
+        m_Device->Release();
+    }
 
+    std::cout << "DX12Device Destroyed" << std::endl;
 }
 
 void DX12Device::EndFrame()

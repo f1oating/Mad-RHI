@@ -18,6 +18,17 @@ int main()
     Factory::Init({ FactoryBackend::DX12, "PBR", "Mad-RHI" });
 
     Factory* factory = Factory::Get();
+    Device* device = nullptr;
+
+    rhi::CommandQueueDesc queueDesc{};
+    queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+
+    rhi::DeviceDesc deviceDesc{};
+    deviceDesc.AdapterId = 0;
+    deviceDesc.pCommandQueues = &queueDesc;
+    deviceDesc.NumCommandQueues = 1;
+
+    factory->CreateDevice(&device, deviceDesc);
 
     {
         common::Window* window = new common::Window("PBR", 800, 600);
@@ -37,6 +48,8 @@ int main()
     }
 
     common::EventBus::Clear();
+
+    device->Release();
 
     Factory::Shutdown();
 
