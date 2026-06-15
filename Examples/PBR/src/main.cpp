@@ -33,6 +33,13 @@ int main()
 
     queue = device->GetCommandQueue(0);
 
+    TextureDesc desc {};
+    desc.Width = 4;
+    desc.Height = 4;
+
+    Texture* tex = nullptr;
+    device->CreateTexture(&tex, desc);
+
     {
         common::Window* window = new common::Window("PBR", 800, 600);
 
@@ -51,6 +58,8 @@ int main()
     }
 
     common::EventBus::Clear();
+
+    tex->Release();
 
     device->Release();
 

@@ -19,16 +19,17 @@ VulkanTexture::VulkanTexture(const TextureDesc& desc, VulkanDevice* context)
     switch (desc.Dimension)
     {
     case TextureDimension::Texture1D:
-    case TextureDimension::Texture1DArray:
         imageType = VK_IMAGE_TYPE_1D; break;
+    case TextureDimension::Texture2D:
+    case TextureDimension::TextureCube:
+        imageType = VK_IMAGE_TYPE_2D; break;
     case TextureDimension::Texture3D:
         imageType = VK_IMAGE_TYPE_3D; break;
     default:
         imageType = VK_IMAGE_TYPE_2D; break;
     }
 
-    bool isCube = (desc.Dimension == TextureDimension::TextureCube ||
-        desc.Dimension == TextureDimension::TextureCubeArray);
+    bool isCube = (desc.Dimension == TextureDimension::TextureCube);
 
     VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     if (desc.BindFlags & RESOURCE_BIND_RENDER_TARGET) usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -290,8 +291,10 @@ VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureVie
     m_Context = context;
     m_Texture = tex;
 
+    auto texDesc = tex->GetDesc();
+
     if (m_Desc.Format == TextureFormat::Unknown)
-        m_Desc.Format = tex->GetDesc().Format;
+        m_Desc.Format = texDesc.Format;
 
     VkImageViewCreateInfo ci{};
     ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -299,13 +302,26 @@ VulkanTextureView::VulkanTextureView(RefCounter* sharedCounter, const TextureVie
 
     switch (tex->GetDesc().Dimension) 
     {
-        case TextureDimension::Texture1D:           ci.viewType = VK_IMAGE_VIEW_TYPE_1D; break;
-        case TextureDimension::Texture1DArray:      ci.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY; break;
-        case TextureDimension::Texture2D:           ci.viewType = VK_IMAGE_VIEW_TYPE_2D; break;
-        case TextureDimension::Texture2DArray:      ci.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY; break;
-        case TextureDimension::TextureCube:         ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE; break;
-        case TextureDimension::TextureCubeArray:    ci.viewType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY; break;
-        case TextureDimension::Texture3D:           ci.viewType = VK_IMAGE_VIEW_TYPE_3D; break;
+        case TextureDimension::Texture1D:
+        {
+            ci.viewType = texDesc.ArraySize > 1 ? VK_IMAGE_VIEW_TYPE_1D_ARRAY : VK_IMAGE_VIEW_TYPE_1D;
+            break;
+        }
+        case TextureDimension::Texture2D:
+        {
+            ci.viewType = texDesc.ArraySize > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        }
+        case TextureDimension::Texture3D:
+        {
+            ci.viewType = VK_IMAGE_VIEW_TYPE_3D;
+            break;
+        }
+        case TextureDimension::TextureCube:
+        {
+            ci.viewType = texDesc.ArraySize > 1 ? VK_IMAGE_VIEW_TYPE_CUBE_ARRAY : VK_IMAGE_VIEW_TYPE_CUBE;
+            break;
+        }
     }
 
     ci.format = ToVkFormat(m_Desc.Format);

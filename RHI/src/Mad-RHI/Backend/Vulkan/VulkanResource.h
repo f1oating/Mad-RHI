@@ -205,14 +205,37 @@ inline VkImageViewType ToVkImageViewType(TextureDimension dimension)
     switch (dimension)
     {
     case TextureDimension::Texture1D:           return VK_IMAGE_VIEW_TYPE_1D;
-    case TextureDimension::Texture1DArray:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
     case TextureDimension::Texture2D:           return VK_IMAGE_VIEW_TYPE_2D;
-    case TextureDimension::Texture2DArray:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     case TextureDimension::Texture3D:           return VK_IMAGE_VIEW_TYPE_3D;
-    case TextureDimension::TextureCube:         return VK_IMAGE_VIEW_TYPE_CUBE;
-    case TextureDimension::TextureCubeArray:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
 
     default:                                    return VK_IMAGE_VIEW_TYPE_2D;
+    }
+}
+
+inline TextureDimension FromVkImageViewType(VkImageViewType type)
+{
+    switch (type)
+    {
+    case VK_IMAGE_VIEW_TYPE_1D:         return TextureDimension::Texture1D;
+    case VK_IMAGE_VIEW_TYPE_2D:         return TextureDimension::Texture2D;
+    case VK_IMAGE_VIEW_TYPE_3D:         return TextureDimension::Texture3D;
+
+    default:                            return TextureDimension::Texture2D;
+    }
+}
+
+inline VkImageType ToVkImageType(TextureDimension dimension)
+{
+    switch (dimension)
+    {
+    case TextureDimension::Texture1D:
+        return VK_IMAGE_TYPE_1D;
+    case TextureDimension::Texture2D:
+        return VK_IMAGE_TYPE_2D;
+    case TextureDimension::Texture3D:
+        return VK_IMAGE_TYPE_3D;
+    default:
+        return VK_IMAGE_TYPE_2D;
     }
 }
 
@@ -276,22 +299,6 @@ inline VkFormat ToVkFormat(TextureFormat format)
     case TextureFormat::D32_SFloat_S8_UInt:             return VK_FORMAT_D32_SFLOAT_S8_UINT;
 
     default:                                            return VK_FORMAT_UNDEFINED;
-    }
-}
-
-inline TextureDimension FromVkImageViewType(VkImageViewType type)
-{
-    switch (type)
-    {
-    case VK_IMAGE_VIEW_TYPE_1D:         return TextureDimension::Texture1D;
-    case VK_IMAGE_VIEW_TYPE_1D_ARRAY:   return TextureDimension::Texture1DArray;
-    case VK_IMAGE_VIEW_TYPE_2D:         return TextureDimension::Texture2D;
-    case VK_IMAGE_VIEW_TYPE_2D_ARRAY:   return TextureDimension::Texture2DArray;
-    case VK_IMAGE_VIEW_TYPE_3D:         return TextureDimension::Texture3D;
-    case VK_IMAGE_VIEW_TYPE_CUBE:       return TextureDimension::TextureCube;
-    case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: return TextureDimension::TextureCubeArray;
-
-    default:                            return TextureDimension::Texture2D;
     }
 }
 

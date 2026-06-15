@@ -64,7 +64,7 @@ void DX12Device::CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window, C
 
 void DX12Device::CreateTexture(Texture** ppTex, const TextureDesc& desc)
 {
-
+    *ppTex = new DX12Texture(desc, this);
 }
 
 void DX12Device::CreateBuffer(Buffer** ppBuff, const BufferDesc& desc)

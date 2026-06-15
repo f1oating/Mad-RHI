@@ -5,6 +5,7 @@
 #include <d3dx12/d3dx12.h>
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
 #include <D3D12MemAlloc.h>
+#include "Mad-RHI/Backend/DX12/DX12Resource.h"
 
 namespace mad::rhi {
 

@@ -2,8 +2,12 @@
 
 #include "Mad-RHI/Resource.h"
 #include <dxgi.h>
+#include <d3dx12/d3dx12.h>
+#include <D3D12MemAlloc.h>
 
 namespace mad::rhi {
+
+class DX12Device;
 
 class DX12Texture : public ObjectBase<Texture>
 {
@@ -11,7 +15,7 @@ protected:
     ~DX12Texture();
 
 public:
-    DX12Texture(const TextureDesc& desc);
+    DX12Texture(const TextureDesc& desc, DX12Device* context);
 
     virtual RefPtr<TextureView> GetDefaultSRV() override;
     virtual RefPtr<TextureView> GetDefaultRTV() override;
@@ -21,7 +25,12 @@ public:
     virtual ResourceState GetCurrentResourceState() override;
 
 private:
-    
+    DX12Device* m_Context = nullptr;
+    TextureDesc m_Desc; 
+
+    D3D12MA::Allocation* m_Allocation;
+    ID3D12Resource* m_Resource = nullptr;
+
 };
 
 class DX12Buffer : public ObjectBase<Buffer>
@@ -192,6 +201,33 @@ inline TextureFormat ToTextureFormat(DXGI_FORMAT format)
 
     default:                                            return TextureFormat::Unknown;
     }
+}
+
+inline D3D12_RESOURCE_DIMENSION ToDXGIResourceDimension(TextureDimension dimension)
+{
+    switch (dimension)
+    {
+    case TextureDimension::Texture1D:
+        return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+    case TextureDimension::Texture2D:
+    case TextureDimension::TextureCube:
+        return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    case TextureDimension::Texture3D:
+        return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+    default:
+        return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    }
+}
+
+inline D3D12_RESOURCE_FLAGS ToD3D12ResourceFlags(uint8_t bindFlags)
+{
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+    
+    if (bindFlags & RESOURCE_BIND_RENDER_TARGET) flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+    if (bindFlags & RESOURCE_BIND_DEPTH_STENCIL) flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    if (bindFlags & RESOURCE_BIND_UNORDERED_ACCESS) flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    return flags;
 }
 
 }
