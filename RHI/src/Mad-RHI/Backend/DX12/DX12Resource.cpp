@@ -13,7 +13,7 @@ DX12Texture::DX12Texture(const TextureDesc& desc, DX12Device* context)
     resourceDesc.Alignment = 0;
     resourceDesc.Width = m_Desc.Width;
     resourceDesc.Height = m_Desc.Height;
-    resourceDesc.DepthOrArraySize = m_Desc.ArraySize;
+    resourceDesc.DepthOrArraySize = m_Desc.Dimension == TextureDimension::Texture3D ? m_Desc.Depth : m_Desc.ArraySize;
     resourceDesc.MipLevels = m_Desc.MipLevels;
     resourceDesc.Format = ToDXGIFormat(m_Desc.Format);
     resourceDesc.SampleDesc.Count = m_Desc.SampleCount;
