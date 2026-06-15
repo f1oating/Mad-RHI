@@ -4,6 +4,7 @@
 #include "Mad-RHI/Backend/DX12/DX12Factory.h"
 #include <d3dx12/d3dx12.h>
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
+#include <D3D12MemAlloc.h>
 
 namespace mad::rhi {
 
@@ -28,6 +29,7 @@ public:
     virtual void CreateFence(Fence** ppFence) override;
 
     ID3D12Device* GetDevice() { return m_Device; }
+    D3D12MA::Allocator* GetAllocator() { return m_Allocator; }
 
 private:
     DX12Factory* m_Factory = nullptr;
@@ -35,6 +37,8 @@ private:
     ID3D12Device* m_Device = nullptr;
 
     std::vector<DX12CommandQueue*> m_CommandQueues;
+
+    D3D12MA::Allocator* m_Allocator = nullptr;
 
 };
 

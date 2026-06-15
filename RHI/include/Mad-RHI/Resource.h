@@ -60,14 +60,6 @@ enum class TextureFormat
     R32G32B32A32_UInt, R32G32B32A32_SInt, R32G32B32A32_SFloat,
 
     D16_UNorm, D32_SFloat, D24_UNorm_S8_UInt, D32_SFloat_S8_UInt,
-
-    BC1_RGBA_UNorm_Block, BC1_RGBA_SRGB_UNorm_Block,
-    BC2_UNorm_Block, BC2_SRGB_UNorm_Block,
-    BC3_UNorm_Block, BC3_SRGB_UNorm_Block,
-    BC4_UNorm_Block, BC4_SNorm_Block,
-    BC5_UNorm_Block, BC5_SNorm_Block,
-    BC6H_UFloat_Block, BC6H_SFloat_Block,
-    BC7_UNorm_Block, BC7_SRGB_UNorm_Block,
 };
 
 struct TextureDesc

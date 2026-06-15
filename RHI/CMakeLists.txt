@@ -12,6 +12,11 @@ target_include_directories(Mad-RHI
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_SOURCE_DIR}/thirdparty/VMA/include
+        $<$<PLATFORM_ID:Windows>:${CMAKE_SOURCE_DIR}/thirdparty/D3D12MA/include>
+)
+
+target_sources(Mad-RHI PRIVATE
+    $<$<PLATFORM_ID:Windows>:${CMAKE_SOURCE_DIR}/thirdparty/D3D12MA/src/D3D12MemAlloc.cpp>
 )
 
 target_link_libraries(Mad-RHI

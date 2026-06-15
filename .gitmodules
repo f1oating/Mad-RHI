@@ -16,3 +16,6 @@
 [submodule "thirdparty/glm"]
 	path = thirdparty/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "thirdparty/D3D12MA"]
+	path = thirdparty/D3D12MA
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator

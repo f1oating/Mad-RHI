@@ -13,26 +13,26 @@ DX12CommandQueue::DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* con
 
     switch (desc.Type)
     {
-        case CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS:
-        {
-            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-            break;
-        }
-        case CommandQueueType::COMMAND_QUEUE_TYPE_COMPUTE:
-        {
-            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-            break;
-        }
-        case CommandQueueType::COMMAND_QUEUE_TYPE_TRANSFER:
-        {
-            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-            break;
-        }
-        default:
-        {
-            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-            break;
-        }
+    case CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS:
+    {
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        break;
+    }
+    case CommandQueueType::COMMAND_QUEUE_TYPE_COMPUTE:
+    {
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        break;
+    }
+    case CommandQueueType::COMMAND_QUEUE_TYPE_TRANSFER:
+    {
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+        break;
+    }
+    default:
+    {
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        break;
+    }
     }
 
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;

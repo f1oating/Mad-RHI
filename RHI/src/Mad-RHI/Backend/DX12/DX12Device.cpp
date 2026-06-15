@@ -15,11 +15,21 @@ DX12Device::DX12Device(const DeviceDesc& desc, DX12Factory* factory)
     for (int i = 0; i < desc.NumCommandQueues; i++)
     {
         m_CommandQueues[i] = new DX12CommandQueue(desc.pCommandQueues[i], this);
-    }   
+    }
+
+    D3D12MA::ALLOCATOR_DESC allocDesc = {};
+    allocDesc.pDevice = m_Device;
+    allocDesc.pAdapter = m_Factory->GetAdapter(desc.AdapterId);
+    D3D12MA::CreateAllocator(&allocDesc, &m_Allocator);
 }
 
 DX12Device::~DX12Device()
 {
+    if (m_Allocator)
+    {
+        m_Allocator->Release();
+    }
+
     for (auto* queue : m_CommandQueues)
     {
         if (queue)
