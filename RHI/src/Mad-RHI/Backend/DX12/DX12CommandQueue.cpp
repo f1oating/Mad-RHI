@@ -1,15 +1,54 @@
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
 #include <iostream>
+#include "Mad-RHI/Backend/DX12/DX12Device.h"
 
 namespace mad::rhi {
 
-DX12CommandQueue::DX12CommandQueue()
+DX12CommandQueue::DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* context)
 {
+    m_Context = context;
+
+    D3D12_COMMAND_QUEUE_DESC queueDesc{};
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+
+    switch (desc.Type)
+    {
+        case CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS:
+        {
+            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+            break;
+        }
+        case CommandQueueType::COMMAND_QUEUE_TYPE_COMPUTE:
+        {
+            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+            break;
+        }
+        case CommandQueueType::COMMAND_QUEUE_TYPE_TRANSFER:
+        {
+            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+            break;
+        }
+        default:
+        {
+            queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+            break;
+        }
+    }
+
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+    m_Context->GetDevice()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue));
+
     std::cout << "DX12CommandQueue Created" << std::endl;
 }
 
 DX12CommandQueue::~DX12CommandQueue()
 {
+    if (m_Queue)
+    {
+        m_Queue->Release();
+    }
+    
     std::cout << "DX12CommandQueue Destroyed" << std::endl;
 }
 

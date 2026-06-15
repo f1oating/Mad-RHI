@@ -124,14 +124,14 @@ void VulkanDevice::CreateLogicalDevice(const DeviceDesc& desc)
         for (uint32_t f = 0; f < familyCount; f++)
         {
             auto flags = families[f].queueFlags;
-            uint8_t typeFlags;
+            CommandQueueType type;
 
-            if (flags & VK_QUEUE_GRAPHICS_BIT) typeFlags |= COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
-            else if (flags & VK_QUEUE_COMPUTE_BIT) typeFlags |= COMMAND_QUEUE_TYPE_COMPUTE_BIT;
-            else if (flags & VK_QUEUE_TRANSFER_BIT) typeFlags |= COMMAND_QUEUE_TYPE_TRANSFER_BIT;
+            if (flags & VK_QUEUE_GRAPHICS_BIT) type = CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS;
+            else if (flags & VK_QUEUE_COMPUTE_BIT) type = CommandQueueType::COMMAND_QUEUE_TYPE_COMPUTE;
+            else if (flags & VK_QUEUE_TRANSFER_BIT) type = CommandQueueType::COMMAND_QUEUE_TYPE_TRANSFER;
             else continue;
 
-            if (desc.pCommandQueues[i].Flags == typeFlags)
+            if (desc.pCommandQueues[i].Type == type)
             {
                 queueFamilies[i] = f;
                 break;

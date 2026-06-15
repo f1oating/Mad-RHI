@@ -1,8 +1,12 @@
 #pragma once
 
 #include "Mad-RHI/CommandQueue.h"
+#include "Mad-RHI/Device.h"
+#include <d3dx12/d3dx12.h>
 
 namespace mad::rhi {
+
+class DX12Device;
 
 class DX12CommandQueue : public ObjectBase<CommandQueue>
 {
@@ -10,7 +14,7 @@ protected:
     ~DX12CommandQueue();
 
 public:
-    DX12CommandQueue();
+    DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* context);
 
     virtual void ResourceBarrier(
         std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers) override;
@@ -47,6 +51,9 @@ public:
     virtual void Flush() override;
 
 private:
+    DX12Device* m_Context = nullptr;
+
+    ID3D12CommandQueue* m_Queue = nullptr;
 
 };
 

@@ -19,9 +19,10 @@ int main()
 
     Factory* factory = Factory::Get();
     Device* device = nullptr;
+    CommandQueue* queue = nullptr;
 
     rhi::CommandQueueDesc queueDesc{};
-    queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+    queueDesc.Type = rhi::CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS;
 
     rhi::DeviceDesc deviceDesc{};
     deviceDesc.AdapterId = 0;
@@ -29,6 +30,8 @@ int main()
     deviceDesc.NumCommandQueues = 1;
 
     factory->CreateDevice(&device, deviceDesc);
+
+    queue = device->GetCommandQueue(0);
 
     {
         common::Window* window = new common::Window("PBR", 800, 600);

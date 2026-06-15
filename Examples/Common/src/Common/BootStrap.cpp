@@ -71,7 +71,7 @@ void BootStrap::Shutdown()
 void BootStrap::CreateDeviceAndQueue()
 {
     rhi::CommandQueueDesc queueDesc{};
-    queueDesc.Flags = rhi::COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+    queueDesc.Type = rhi::CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS;
 
     rhi::DeviceDesc deviceDesc{};
     deviceDesc.AdapterId = 0;

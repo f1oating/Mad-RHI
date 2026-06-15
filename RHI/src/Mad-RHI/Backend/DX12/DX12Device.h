@@ -3,6 +3,7 @@
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/Backend/DX12/DX12Factory.h"
 #include <d3dx12/d3dx12.h>
+#include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
 
 namespace mad::rhi {
 
@@ -26,9 +27,14 @@ public:
     virtual void CreateGraphicsPipeline(GraphicsPipelineState** ppPipeline, const GraphicsPipelineDesc& desc) override;
     virtual void CreateFence(Fence** ppFence) override;
 
+    ID3D12Device* GetDevice() { return m_Device; }
+
 private:
     DX12Factory* m_Factory = nullptr;
+    
     ID3D12Device* m_Device = nullptr;
+
+    std::vector<DX12CommandQueue*> m_CommandQueues;
 
 };
 

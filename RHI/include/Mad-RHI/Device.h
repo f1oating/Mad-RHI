@@ -9,16 +9,16 @@
 
 namespace mad::rhi {
     
-enum CommandQueueTypeFlags : uint8_t
+enum class CommandQueueType
 {
-    COMMAND_QUEUE_TYPE_GRAPHICS_BIT = 1 << 0,
-    COMMAND_QUEUE_TYPE_COMPUTE_BIT = 1 << 1,
-    COMMAND_QUEUE_TYPE_TRANSFER_BIT = 1 << 2,
+    COMMAND_QUEUE_TYPE_GRAPHICS,
+    COMMAND_QUEUE_TYPE_COMPUTE,
+    COMMAND_QUEUE_TYPE_TRANSFER,
 };
 
 struct CommandQueueDesc
 {
-    CommandQueueTypeFlags Flags = COMMAND_QUEUE_TYPE_GRAPHICS_BIT;
+    CommandQueueType Type = CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS;
 };
 
 struct DeviceDesc
