@@ -1,5 +1,6 @@
 #include "Mad-RHI/Backend/DX12/DX12Device.h"
 #include <iostream>
+#include "Mad-RHI/Backend/DX12/DX12Swapchain.h"
 
 namespace mad::rhi {
 
@@ -7,7 +8,9 @@ DX12Device::DX12Device(const DeviceDesc& desc, DX12Factory* factory)
 {
     m_Factory = factory;
 
-    D3D12CreateDevice(m_Factory->GetAdapter(desc.AdapterId), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
+    IDXGIAdapter* adapter = m_Factory->GetAdapter(desc.AdapterId);
+
+    HRESULT res = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
 
     std::cout << "DX12Device Created" << std::endl;
 
@@ -59,7 +62,7 @@ CommandQueue* DX12Device::GetCommandQueue(uint32_t index)
 
 void DX12Device::CreateSwapchain(Swapchain** ppSwapchain, WindowHandle window, CommandQueue* queue)
 {
-
+    *ppSwapchain = new DX12Swapchain(window, static_cast<DX12CommandQueue*>(queue), this);
 }
 
 void DX12Device::CreateTexture(Texture** ppTex, const TextureDesc& desc)

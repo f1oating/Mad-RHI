@@ -7,7 +7,11 @@ namespace mad::rhi {
 
 DX12Factory::DX12Factory(const FactoryInitInfo& info)
 {
-    CreateDXGIFactory(IID_PPV_ARGS(&m_Factory));
+    HRESULT res = D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugController));
+    m_DebugController->EnableDebugLayer();
+    m_DebugController->SetEnableGPUBasedValidation(true);
+
+    res = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_Factory));
 
     IDXGIAdapter* dxAdapter = nullptr;
     for (uint32_t i = 0; SUCCEEDED(m_Factory->EnumAdapters(i, &dxAdapter)); i++)

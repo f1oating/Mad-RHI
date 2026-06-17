@@ -29,6 +29,7 @@ public:
     virtual void CreateGraphicsPipeline(GraphicsPipelineState** ppPipeline, const GraphicsPipelineDesc& desc) override;
     virtual void CreateFence(Fence** ppFence) override;
 
+    DX12Factory* GetFactory() { return m_Factory; }
     ID3D12Device* GetDevice() { return m_Device; }
     D3D12MA::Allocator* GetAllocator() { return m_Allocator; }
 

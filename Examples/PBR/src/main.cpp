@@ -17,9 +17,11 @@ int main()
 {
     Factory::Init({ FactoryBackend::DX12, "PBR", "Mad-RHI" });
 
+    common::Window* window = new common::Window("PBR", 800, 600);
     Factory* factory = Factory::Get();
     Device* device = nullptr;
     CommandQueue* queue = nullptr;
+    Swapchain* swapchain = nullptr;
 
     rhi::CommandQueueDesc queueDesc{};
     queueDesc.Type = rhi::CommandQueueType::COMMAND_QUEUE_TYPE_GRAPHICS;
@@ -32,6 +34,7 @@ int main()
     factory->CreateDevice(&device, deviceDesc);
 
     queue = device->GetCommandQueue(0);
+    device->CreateSwapchain(&swapchain, window->GetWindowInfo(), queue);
 
     TextureDesc desc {};
     desc.Width = 4;
@@ -41,8 +44,6 @@ int main()
     device->CreateTexture(&tex, desc);
 
     {
-        common::Window* window = new common::Window("PBR", 800, 600);
-
         auto startTime = std::chrono::high_resolution_clock::now();
         auto prevTime = startTime;
 
@@ -61,6 +62,7 @@ int main()
 
     tex->Release();
 
+    swapchain->Release();
     device->Release();
 
     Factory::Shutdown();
