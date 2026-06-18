@@ -40,7 +40,7 @@ protected:
     ~DX12Buffer();
 
 public:
-    DX12Buffer(const BufferDesc& desc);
+    DX12Buffer(const BufferDesc& desc, DX12Device* context);
 
     virtual void* Map() override;
     virtual void Unmap() override;
@@ -49,6 +49,11 @@ public:
     virtual ResourceState GetCurrentResourceState() override;
 
 private:
+    DX12Device* m_Context = nullptr;
+    BufferDesc m_Desc;
+
+    D3D12MA::Allocation* m_Allocation = nullptr;
+    ID3D12Resource* m_Resource = nullptr;
 
 };
 
@@ -229,6 +234,37 @@ inline D3D12_RESOURCE_FLAGS ToD3D12ResourceFlags(uint8_t bindFlags)
     if (bindFlags & RESOURCE_BIND_UNORDERED_ACCESS) flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
     return flags;
+}
+
+inline D3D12_RESOURCE_STATES ToD3D12ResourceState(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState::Undefined:
+        return D3D12_RESOURCE_STATE_COMMON;
+    case ResourceState::VertexBuffer:
+        return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    case ResourceState::IndexBuffer:
+        return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    case ResourceState::RenderTarget:
+        return D3D12_RESOURCE_STATE_RENDER_TARGET;
+    case ResourceState::ShaderResource:
+        return D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+    case ResourceState::UnorderedAccess:
+        return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    case ResourceState::DepthWrite:
+        return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    case ResourceState::DepthRead:
+        return D3D12_RESOURCE_STATE_DEPTH_READ;
+    case ResourceState::CopyDst:
+        return D3D12_RESOURCE_STATE_COPY_DEST;
+    case ResourceState::CopySrc:
+        return D3D12_RESOURCE_STATE_COPY_SOURCE;
+    case ResourceState::Present:
+        return D3D12_RESOURCE_STATE_PRESENT;
+    default:
+        return D3D12_RESOURCE_STATE_COMMON;
+    }
 }
 
 }

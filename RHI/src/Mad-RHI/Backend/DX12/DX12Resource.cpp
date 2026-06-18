@@ -78,14 +78,44 @@ ResourceState DX12Texture::GetCurrentResourceState()
 
 }
 
-DX12Buffer::DX12Buffer(const BufferDesc& desc)
+DX12Buffer::DX12Buffer(const BufferDesc& desc, DX12Device* context)
 {
+    m_Context = context;
+    m_Desc = desc;
 
+    D3D12_RESOURCE_DESC resourceDesc;
+    resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    resourceDesc.Alignment = 0;
+    resourceDesc.Width = m_Desc.Size;
+    resourceDesc.Height = 1;
+    resourceDesc.DepthOrArraySize = 1;
+    resourceDesc.MipLevels = 1;
+    resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+    resourceDesc.SampleDesc.Count = 1;
+    resourceDesc.SampleDesc.Quality = 0;
+    resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    resourceDesc.Flags = ToD3D12ResourceFlags(m_Desc.BindFlags);
+
+    D3D12MA::ALLOCATION_DESC allocationDesc = {};
+    allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+    m_Context->GetAllocator()->CreateResource(
+        &allocationDesc,
+        &resourceDesc,
+        D3D12_RESOURCE_STATE_COPY_DEST,
+        NULL,
+        &m_Allocation,
+        IID_NULL, NULL);
+
+    m_Resource = m_Allocation->GetResource();
 }
 
 DX12Buffer::~DX12Buffer()
 {
-
+    if (m_Allocation)
+    {
+        m_Allocation->Release();
+    }
 }
 
 void* DX12Buffer::Map()
@@ -100,7 +130,7 @@ void DX12Buffer::Unmap()
     
 const BufferDesc& DX12Buffer::GetDesc()
 {
-
+    return m_Desc;
 }
 
 ResourceState DX12Buffer::GetCurrentResourceState()

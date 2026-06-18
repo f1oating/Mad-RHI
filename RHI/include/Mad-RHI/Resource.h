@@ -89,8 +89,6 @@ struct BufferDesc
     uint64_t Size = 0;
     uint8_t BindFlags = RESOURCE_BIND_NONE;
     ResourceUsage Usage = ResourceUsage::Default;
-    BufferMode Mode = BufferMode::Undefined;
-    uint32_t ElementByteStride = 0;
 };
 
 enum class ResourceState

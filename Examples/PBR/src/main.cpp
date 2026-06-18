@@ -40,12 +40,19 @@ int main()
     queue = device->GetCommandQueue(0);
     device->CreateSwapchain(&swapchain, window->GetWindowInfo(), queue);
 
-    TextureDesc desc {};
-    desc.Width = 4;
-    desc.Height = 4;
+    TextureDesc texDesc {};
+    texDesc.Width = 4;
+    texDesc.Height = 4;
 
     Texture* tex = nullptr;
-    device->CreateTexture(&tex, desc);
+    device->CreateTexture(&tex, texDesc);
+
+    BufferDesc buffDesc {};
+    buffDesc.Size = 4;
+    buffDesc.BindFlags = RESOURCE_BIND_UNIFORM_BUFFER;
+
+    Buffer* buff = nullptr;
+    device->CreateBuffer(&buff, buffDesc);
 
     common::EventBus::Subscribe<common::WindowResizeEvent>([&swapchain](const common::WindowResizeEvent& event){
         swapchain->Resize();
@@ -68,6 +75,7 @@ int main()
 
     common::EventBus::Clear();
 
+    buff->Release();
     tex->Release();
 
     swapchain->Release();

@@ -1,6 +1,7 @@
 #include "Mad-RHI/Backend/DX12/DX12Device.h"
 #include <iostream>
 #include "Mad-RHI/Backend/DX12/DX12Swapchain.h"
+#include "Mad-RHI/Backend/DX12/DX12Resource.h"
 
 namespace mad::rhi {
 
@@ -72,7 +73,7 @@ void DX12Device::CreateTexture(Texture** ppTex, const TextureDesc& desc)
 
 void DX12Device::CreateBuffer(Buffer** ppBuff, const BufferDesc& desc)
 {
-
+    *ppBuff = new DX12Buffer(desc, this);
 }
 
 void DX12Device::CreateSampler(Sampler** ppSampler, const SamplerDesc& desc)
