@@ -16,6 +16,7 @@ protected:
 
 public:
     DX12Texture(const TextureDesc& desc, DX12Device* context);
+    DX12Texture(ID3D12Resource* res, const TextureDesc& desc, DX12Device* context);
 
     virtual RefPtr<TextureView> GetDefaultSRV() override;
     virtual RefPtr<TextureView> GetDefaultRTV() override;
@@ -28,7 +29,7 @@ private:
     DX12Device* m_Context = nullptr;
     TextureDesc m_Desc; 
 
-    D3D12MA::Allocation* m_Allocation;
+    D3D12MA::Allocation* m_Allocation = nullptr;
     ID3D12Resource* m_Resource = nullptr;
 
 };

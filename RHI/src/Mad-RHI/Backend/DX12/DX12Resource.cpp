@@ -35,11 +35,21 @@ DX12Texture::DX12Texture(const TextureDesc& desc, DX12Device* context)
     m_Resource = m_Allocation->GetResource();
 }
 
+DX12Texture::DX12Texture(ID3D12Resource* res, const TextureDesc& desc, DX12Device* context)
+{
+    m_Context = context;
+    m_Resource = res;
+    m_Desc = desc;
+}
+
 DX12Texture::~DX12Texture()
 {
     if (m_Allocation)
     {
         m_Allocation->Release();
+    } else
+    {
+        m_Resource->Release();
     }
 }
 
