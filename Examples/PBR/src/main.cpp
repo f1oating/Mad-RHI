@@ -47,6 +47,10 @@ int main()
     Texture* tex = nullptr;
     device->CreateTexture(&tex, desc);
 
+    common::EventBus::Subscribe<common::WindowResizeEvent>([&swapchain](const common::WindowResizeEvent& event){
+        swapchain->Resize();
+    });
+
     {
         auto startTime = std::chrono::high_resolution_clock::now();
         auto prevTime = startTime;
