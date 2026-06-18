@@ -35,8 +35,6 @@ DX12CommandQueue::DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* con
     }
     }
 
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
     m_Context->GetDevice()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue));
 
     std::cout << "DX12CommandQueue Created" << std::endl;

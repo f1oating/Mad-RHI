@@ -7,20 +7,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Vulkan REQUIRED)
 
-if(WIN32)
-    include(FetchContent)
-    FetchContent_Declare(
-        agility_sdk
-        URL "https://www.nuget.org/api/v2/package/Microsoft.Direct3D.D3D12/1.619.1"
-    )
-    FetchContent_MakeAvailable(agility_sdk)
-
-    add_library(D3D12AgilitySDK INTERFACE)
-    target_include_directories(D3D12AgilitySDK INTERFACE
-        ${agility_sdk_SOURCE_DIR}/build/native/include
-    )
-endif()
-
 add_subdirectory(thirdparty/glm)
 
 set(LIBC_HAS_ITOA "" CACHE INTERNAL "Have symbol itoa" FORCE)
@@ -44,6 +30,8 @@ elseif(UNIX)
     set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XCB_KHR)
 endif()
 add_subdirectory(thirdparty/volk)
+
+add_subdirectory(thirdparty/DirectX-Headers)
 
 add_subdirectory(RHI)
 add_subdirectory(Examples)

@@ -2,7 +2,7 @@
 
 #include "Mad-RHI/Resource.h"
 #include <dxgi.h>
-#include <d3dx12/d3dx12.h>
+#include <directx/d3dx12.h>
 #include <D3D12MemAlloc.h>
 
 namespace mad::rhi {

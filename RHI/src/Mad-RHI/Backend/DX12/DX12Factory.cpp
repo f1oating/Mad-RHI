@@ -24,6 +24,15 @@ DX12Factory::DX12Factory(const FactoryInitInfo& info)
 
 DX12Factory::~DX12Factory()
 {
+    for (auto* adapter : m_Adapters)
+    {
+        if (adapter)
+        {
+            adapter->Release();
+        }
+    }
+    m_Adapters.clear();
+
     if (m_Factory)
     {
         m_Factory->Release();

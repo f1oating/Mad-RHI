@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mad-RHI/Swapchain.h"
-#include <d3dx12/d3dx12.h>
+#include <directx/d3dx12.h>
 #include <dxgi1_2.h>
 #include "Mad-RHI/Backend/DX12/DX12Resource.h"
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"

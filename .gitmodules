@@ -19,3 +19,6 @@
 [submodule "thirdparty/D3D12MA"]
 	path = thirdparty/D3D12MA
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator
+[submodule "thirdparty/DirectX-Headers"]
+	path = thirdparty/DirectX-Headers
+	url = https://github.com/microsoft/DirectX-Headers

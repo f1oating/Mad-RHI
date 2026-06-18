@@ -2,7 +2,7 @@
 
 #include "Mad-RHI/CommandQueue.h"
 #include "Mad-RHI/Device.h"
-#include <d3dx12/d3dx12.h>
+#include <directx/d3dx12.h>
 
 namespace mad::rhi {
 
@@ -49,6 +49,8 @@ public:
     virtual void WaitForFence(Fence* fence, uint64_t value) override;
 
     virtual void Flush() override;
+
+    ID3D12CommandQueue* GetQueue() { return m_Queue; }  
 
 private:
     DX12Device* m_Context = nullptr;

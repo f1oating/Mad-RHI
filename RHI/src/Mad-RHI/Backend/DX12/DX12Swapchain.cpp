@@ -21,7 +21,7 @@ DX12Swapchain::DX12Swapchain(WindowHandle window, DX12CommandQueue* queue, DX12D
     swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Flags = 0;
 
-    m_Context->GetFactory()->GetFactory()->CreateSwapChainForHwnd(m_Context->GetDevice(), (HWND)window.win32.hwnd, 
+    m_Context->GetFactory()->GetFactory()->CreateSwapChainForHwnd(m_Queue->GetQueue(), (HWND)window.win32.hwnd, 
         &swapchainDesc, nullptr, nullptr, &m_Swapchain);
 }
 

@@ -2,7 +2,7 @@
 
 #include "Mad-RHI/Device.h"
 #include "Mad-RHI/Backend/DX12/DX12Factory.h"
-#include <d3dx12/d3dx12.h>
+#include <directx/d3dx12.h>
 #include "Mad-RHI/Backend/DX12/DX12CommandQueue.h"
 #include <D3D12MemAlloc.h>
 #include "Mad-RHI/Backend/DX12/DX12Resource.h"

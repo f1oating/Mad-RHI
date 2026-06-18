@@ -2,7 +2,7 @@
 
 #include "Mad-RHI/Factory.h"
 #include <vector>
-#include <d3dx12/d3dx12.h>
+#include <directx/d3dx12.h>
 #include <dxgi1_2.h>
 
 namespace mad::rhi {
