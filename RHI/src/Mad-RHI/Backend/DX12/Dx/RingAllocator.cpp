@@ -32,6 +32,7 @@ void RingBuffer::Init(D3D12MA::Allocator* allocator, uint64_t capacity)
         IID_NULL, NULL);
 
     m_Buffer = m_Allocation->GetResource();
+    m_Buffer->Map(0, nullptr, &m_MappedPtr);
 }
 
 void RingBuffer::Shutdown()
