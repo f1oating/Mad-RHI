@@ -76,14 +76,6 @@ struct TextureDesc
     ResourceUsage Usage = ResourceUsage::Default;
 };
 
-enum class BufferMode
-{
-    Undefined,
-    Structured,
-    Formatted,
-    Raw,
-};
-
 struct BufferDesc 
 {
     uint64_t Size = 0;
