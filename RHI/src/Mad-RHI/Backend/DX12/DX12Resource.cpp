@@ -102,7 +102,7 @@ DX12Buffer::DX12Buffer(const BufferDesc& desc, DX12Device* context)
     m_Context->GetAllocator()->CreateResource(
         &allocationDesc,
         &resourceDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         NULL,
         &m_Allocation,
         IID_NULL, NULL);

@@ -3,6 +3,7 @@
 #include "Mad-RHI/CommandQueue.h"
 #include "Mad-RHI/Device.h"
 #include <directx/d3dx12.h>
+#include "Mad-RHI/Backend/DX12/DX12Fence.h"
 
 namespace mad::rhi {
 
@@ -56,6 +57,8 @@ private:
     DX12Device* m_Context = nullptr;
 
     ID3D12CommandQueue* m_Queue = nullptr;
+
+    DX12Fence* m_Fence = nullptr;
 
 };
 

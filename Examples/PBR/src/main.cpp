@@ -70,6 +70,8 @@ int main()
 
             window->Update();
             common::ShaderSystem::Poll();
+
+            swapchain->Present();
         }
     }
 

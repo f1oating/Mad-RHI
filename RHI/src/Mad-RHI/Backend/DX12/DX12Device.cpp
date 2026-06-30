@@ -13,6 +13,25 @@ DX12Device::DX12Device(const DeviceDesc& desc, DX12Factory* factory)
 
     HRESULT res = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
 
+    m_Device->QueryInterface(IID_PPV_ARGS(&m_DebugInfoQueue));
+
+    auto messageCallback = [](
+        D3D12_MESSAGE_CATEGORY category,
+        D3D12_MESSAGE_SEVERITY severity,
+        D3D12_MESSAGE_ID id,
+        LPCSTR pDescription,
+        void* pContext)
+    {
+        std::cout << "[D3D12] " << pDescription << "\n";
+    };
+
+    m_DebugInfoQueue->RegisterMessageCallback(
+        messageCallback,
+        D3D12_MESSAGE_CALLBACK_FLAG_NONE,
+        nullptr,
+        &m_CallbackCookie
+    );
+
     std::cout << "DX12Device Created" << std::endl;
 
     m_CommandQueues.resize(desc.NumCommandQueues);
@@ -45,6 +64,7 @@ DX12Device::~DX12Device()
     
     if (m_Device)
     {
+        m_DebugInfoQueue->UnregisterMessageCallback(m_CallbackCookie);
         m_Device->Release();
     }
 

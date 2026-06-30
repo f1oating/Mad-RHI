@@ -37,6 +37,8 @@ private:
     DX12Factory* m_Factory = nullptr;
     
     ID3D12Device* m_Device = nullptr;
+    ID3D12InfoQueue1* m_DebugInfoQueue = nullptr;
+    DWORD m_CallbackCookie = 0;
 
     std::vector<DX12CommandQueue*> m_CommandQueues;
 

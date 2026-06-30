@@ -22,7 +22,6 @@ public:
 
 private:
     ID3D12Debug3* m_DebugController = nullptr;
-    ID3D12InfoQueue* m_DebugInfoQueue = nullptr;
     IDXGIFactory2* m_Factory = nullptr;
 
     std::vector<IDXGIAdapter*> m_Adapters;

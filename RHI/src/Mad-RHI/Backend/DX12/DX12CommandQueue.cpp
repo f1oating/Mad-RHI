@@ -37,11 +37,17 @@ DX12CommandQueue::DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* con
 
     m_Context->GetDevice()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue));
 
+    m_Fence = new DX12Fence(m_Context);
+
     std::cout << "DX12CommandQueue Created" << std::endl;
 }
 
 DX12CommandQueue::~DX12CommandQueue()
 {
+    if (m_Fence)
+    {
+        m_Fence->Release();
+    }
     if (m_Queue)
     {
         m_Queue->Release();
