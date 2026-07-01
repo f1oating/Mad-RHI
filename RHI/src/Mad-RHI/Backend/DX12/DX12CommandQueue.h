@@ -4,6 +4,7 @@
 #include "Mad-RHI/Device.h"
 #include <directx/d3dx12.h>
 #include "Mad-RHI/Backend/DX12/DX12Fence.h"
+#include "Mad-RHI/Backend/DX12/Dx/CommandListPool.h"
 
 namespace mad::rhi {
 
@@ -59,6 +60,10 @@ private:
     ID3D12CommandQueue* m_Queue = nullptr;
 
     DX12Fence* m_Fence = nullptr;
+
+    dx12::CommandListPool m_CommandListPool;
+    ID3D12GraphicsCommandList* m_CommandList = nullptr;
+    ID3D12CommandAllocator* m_CommandAllocator = nullptr;
 
 };
 

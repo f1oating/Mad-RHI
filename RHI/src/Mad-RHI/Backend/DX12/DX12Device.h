@@ -30,13 +30,13 @@ public:
     virtual void CreateFence(Fence** ppFence) override;
 
     DX12Factory* GetFactory() { return m_Factory; }
-    ID3D12Device* GetDevice() { return m_Device; }
+    ID3D12Device4* GetDevice() { return m_Device; }
     D3D12MA::Allocator* GetAllocator() { return m_Allocator; }
 
 private:
     DX12Factory* m_Factory = nullptr;
     
-    ID3D12Device* m_Device = nullptr;
+    ID3D12Device4* m_Device = nullptr;
     ID3D12InfoQueue1* m_DebugInfoQueue = nullptr;
     DWORD m_CallbackCookie = 0;
 

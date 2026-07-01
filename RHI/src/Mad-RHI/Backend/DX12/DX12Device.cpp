@@ -32,6 +32,9 @@ DX12Device::DX12Device(const DeviceDesc& desc, DX12Factory* factory)
         &m_CallbackCookie
     );
 
+    m_DebugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+    m_DebugInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+
     std::cout << "DX12Device Created" << std::endl;
 
     m_CommandQueues.resize(desc.NumCommandQueues);

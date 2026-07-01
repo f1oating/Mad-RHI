@@ -38,12 +38,26 @@ DX12CommandQueue::DX12CommandQueue(const CommandQueueDesc& desc, DX12Device* con
     m_Context->GetDevice()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue));
 
     m_Fence = new DX12Fence(m_Context);
+    
+    m_CommandListPool.Init(m_Context->GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+    m_CommandAllocator = m_CommandListPool.AcquireCommandAllocator();
+
+    m_Context->GetDevice()->CreateCommandList1(
+        0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+        D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_CommandList)
+    );
+    m_CommandList->Reset(m_CommandAllocator, nullptr);
 
     std::cout << "DX12CommandQueue Created" << std::endl;
 }
 
 DX12CommandQueue::~DX12CommandQueue()
 {
+    m_Fence->Wait(m_Fence->GetCurrentValue());
+
+    m_CommandListPool.Shutdown();
+
     if (m_Fence)
     {
         m_Fence->Release();
@@ -161,7 +175,14 @@ void DX12CommandQueue::WaitForFence(Fence* fence, uint64_t value)
 
 void DX12CommandQueue::Flush()
 {
+    m_CommandList->Close();
+    ID3D12CommandList* lists[] = { m_CommandList };
+    m_Queue->ExecuteCommandLists(1, lists);
+    m_Queue->Signal(m_Fence->GetFence(), m_Fence->IncrementCurrentValue());
 
+    m_CommandListPool.ReleaseCommandAllocator(m_CommandAllocator, m_Fence->GetCurrentValue());
+    m_CommandAllocator = m_CommandListPool.AcquireCommandAllocator();
+    m_CommandList->Reset(m_CommandAllocator, nullptr);
 }
 
 }

@@ -120,6 +120,7 @@ void DX12Swapchain::Resize()
 
 void DX12Swapchain::Present()
 {
+    m_Queue->Flush();
     m_Swapchain->Present(1, 0);
 }
 
