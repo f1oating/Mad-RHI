@@ -8,7 +8,7 @@ DX12Texture::DX12Texture(const TextureDesc& desc, DX12Device* context)
     m_Context = context;
     m_Desc = desc;
 
-    D3D12_RESOURCE_DESC resourceDesc = {};
+    D3D12_RESOURCE_DESC1 resourceDesc = {};
     resourceDesc.Dimension = ToDXGIResourceDimension(m_Desc.Dimension);
     resourceDesc.Alignment = 0;
     resourceDesc.Width = m_Desc.Width;
@@ -24,15 +24,21 @@ DX12Texture::DX12Texture(const TextureDesc& desc, DX12Device* context)
     D3D12MA::ALLOCATION_DESC allocationDesc = {};
     allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
     
-    m_Context->GetAllocator()->CreateResource(
+    D3D12_CLEAR_VALUE clearValue{ ToDXGIFormat(m_Desc.Format), { 0, 0, 0, 1 } };
+    D3D12_CLEAR_VALUE* pClearValue = nullptr;
+
+    if (m_Desc.BindFlags & RESOURCE_BIND_RENDER_TARGET || m_Desc.BindFlags & RESOURCE_BIND_DEPTH_STENCIL)
+    {
+        pClearValue = &clearValue;
+    }
+
+    m_Context->GetAllocator()->CreateResource3(
         &allocationDesc,
         &resourceDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
-        NULL,
+        D3D12_BARRIER_LAYOUT_UNDEFINED,
+        pClearValue, 0, nullptr,
         &m_Allocation,
-        IID_NULL, NULL);
-
-    m_Resource = m_Allocation->GetResource();
+        IID_PPV_ARGS(&m_Resource));
 }
 
 DX12Texture::DX12Texture(ID3D12Resource* res, const TextureDesc& desc, DX12Device* context)
@@ -75,7 +81,7 @@ const TextureDesc& DX12Texture::GetDesc()
 
 ResourceState DX12Texture::GetCurrentResourceState()
 {
-
+    return m_CurrentState;
 }
 
 DX12Buffer::DX12Buffer(const BufferDesc& desc, DX12Device* context)
@@ -83,7 +89,7 @@ DX12Buffer::DX12Buffer(const BufferDesc& desc, DX12Device* context)
     m_Context = context;
     m_Desc = desc;
 
-    D3D12_RESOURCE_DESC resourceDesc;
+    D3D12_RESOURCE_DESC1 resourceDesc;
     resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     resourceDesc.Alignment = 0;
     resourceDesc.Width = m_Desc.Size;
@@ -99,15 +105,13 @@ DX12Buffer::DX12Buffer(const BufferDesc& desc, DX12Device* context)
     D3D12MA::ALLOCATION_DESC allocationDesc = {};
     allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
-    m_Context->GetAllocator()->CreateResource(
+    m_Context->GetAllocator()->CreateResource3(
         &allocationDesc,
         &resourceDesc,
-        D3D12_RESOURCE_STATE_COMMON,
-        NULL,
+        D3D12_BARRIER_LAYOUT_UNDEFINED,
+        nullptr, 0, nullptr,
         &m_Allocation,
-        IID_NULL, NULL);
-
-    m_Resource = m_Allocation->GetResource();
+        IID_PPV_ARGS(&m_Resource));
 }
 
 DX12Buffer::~DX12Buffer()
@@ -135,7 +139,7 @@ const BufferDesc& DX12Buffer::GetDesc()
 
 ResourceState DX12Buffer::GetCurrentResourceState()
 {
-
+    return m_CurrentState;
 }
 
 DX12Sampler::DX12Sampler(const SamplerDesc& desc)

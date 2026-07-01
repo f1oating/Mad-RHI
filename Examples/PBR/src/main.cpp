@@ -71,6 +71,12 @@ int main()
             window->Update();
             common::ShaderSystem::Poll();
 
+            Texture* backbuffer = swapchain->GetCurrentBackBuffer();
+
+            queue->ResourceBarrier( { {backbuffer, ResourceState::RenderTarget} }, {} );
+
+            queue->ResourceBarrier( { {backbuffer, ResourceState::Present} }, {} );
+
             swapchain->Present();
         }
     }

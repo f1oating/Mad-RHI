@@ -73,7 +73,57 @@ DX12CommandQueue::~DX12CommandQueue()
 void DX12CommandQueue::ResourceBarrier(
     std::vector<TextureBarrier> textureBarriers, std::vector<BufferBarrier> bufferBarriers)
 {
-    
+    std::vector<D3D12_TEXTURE_BARRIER> texBars;
+    std::vector<D3D12_BUFFER_BARRIER> bufBars;
+
+    for (TextureBarrier& tb : textureBarriers)
+    {
+        DX12Texture* dtex = static_cast<DX12Texture*>(tb.Texture);
+
+        D3D12_TEXTURE_BARRIER dtb{};
+        dtb.SyncBefore = D3D12_BARRIER_SYNC_ALL;
+        dtb.SyncAfter = D3D12_BARRIER_SYNC_ALL;
+        dtb.AccessBefore = ToD3D12BarrierAccess(dtex->GetCurrentResourceState());
+        dtb.AccessAfter = ToD3D12BarrierAccess(tb.NewState);
+        dtb.LayoutBefore = ToD3D12BarrierLayout(dtex->GetCurrentResourceState());
+        dtb.LayoutAfter = ToD3D12BarrierLayout(tb.NewState);
+        dtb.pResource = dtex->GetResource();
+        dtb.Subresources = { 0xffffffff, 0, 0, 0, 0, 0 };
+        dtb.Flags = D3D12_TEXTURE_BARRIER_FLAG_NONE;
+
+        texBars.push_back(dtb);
+
+        dtex->SetResourceState(tb.NewState);
+    }
+
+    for (BufferBarrier& bb : bufferBarriers)
+    {
+        DX12Buffer* dBuf = static_cast<DX12Buffer*>(bb.Buffer);
+
+        D3D12_BUFFER_BARRIER dbb{};
+        dbb.SyncBefore = D3D12_BARRIER_SYNC_ALL;
+        dbb.SyncAfter = D3D12_BARRIER_SYNC_ALL;
+        dbb.AccessBefore = ToD3D12BarrierAccess(dBuf->GetCurrentResourceState());
+        dbb.AccessAfter = ToD3D12BarrierAccess(bb.NewState);
+        dbb.pResource = dBuf->GetResource();; 
+        dbb.Offset = 0; 
+        dbb.Size = UINT64_MAX;
+
+        bufBars.push_back(dbb);
+
+        dBuf->SetResourceState(bb.NewState);
+    }
+
+    D3D12_BARRIER_GROUP groups[2] = {};
+    groups[0].Type = D3D12_BARRIER_TYPE_TEXTURE;
+    groups[0].NumBarriers = texBars.size();
+    groups[0].pTextureBarriers = texBars.data();
+
+    groups[1].Type = D3D12_BARRIER_TYPE_BUFFER;
+    groups[1].NumBarriers = bufBars.size();
+    groups[1].pBufferBarriers = bufBars.data();
+
+    m_CommandList->Barrier(2, groups);
 }
 
 void DX12CommandQueue::SetRenderTargets(std::vector<TextureView*> colorViews, TextureView* depthView)

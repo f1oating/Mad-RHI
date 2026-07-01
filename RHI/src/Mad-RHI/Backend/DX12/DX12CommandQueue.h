@@ -62,7 +62,7 @@ private:
     DX12Fence* m_Fence = nullptr;
 
     dx12::CommandListPool m_CommandListPool;
-    ID3D12GraphicsCommandList* m_CommandList = nullptr;
+    ID3D12GraphicsCommandList7* m_CommandList = nullptr;
     ID3D12CommandAllocator* m_CommandAllocator = nullptr;
 
 };

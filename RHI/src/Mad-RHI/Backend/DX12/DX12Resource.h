@@ -25,7 +25,12 @@ public:
     virtual const TextureDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
 
+    ID3D12Resource* GetResource() { return m_Resource; }
+
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
 private:
+    ResourceState m_CurrentState = ResourceState::Undefined;
     DX12Device* m_Context = nullptr;
     TextureDesc m_Desc; 
 
@@ -48,7 +53,12 @@ public:
     virtual const BufferDesc& GetDesc() override;
     virtual ResourceState GetCurrentResourceState() override;
 
+    ID3D12Resource* GetResource() { return m_Resource; }
+
+    void SetResourceState(ResourceState state) { m_CurrentState = state; }
+
 private:
+    ResourceState m_CurrentState = ResourceState::Undefined;
     DX12Device* m_Context = nullptr;
     BufferDesc m_Desc;
 
@@ -264,6 +274,62 @@ inline D3D12_RESOURCE_STATES ToD3D12ResourceState(ResourceState state)
         return D3D12_RESOURCE_STATE_PRESENT;
     default:
         return D3D12_RESOURCE_STATE_COMMON;
+    }
+}
+
+inline D3D12_BARRIER_LAYOUT ToD3D12BarrierLayout(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState::Undefined:        return D3D12_BARRIER_LAYOUT_UNDEFINED;
+    case ResourceState::RenderTarget:     return D3D12_BARRIER_LAYOUT_RENDER_TARGET;
+    case ResourceState::ShaderResource:   return D3D12_BARRIER_LAYOUT_SHADER_RESOURCE;
+    case ResourceState::UnorderedAccess:  return D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS;
+    case ResourceState::DepthWrite:       return D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE;
+    case ResourceState::DepthRead:        return D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ;
+    case ResourceState::CopyDst:          return D3D12_BARRIER_LAYOUT_COPY_DEST;
+    case ResourceState::CopySrc:          return D3D12_BARRIER_LAYOUT_COPY_SOURCE;
+    case ResourceState::Present:          return D3D12_BARRIER_LAYOUT_PRESENT;
+
+    default:                              return D3D12_BARRIER_LAYOUT_UNDEFINED;
+    }
+}
+
+inline ResourceState FromD3D12BarrierLayout(D3D12_BARRIER_LAYOUT layout)
+{
+    switch (layout)
+    {
+    case D3D12_BARRIER_LAYOUT_UNDEFINED:                    return ResourceState::Undefined;
+    case D3D12_BARRIER_LAYOUT_RENDER_TARGET:                return ResourceState::RenderTarget;
+    case D3D12_BARRIER_LAYOUT_SHADER_RESOURCE:              return ResourceState::ShaderResource;
+    case D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS:             return ResourceState::UnorderedAccess;
+    case D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE:          return ResourceState::DepthWrite;
+    case D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ:           return ResourceState::DepthRead;
+    case D3D12_BARRIER_LAYOUT_COPY_DEST:                    return ResourceState::CopyDst;
+    case D3D12_BARRIER_LAYOUT_COPY_SOURCE:                  return ResourceState::CopySrc;
+    case D3D12_BARRIER_LAYOUT_PRESENT:                      return ResourceState::Present;
+
+    default:                                                return ResourceState::Undefined;
+    }
+}
+
+inline D3D12_BARRIER_ACCESS ToD3D12BarrierAccess(ResourceState state)
+{
+    switch (state)
+    {
+    case ResourceState::Undefined:        return D3D12_BARRIER_ACCESS_NO_ACCESS;
+    case ResourceState::VertexBuffer:     return D3D12_BARRIER_ACCESS_VERTEX_BUFFER;
+    case ResourceState::IndexBuffer:      return D3D12_BARRIER_ACCESS_INDEX_BUFFER;
+    case ResourceState::RenderTarget:     return D3D12_BARRIER_ACCESS_RENDER_TARGET;
+    case ResourceState::ShaderResource:   return D3D12_BARRIER_ACCESS_SHADER_RESOURCE;
+    case ResourceState::UnorderedAccess:  return D3D12_BARRIER_ACCESS_UNORDERED_ACCESS;
+    case ResourceState::DepthWrite:       return D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE;
+    case ResourceState::DepthRead:        return D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ;
+    case ResourceState::CopyDst:          return D3D12_BARRIER_ACCESS_COPY_DEST;
+    case ResourceState::CopySrc:          return D3D12_BARRIER_ACCESS_COPY_SOURCE;
+    case ResourceState::Present:          return D3D12_BARRIER_ACCESS_COMMON;
+
+    default:                              return D3D12_BARRIER_ACCESS_NO_ACCESS;
     }
 }
 
