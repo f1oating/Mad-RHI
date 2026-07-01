@@ -21,12 +21,12 @@ void RingBuffer::Init(D3D12MA::Allocator* allocator, uint64_t capacity)
     resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     D3D12MA::ALLOCATION_DESC allocationDesc = {};
-    allocationDesc.HeapType = D3D12_HEAP_TYPE_READBACK;
+    allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
 
     m_Allocator->CreateResource(
         &allocationDesc,
         &resourceDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         NULL,
         &m_Allocation,
         IID_NULL, NULL);

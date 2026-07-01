@@ -14,50 +14,44 @@ void CommandListPool::Shutdown()
 
     while (!m_AcquireQueue.empty())
     {
-        Entry entry = m_AcquireQueue.front();
+        ID3D12CommandAllocator* allocator = m_AcquireQueue.front();
         m_AcquireQueue.pop_front();
-        if (entry.CommandBuffer)
+        if (allocator)
         {
-            entry.CommandBuffer->Release();
-        }
-        if (entry.CommandAllocator)
-        {
-            entry.CommandAllocator->Release();
+            allocator->Release();
         }
     }
 }
 
-CommandListPool::Entry CommandListPool::AcquireCommandBuffer(ID3D12PipelineState* pipelineState)
+ID3D12CommandAllocator* CommandListPool::AcquireCommandAllocator()
 {
     if (!m_AcquireQueue.empty())
     {
-        Entry entry = m_AcquireQueue.front();
+        ID3D12CommandAllocator* allocator = m_AcquireQueue.front();
         m_AcquireQueue.pop_front();
-        entry.CommandAllocator->Reset();
-        entry.CommandBuffer->Reset(entry.CommandAllocator, pipelineState);
-        return entry;
+        allocator->Reset();
+        return allocator;
     }
 
-    Entry entry {};
+    ID3D12CommandAllocator* allocator = nullptr;
     
-    m_Device->CreateCommandAllocator(m_Type, IID_PPV_ARGS(&entry.CommandAllocator));
-    m_Device->CreateCommandList(0, m_Type, entry.CommandAllocator, pipelineState, IID_PPV_ARGS(&entry.CommandBuffer));
+    m_Device->CreateCommandAllocator(m_Type, IID_PPV_ARGS(&allocator));
 
-    return entry;
+    return allocator;
 }
 
-void CommandListPool::ReleaseCommandBuffer(Entry entry, uint64_t fenceValue)
+void CommandListPool::ReleaseCommandAllocator(ID3D12CommandAllocator* allocator, uint64_t fenceValue)
 {
-    m_ReleaseQueue.push_back({ fenceValue, entry });
+    m_ReleaseQueue.push_back({ allocator, fenceValue });
 }
 
 void CommandListPool::Purge(uint64_t fenceValue)
 {
     while (!m_ReleaseQueue.empty())
     {
-        auto& pair = m_ReleaseQueue.front();
-        if (pair.first > fenceValue) break;
-        m_AcquireQueue.push_back(pair.second);
+        auto& entry = m_ReleaseQueue.front();
+        if (entry.FenceValue > fenceValue) break;
+        m_AcquireQueue.push_back(entry.CommandAllocator);
         m_ReleaseQueue.pop_front();
     }
 }
